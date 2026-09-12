@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_card %}
+{% block content %}
+
+<section class="page-head">
+  <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ t.our_product_line }}</span>
+    {% if group %} › <span>{{ loc(group, 'name') }}</span>{% endif %}</nav>
+  <h1>{{ loc(group, 'name') if group else t.our_product_line }}</h1>
+  <p class="lead">{{ loc(group, 'desc') if group and loc(group, 'desc') else t.delivery_note }}</p>
+</section>
+
+{# Sub-menu across the product groups, the way the client's reference site
+   splits its product page. #}
+<nav class="submenu">
+  <a href="/products" class="{{ 'on' if not group }}">{{ t.all }}</a>
+  {% for g in groups %}
+    <a href="/products/{{ g.slug }}" class="{{ 'on' if group and g.id == group.id }}">
+      {% if g.icon %}{{ g.icon }} {% endif %}{{ loc(g, 'name') }}
+    </a>
+  {% endfor %}
+</nav>
+
+{% if products %}
+<div class="grid grid-4 section">
+  {% for p in products %}
+    {{ product_card(p, price_of('product', p, code), covers.get(p.id) or p.image_url, rp, t, loc) }}
+  {% endfor %}
+</div>
+{% else %}
+<p class="section muted">{{ t.no_results }}</p>
+{% endif %}
+
+<section class="section section-alt">
+  <div class="prose">
+    <h2>{{ t.delivery }}</h2>
+    <p>{{ t.delivery_note }}</p>
+    <p><a class="btn btn-primary" href="{{ wa() }}" target="_blank" rel="noopener">{{ t.order_whatsapp }}</a></p>
+  </div>
+</section>
+
+{% endblock %}

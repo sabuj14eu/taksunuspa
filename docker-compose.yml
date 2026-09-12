@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: taksunusa
+      POSTGRES_USER: taksunusa
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taksunusa"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://taksunusa:${DB_PASSWORD}@db:5432/taksunusa
+    depends_on:
+      db:
+        condition: service_healthy
+    # Bound to localhost only: nginx terminates TLS and proxies to this port.
+    ports:
+      - "127.0.0.1:5200:5200"
+    volumes:
+      - uploads:/app/app/static/uploads
+
+volumes:
+  pgdata:
+  uploads:

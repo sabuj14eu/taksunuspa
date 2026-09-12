@@ -1,0 +1,104 @@
+# -*- coding: utf-8 -*-
+"""Two-language UI strings: English (default, for guests) and Indonesian.
+
+Content rows carry their own `*_en` / `*_idn` columns; this file only covers
+chrome — buttons, labels, messages. `loc(obj, "name")` picks the right column
+and falls back to English so a half-translated row never renders blank.
+
+The Indonesian suffix is `_idn`, not `_id`: `category_id` is a foreign key, and
+a `_id` suffix would make `loc(obj, "category")` return an integer.
+"""
+from flask import session
+from .config import Config
+
+T = {
+    "en": {
+        "book": "Book now", "book_treatment": "Book this treatment",
+        "treatments": "Treatments", "products": "Products", "shop": "Shop",
+        "home": "Home", "about": "About", "contact": "Contact",
+        "our_product_line": "Our Product Line",
+        "spa_menu": "Spa Menu", "all": "All",
+        "duration": "Duration", "min": "min", "price": "Price", "from": "from",
+        "add_to_cart": "Add to cart", "cart": "Cart", "checkout": "Checkout",
+        "empty_cart": "Your cart is empty.",
+        "qty": "Qty", "subtotal": "Subtotal", "discount": "Discount",
+        "delivery": "Delivery", "total": "Total", "remove": "Remove",
+        "update": "Update", "continue_shopping": "Continue shopping",
+        "your_details": "Your details", "name": "Full name", "phone": "Phone",
+        "email": "E-mail", "address": "Delivery address", "note": "Notes",
+        "payment": "Payment method", "place_order": "Place order",
+        "order_received": "Thank you! Your order has been received.",
+        "booking_received": "Thank you! Your booking request has been received.",
+        "we_will_confirm": "We will confirm shortly by WhatsApp or phone.",
+        "order_code": "Order code", "booking_code": "Booking code",
+        "day": "Day", "time": "Time", "therapist": "Therapist",
+        "any_therapist": "Any therapist", "no_slots": "No free times that day.",
+        "slot_gone": "That time was just taken — please pick another.",
+        "cart_empty_err": "Your cart is empty.",
+        "out_of_stock": "Out of stock", "in_stock": "In stock",
+        "save": "Save", "sale": "SALE", "off": "OFF",
+        "opening_hours": "Opening hours", "closed": "Closed",
+        "send": "Send", "message": "Message",
+        "message_sent": "Thank you — your message has been sent.",
+        "order_whatsapp": "Order via WhatsApp",
+        "delivery_note": "We deliver across Bali. Pay cash on delivery, "
+                         "bank transfer or online.",
+        "read_more": "Read more", "back": "Back",
+        "search": "Search", "no_results": "Nothing found.",
+    },
+    "id": {
+        "book": "Pesan sekarang", "book_treatment": "Pesan perawatan ini",
+        "treatments": "Perawatan", "products": "Produk", "shop": "Toko",
+        "home": "Beranda", "about": "Tentang", "contact": "Kontak",
+        "our_product_line": "Produk Kami",
+        "spa_menu": "Menu Spa", "all": "Semua",
+        "duration": "Durasi", "min": "menit", "price": "Harga", "from": "mulai",
+        "add_to_cart": "Tambah ke keranjang", "cart": "Keranjang",
+        "checkout": "Pembayaran",
+        "empty_cart": "Keranjang Anda kosong.",
+        "qty": "Jml", "subtotal": "Subtotal", "discount": "Diskon",
+        "delivery": "Pengiriman", "total": "Total", "remove": "Hapus",
+        "update": "Perbarui", "continue_shopping": "Lanjut belanja",
+        "your_details": "Data Anda", "name": "Nama lengkap", "phone": "Telepon",
+        "email": "E-mail", "address": "Alamat pengiriman", "note": "Catatan",
+        "payment": "Metode pembayaran", "place_order": "Kirim pesanan",
+        "order_received": "Terima kasih! Pesanan Anda sudah kami terima.",
+        "booking_received": "Terima kasih! Permintaan pesanan sudah kami terima.",
+        "we_will_confirm": "Kami akan konfirmasi segera lewat WhatsApp atau telepon.",
+        "order_code": "Kode pesanan", "booking_code": "Kode pesanan",
+        "day": "Tanggal", "time": "Jam", "therapist": "Terapis",
+        "any_therapist": "Terapis mana saja", "no_slots": "Tidak ada jam kosong.",
+        "slot_gone": "Jam itu baru saja terisi — silakan pilih yang lain.",
+        "cart_empty_err": "Keranjang Anda kosong.",
+        "out_of_stock": "Stok habis", "in_stock": "Tersedia",
+        "save": "Hemat", "sale": "DISKON", "off": "OFF",
+        "opening_hours": "Jam buka", "closed": "Tutup",
+        "send": "Kirim", "message": "Pesan",
+        "message_sent": "Terima kasih — pesan Anda sudah terkirim.",
+        "order_whatsapp": "Pesan lewat WhatsApp",
+        "delivery_note": "Kami kirim ke seluruh Bali. Bayar tunai saat "
+                         "pengiriman, transfer bank atau online.",
+        "read_more": "Selengkapnya", "back": "Kembali",
+        "search": "Cari", "no_results": "Tidak ada hasil.",
+    },
+}
+
+
+def lang() -> str:
+    code = session.get("lang")
+    if code in Config.LANGUAGES:
+        return code
+    return Config.DEFAULT_LANG if Config.DEFAULT_LANG in Config.LANGUAGES else "en"
+
+
+def t() -> dict:
+    return T.get(lang(), T["en"])
+
+
+def loc(obj, field: str) -> str:
+    """Localised column with English fallback: loc(product, 'name')."""
+    if obj is None:
+        return ""
+    if lang() == "id":
+        return getattr(obj, f"{field}_idn", None) or getattr(obj, f"{field}_en", "") or ""
+    return getattr(obj, f"{field}_en", "") or getattr(obj, f"{field}_idn", "") or ""

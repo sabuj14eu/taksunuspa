@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section confirm">
+  <div class="confirm-card">
+    <div class="tick">✓</div>
+    <h1>{{ t.order_received }}</h1>
+    <p class="lead">{{ t.we_will_confirm }}</p>
+    <p class="code">{{ t.order_code }}: <strong>{{ o.public_code }}</strong></p>
+
+    <table class="table">
+      {% for i in o.items %}
+      <tr>
+        <td>{{ i.qty }} × {{ i.name }}{% if i.size_label %} ({{ i.size_label }}){% endif %}</td>
+        <td class="right">{{ rp(i.line_total_idr) }}</td>
+      </tr>
+      {% endfor %}
+      {% if o.discount_idr %}<tr><td>{{ t.discount }}</td><td class="right">-{{ rp(o.discount_idr) }}</td></tr>{% endif %}
+      {% if o.delivery_idr %}<tr><td>{{ t.delivery }}</td><td class="right">{{ rp(o.delivery_idr) }}</td></tr>{% endif %}
+      <tr class="grand"><td>{{ t.total }}</td><td class="right">{{ rp(o.total_idr) }}</td></tr>
+    </table>
+
+    <p class="muted">{{ t.payment }}: {{ o.payment_method }}</p>
+    {% if o.payment_method == 'transfer' and bank %}
+      <div class="bank-box">{{ bank|nl2br }}</div>
+    {% endif %}
+    {% if o.address %}<p class="muted">{{ t.address }}: {{ o.address }}</p>{% endif %}
+
+    <p>
+      <a class="btn btn-primary" href="{{ wa(t.order_code ~ ' ' ~ o.public_code) }}" target="_blank" rel="noopener">{{ t.order_whatsapp }}</a>
+      <a class="btn btn-ghost" href="/products">{{ t.continue_shopping }}</a>
+    </p>
+  </div>
+</section>
+{% endblock %}

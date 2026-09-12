@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-head"><h1>{{ t.cart }}</h1></section>
+
+{% if not totals.lines %}
+  <p class="section muted">{{ t.empty_cart }}</p>
+  <p class="section"><a class="btn btn-primary" href="/products">{{ t.continue_shopping }}</a></p>
+{% else %}
+<form method="post" action="/cart/update" class="section">
+  <table class="table cart-table">
+    <thead><tr>
+      <th>{{ t.products }}</th><th>{{ t.price }}</th><th>{{ t.qty }}</th>
+      <th class="right">{{ t.total }}</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for row in totals.lines %}
+      <tr>
+        <td>
+          <a href="/product/{{ row.product.slug }}">{{ loc(row.product, 'name') }}</a>
+          {% if row.product.size_label %}<span class="muted small"> · {{ row.product.size_label }}</span>{% endif %}
+        </td>
+        <td>
+          {% if row.price.has_discount %}
+            <span class="price-was">{{ rp(row.price.base) }}</span>
+            <span class="price-now">{{ rp(row.price.final) }}</span>
+          {% else %}{{ rp(row.price.base) }}{% endif %}
+        </td>
+        <td><input type="number" name="qty_{{ row.product.id }}" value="{{ row.qty }}" min="0" max="99" class="qty-input"></td>
+        <td class="right">{{ rp(row.line_total) }}</td>
+        <td class="right">
+          <button class="link-btn" form="rm{{ row.product.id }}" type="submit">{{ t.remove }}</button>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="cart-foot">
+    <div class="cart-tools">
+      <label>{{ t.discount }}
+        <input type="text" name="code" value="{{ code or '' }}" placeholder="CODE">
+      </label>
+      {% if zones %}
+      <label>{{ t.delivery }}
+        <select name="zone_id">
+          <option value="">—</option>
+          {% for z in zones %}
+            <option value="{{ z.id }}" {{ 'selected' if zone_id == z.id }}>
+              {{ loc(z, 'name') }} — {{ rp(z.fee_idr) }}{% if z.free_over_idr %} ({{ t.from }} {{ rp(z.free_over_idr) }}: 0){% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      {% endif %}
+      <button class="btn btn-ghost" type="submit">{{ t.update }}</button>
+    </div>
+
+    <div class="cart-totals">
+      <div><span>{{ t.subtotal }}</span><span>{{ rp(totals.subtotal) }}</span></div>
+      {% if totals.discount %}<div class="off"><span>{{ t.discount }}</span><span>-{{ rp(totals.discount) }}</span></div>{% endif %}
+      {% if totals.zone %}<div><span>{{ t.delivery }}</span><span>{{ rp(totals.delivery) }}</span></div>{% endif %}
+      <div class="grand"><span>{{ t.total }}</span><span>{{ rp(totals.total) }}</span></div>
+      <a class="btn btn-primary block" href="/checkout">{{ t.checkout }}</a>
+      <a class="btn btn-ghost block" href="/products">{{ t.continue_shopping }}</a>
+    </div>
+  </div>
+</form>
+
+{% for row in totals.lines %}
+<form id="rm{{ row.product.id }}" method="post" action="/cart/remove/{{ row.product.id }}"></form>
+{% endfor %}
+{% endif %}
+{% endblock %}

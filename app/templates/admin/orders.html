@@ -1,0 +1,32 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Orders</h1>
+
+<nav class="tabs">
+  <a href="/admin/orders" class="{{ 'on' if not status }}">All</a>
+  {% for s in statuses %}
+    <a href="/admin/orders?status={{ s }}" class="{{ 'on' if status == s }}">{{ s }}</a>
+  {% endfor %}
+</nav>
+
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Code</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for o in rows %}
+      <tr>
+        <td><a href="/admin/orders/{{ o.id }}">{{ o.public_code }}</a></td>
+        <td class="muted small">{{ o.created_at.strftime('%d %b %H:%M') }}</td>
+        <td>{{ o.customer_name or '—' }}<br><span class="muted small">{{ o.customer_phone }}</span></td>
+        <td>{{ o.items_total_qty }}</td>
+        <td>{{ rp(o.total_idr) }}</td>
+        <td>{{ o.payment_method }}<br><span class="muted small">{{ o.payment_status }}</span></td>
+        <td><span class="pill pill-{{ o.status }}">{{ o.status }}</span></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7" class="muted">No orders.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

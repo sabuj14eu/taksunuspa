@@ -1,0 +1,40 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Delivery zones</h1>
+<p class="muted">A flat fee per area, optionally free above a certain order value.</p>
+
+<div class="panel">
+  <h2>{{ 'Edit zone' if edit else 'Add zone' }}</h2>
+  <form method="post" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label>Name (English) *<input type="text" name="name_en" required maxlength="90" value="{{ edit.name_en if edit }}" placeholder="Denpasar"></label>
+    <label>Name (Indonesian)<input type="text" name="name_idn" maxlength="90" value="{{ edit.name_idn or '' if edit }}"></label>
+    <label>Fee (IDR)<input type="text" name="fee_idr" value="{{ edit.fee_idr if edit else 0 }}"></label>
+    <label>Free over (IDR, 0 = never)<input type="text" name="free_over_idr" value="{{ edit.free_over_idr if edit else 0 }}"></label>
+    <label>Sort order<input type="number" name="sort_order" value="{{ edit.sort_order if edit else 0 }}"></label>
+    <label class="check"><input type="checkbox" name="is_active" {{ 'checked' if not edit or edit.is_active }}> Active</label>
+    <div class="wide">
+      <button class="btn btn-primary" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-ghost" href="/admin/delivery">Cancel</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Zone</th><th>Fee</th><th>Free over</th><th>Active</th></tr></thead>
+    <tbody>
+    {% for z in rows %}
+      <tr>
+        <td><a href="/admin/delivery?edit={{ z.id }}">{{ z.name_en }}</a></td>
+        <td>{{ rp(z.fee_idr) }}</td>
+        <td>{{ rp(z.free_over_idr) if z.free_over_idr else '—' }}</td>
+        <td>{{ '✅' if z.is_active else '—' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="muted">No zones — delivery is free / arranged by WhatsApp.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

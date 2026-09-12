@@ -1,0 +1,54 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Photos</h1>
+<p class="muted">Uploads are converted to WebP with a thumbnail, so big phone photos do not slow the site down.</p>
+
+<div class="panel">
+  <h2>Upload</h2>
+  <form method="post" enctype="multipart/form-data" class="gridform">
+    <label>Attach to
+      <select name="entity_type">
+        <option value="product" {{ 'selected' if entity_type == 'product' }}>Product</option>
+        <option value="treatment" {{ 'selected' if entity_type == 'treatment' }}>Treatment</option>
+        <option value="site" {{ 'selected' if entity_type == 'site' }}>Site (hero / share image)</option>
+      </select>
+    </label>
+    <label>Item
+      <select name="entity_id">
+        <option value="0">— site-wide —</option>
+        <optgroup label="Products">
+          {% for p in products %}<option value="{{ p.id }}" {{ 'selected' if entity_type=='product' and entity_id == p.id }}>{{ p.name_en }}</option>{% endfor %}
+        </optgroup>
+        <optgroup label="Treatments">
+          {% for tr in treatments %}<option value="{{ tr.id }}" {{ 'selected' if entity_type=='treatment' and entity_id == tr.id }}>{{ tr.name_en }}</option>{% endfor %}
+        </optgroup>
+      </select>
+    </label>
+    <label class="wide">ALT text (English, helps image search)<input type="text" name="alt_en" maxlength="200"></label>
+    <label class="wide">Files<input type="file" name="photos" accept="image/*" multiple></label>
+    <div class="wide"><button class="btn btn-primary" type="submit">Upload</button></div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Library</h2>
+  <div class="media-grid">
+    {% for img in rows %}
+      <figure class="media-item">
+        <img src="{{ img.thumb_url or img.url }}" alt="{{ img.alt_en or '' }}" loading="lazy">
+        <figcaption class="muted small">
+          {{ img.entity_type }} #{{ img.entity_id }}{% if img.is_cover %} · cover{% endif %}
+          {% if img.size_kb %} · {{ img.size_kb }} KB{% endif %}
+          <br><code class="tiny">{{ img.url }}</code>
+        </figcaption>
+        <div class="media-actions">
+          <form method="post" action="/admin/media/{{ img.id }}/cover"><button class="link-btn" type="submit">Make cover</button></form>
+          <form method="post" action="/admin/media/{{ img.id }}/delete" onsubmit="return confirm('Delete this photo?')"><button class="link-btn" type="submit">Delete</button></form>
+        </div>
+      </figure>
+    {% else %}
+      <p class="muted">No photos yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

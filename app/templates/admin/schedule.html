@@ -1,0 +1,94 @@
+{% extends "admin/layout.html" %}
+{% set weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
+{% block content %}
+<h1>Hours &amp; therapists</h1>
+
+<div class="panel">
+  <h2>Opening hours</h2>
+  <p class="muted">These drive the bookable time slots and the opening hours Google reads.</p>
+  <form method="post">
+    <input type="hidden" name="form" value="hours">
+    <table class="table">
+      <thead><tr><th>Day</th><th>Open</th><th>Close</th><th>Closed</th></tr></thead>
+      <tbody>
+      {% for wd in range(7) %}
+        {% set h = hours.get(wd) %}
+        <tr>
+          <td>{{ weekdays[wd] }}</td>
+          <td><input type="time" name="open_{{ wd }}" value="{{ hhmm(h.open_min) if h and h.open_min is not none }}"></td>
+          <td><input type="time" name="close_{{ wd }}" value="{{ hhmm(h.close_min) if h and h.close_min is not none }}"></td>
+          <td><input type="checkbox" name="closed_{{ wd }}" {{ 'checked' if h and h.is_closed }}></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <button class="btn btn-primary" type="submit">Save hours</button>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Therapists</h2>
+  <p class="muted">Each therapist can take one guest at a time. With no therapists listed the spa books as a single room.</p>
+  <form method="post" class="gridform">
+    <input type="hidden" name="form" value="therapist">
+    <label>Name *<input type="text" name="name" required maxlength="80"></label>
+    <label>Sort order<input type="number" name="sort_order" value="0"></label>
+    <label class="check"><input type="checkbox" name="is_active" checked> Active</label>
+    <div class="wide"><button class="btn btn-primary" type="submit">Add therapist</button></div>
+  </form>
+
+  <table class="table">
+    <thead><tr><th>Name</th><th>Active</th></tr></thead>
+    <tbody>
+    {% for th in therapists %}
+      <tr>
+        <td>{{ th.name }}</td>
+        <td>
+          <form method="post" class="inline">
+            <input type="hidden" name="form" value="therapist">
+            <input type="hidden" name="id" value="{{ th.id }}">
+            <input type="hidden" name="name" value="{{ th.name }}">
+            <input type="hidden" name="sort_order" value="{{ th.sort_order }}">
+            {% if th.is_active %}
+              <button class="link-btn" type="submit">Deactivate</button>
+            {% else %}
+              <button class="link-btn" type="submit" name="is_active" value="1">Activate</button>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="2" class="muted">No therapists — booking as one room.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>Holiday / closed days</h2>
+  <form method="post" class="gridform">
+    <input type="hidden" name="form" value="holiday">
+    <label>Date *<input type="date" name="day" required></label>
+    <label>Label<input type="text" name="label" maxlength="80" placeholder="Nyepi"></label>
+    <label>Open<input type="time" name="open"></label>
+    <label>Close<input type="time" name="close"></label>
+    <label class="check"><input type="checkbox" name="is_closed" checked> Closed all day</label>
+    <div class="wide"><button class="btn btn-primary" type="submit">Save day</button></div>
+  </form>
+
+  <table class="table">
+    <thead><tr><th>Date</th><th>Label</th><th>Hours</th></tr></thead>
+    <tbody>
+    {% for h in holidays %}
+      <tr>
+        <td>{{ h.day }}</td>
+        <td>{{ h.label or '—' }}</td>
+        <td>{% if h.is_closed %}Closed{% else %}{{ hhmm(h.open_min) }}–{{ hhmm(h.close_min) }}{% endif %}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3" class="muted">Nothing scheduled.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

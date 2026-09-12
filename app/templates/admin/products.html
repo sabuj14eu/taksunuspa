@@ -1,0 +1,87 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Products</h1>
+
+<div class="panel">
+  <h2>{{ 'Edit product' if edit else 'Add product' }}</h2>
+  <form method="post" enctype="multipart/form-data" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+
+    <label>Name (English) *<input type="text" name="name_en" required maxlength="160" value="{{ edit.name_en if edit }}"></label>
+    <label>Name (Indonesian)<input type="text" name="name_idn" maxlength="160" value="{{ edit.name_idn or '' if edit }}"></label>
+
+    <label>Group
+      <select name="group_id">
+        <option value="">— none —</option>
+        {% for g in groups %}
+          <option value="{{ g.id }}" {{ 'selected' if edit and edit.group_id == g.id }}>{{ g.name_en }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>URL slug<input type="text" name="slug" maxlength="160" value="{{ edit.slug if edit }}" placeholder="auto from name"></label>
+
+    <label>Price (IDR) *<input type="text" name="price_idr" required value="{{ edit.price_idr if edit else '' }}" placeholder="150000"></label>
+    <label>Size label<input type="text" name="size_label" maxlength="40" value="{{ edit.size_label or '' if edit }}" placeholder="250 ml"></label>
+
+    <label>Stock<input type="number" name="stock" value="{{ edit.stock if edit else 0 }}"></label>
+    <label class="check"><input type="checkbox" name="track_stock" {{ 'checked' if not edit or edit.track_stock }}> Track stock</label>
+
+    <label>SKU<input type="text" name="sku" maxlength="40" value="{{ edit.sku or '' if edit }}"></label>
+    <label>Weight (g)<input type="number" name="weight_g" value="{{ edit.weight_g if edit else 0 }}"></label>
+
+    <label>Producer<input type="text" name="producer" maxlength="120" value="{{ edit.producer or '' if edit }}" placeholder="Yustika, Balangan"></label>
+    <label>NIB<input type="text" name="nib" maxlength="40" value="{{ edit.nib or '' if edit }}"></label>
+
+    <label class="wide">Short description (EN)<input type="text" name="short_en" maxlength="300" value="{{ edit.short_en or '' if edit }}"></label>
+    <label class="wide">Short description (ID)<input type="text" name="short_idn" maxlength="300" value="{{ edit.short_idn or '' if edit }}"></label>
+
+    <label class="wide">Full description (EN)<textarea name="desc_en" rows="4">{{ edit.desc_en or '' if edit }}</textarea></label>
+    <label class="wide">Full description (ID)<textarea name="desc_idn" rows="4">{{ edit.desc_idn or '' if edit }}</textarea></label>
+
+    <label class="wide">SEO title<input type="text" name="seo_title" maxlength="180" value="{{ edit.seo_title or '' if edit }}" placeholder="auto-generated when empty"></label>
+    <label class="wide">SEO description<input type="text" name="seo_desc" maxlength="320" value="{{ edit.seo_desc or '' if edit }}"></label>
+
+    <label>Photo<input type="file" name="photo" accept="image/*"></label>
+    <label>Sort order<input type="number" name="sort_order" value="{{ edit.sort_order if edit else 0 }}"></label>
+
+    <label class="check"><input type="checkbox" name="is_featured" {{ 'checked' if edit and edit.is_featured }}> Featured on the home page</label>
+    <label class="check"><input type="checkbox" name="is_active" {{ 'checked' if not edit or edit.is_active }}> Visible on the website</label>
+
+    <div class="wide">
+      <button class="btn btn-primary" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-ghost" href="/admin/products">Cancel</a>
+        <a class="btn btn-ghost" href="/admin/media?entity_type=product&entity_id={{ edit.id }}">Photos</a>
+        <a class="btn btn-ghost" href="/product/{{ edit.slug }}" target="_blank">View</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>All products</h2>
+  <table class="table">
+    <thead><tr><th></th><th>Name</th><th>Group</th><th>Price</th><th>Now</th><th>Stock</th><th>Live</th><th></th></tr></thead>
+    <tbody>
+    {% for p in rows %}
+      {% set pr = price_of('product', p) %}
+      <tr>
+        <td>{% if covers.get(p.id) or p.image_url %}<img class="mini" src="{{ covers.get(p.id) or p.image_url }}" alt=""> {% endif %}</td>
+        <td><a href="/admin/products?edit={{ p.id }}">{{ p.name_en }}</a>
+          {% if p.size_label %}<span class="muted small"> · {{ p.size_label }}</span>{% endif %}</td>
+        <td>{{ p.group.name_en if p.group else '—' }}</td>
+        <td>{{ rp(p.price_idr) }}</td>
+        <td>{% if pr.has_discount %}<strong>{{ rp(pr.final) }}</strong> <span class="pill pill-sale">-{{ pr.pct }}%</span>{% else %}—{% endif %}</td>
+        <td>{{ p.stock if p.track_stock else '∞' }}</td>
+        <td>{{ '✅' if p.is_active else '—' }}</td>
+        <td class="right">
+          <form method="post" action="/admin/products/{{ p.id }}/delete" onsubmit="return confirm('Archive {{ p.name_en }}?')">
+            <button class="link-btn" type="submit">Archive</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="8" class="muted">No products yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

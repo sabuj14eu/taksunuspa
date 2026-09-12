@@ -1,0 +1,42 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Pages</h1>
+<div class="panel">
+  <h2>{{ 'Edit page' if edit else 'Add page' }}</h2>
+  <form method="post" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label>Title (EN) *<input type="text" name="title_en" required maxlength="140" value="{{ edit.title_en if edit }}"></label>
+    <label>Title (ID)<input type="text" name="title_idn" maxlength="140" value="{{ edit.title_idn or '' if edit }}"></label>
+    <label>URL slug<input type="text" name="slug" maxlength="60" value="{{ edit.slug if edit }}" placeholder="auto from title"></label>
+    <label>Sort order<input type="number" name="sort_order" value="{{ edit.sort_order if edit else 0 }}"></label>
+    <label class="wide">Body (EN)<textarea name="body_en" rows="8">{{ edit.body_en or '' if edit }}</textarea></label>
+    <label class="wide">Body (ID)<textarea name="body_idn" rows="8">{{ edit.body_idn or '' if edit }}</textarea></label>
+    <label class="wide">SEO title<input type="text" name="seo_title" maxlength="180" value="{{ edit.seo_title or '' if edit }}"></label>
+    <label class="wide">SEO description<input type="text" name="seo_desc" maxlength="320" value="{{ edit.seo_desc or '' if edit }}"></label>
+    <label class="check"><input type="checkbox" name="is_visible" {{ 'checked' if not edit or edit.is_visible }}> Visible</label>
+    <label class="check"><input type="checkbox" name="show_in_menu" {{ 'checked' if edit and edit.show_in_menu }}> Show in menu</label>
+    <div class="wide">
+      <button class="btn btn-primary" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-ghost" href="/admin/pages">Cancel</a>
+        <a class="btn btn-ghost" href="/p/{{ edit.slug }}" target="_blank">View</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Title</th><th>URL</th><th>Visible</th></tr></thead>
+    <tbody>
+    {% for p in rows %}
+      <tr>
+        <td><a href="/admin/pages?edit={{ p.id }}">{{ p.title_en }}</a></td>
+        <td class="muted small">/p/{{ p.slug }}</td>
+        <td>{{ '✅' if p.is_visible else '—' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3" class="muted">No pages.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

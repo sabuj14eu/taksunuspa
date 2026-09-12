@@ -1,0 +1,37 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Bookings</h1>
+
+<nav class="tabs">
+  <a href="/admin/bookings?scope=upcoming" class="{{ 'on' if scope == 'upcoming' }}">Upcoming</a>
+  <a href="/admin/bookings?scope=all" class="{{ 'on' if scope == 'all' }}">All</a>
+</nav>
+
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Code</th><th>When</th><th>Treatment</th><th>Guest</th><th>Therapist</th><th>Total</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for b in rows %}
+      <tr>
+        <td>{{ b.public_code }}</td>
+        <td>{{ b.starts_at.strftime('%a %d %b %H:%M') }}<br><span class="muted small">{{ b.ends_at.strftime('%H:%M') }}</span></td>
+        <td>{{ b.treatment_name }}{% if b.guests > 1 %} <span class="muted small">×{{ b.guests }}</span>{% endif %}</td>
+        <td>{{ b.customer_name or '—' }}<br><a class="muted small" href="tel:{{ b.customer_phone }}">{{ b.customer_phone }}</a></td>
+        <td>{{ b.therapist.name if b.therapist else '—' }}</td>
+        <td>{{ rp(b.total_idr) }}</td>
+        <td>
+          <form method="post" class="inline">
+            <input type="hidden" name="id" value="{{ b.id }}">
+            <select name="status" onchange="this.form.submit()">
+              {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if b.status == s }}>{{ s }}</option>{% endfor %}
+            </select>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7" class="muted">No bookings.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

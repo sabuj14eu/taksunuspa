@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_card, treatment_card %}
+{% block content %}
+
+<section class="hero"{% if site.get('hero_image') %} style="background-image:linear-gradient(rgba(12,32,24,.55),rgba(12,32,24,.65)),url('{{ site['hero_image'] }}')"{% endif %}>
+  <div class="hero-inner">
+    <h1>{{ site.get('company_name','Taksu Nusa Spa') }}</h1>
+    <p class="hero-lead">{{ site.get('tagline_idn' if lang == 'id' else 'tagline_en', '') }}</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="/treatments">{{ t.book }}</a>
+      <a class="btn btn-ghost" href="/products">{{ t.our_product_line }}</a>
+    </div>
+  </div>
+</section>
+
+{% if treatments %}
+<section class="section">
+  <div class="section-head">
+    <h2>{{ t.spa_menu }}</h2>
+    <a class="more" href="/treatments">{{ t.read_more }} →</a>
+  </div>
+  <div class="grid grid-3">
+    {% for tr in treatments %}
+      {{ treatment_card(tr, price_of('treatment', tr), treatment_covers.get(tr.id) or tr.image_url, rp, t, loc) }}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if products %}
+<section class="section section-alt">
+  <div class="section-head">
+    <h2>{{ t.our_product_line }}</h2>
+    <a class="more" href="/products">{{ t.read_more }} →</a>
+  </div>
+  <p class="muted section-lead">{{ t.delivery_note }}</p>
+  <div class="grid grid-4">
+    {% for p in products %}
+      {{ product_card(p, price_of('product', p), product_covers.get(p.id) or p.image_url, rp, t, loc) }}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if site.get('about_en') or site.get('about_idn') %}
+<section class="section">
+  <div class="prose">
+    <h2>{{ t.about }}</h2>
+    <p>{{ site.get('about_idn' if lang == 'id' else 'about_en','')|nl2br }}</p>
+  </div>
+</section>
+{% endif %}
+
+<section class="section section-alt">
+  <div class="split">
+    <div>
+      <h2>{{ t.opening_hours }}</h2>
+      <table class="hours">
+        {% for day_name, window in opening %}
+        <tr><td>{{ day_name }}</td><td>{{ window or t.closed }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+    <div>
+      <h2>{{ t.contact }}</h2>
+      {% if site.get('address') %}<p>{{ site['address'] }}</p>{% endif %}
+      {% if site.get('phone') %}<p><a href="tel:{{ site['phone']|replace(' ','') }}">{{ site['phone'] }}</a></p>{% endif %}
+      <p><a class="btn btn-primary" href="{{ wa() }}" target="_blank" rel="noopener">{{ t.order_whatsapp }}</a></p>
+      {% if site.get('maps_url') %}<p><a href="{{ site['maps_url'] }}" target="_blank" rel="noopener">Google Maps →</a></p>{% endif %}
+    </div>
+  </div>
+</section>
+
+{% if faqs %}
+<section class="section">
+  <h2>FAQ</h2>
+  <div class="faq">
+    {% for f in faqs %}
+    <details>
+      <summary>{{ loc(f, 'question') }}</summary>
+      <div>{{ loc(f, 'answer')|nl2br }}</div>
+    </details>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}

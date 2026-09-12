@@ -1,0 +1,49 @@
+{# One price renderer for the whole site, so a discount looks the same on a
+   jar of honey and on a massage. `price` is a dict from pricing_service. #}
+{% macro price_tag(price, rp, t, size='') %}
+<span class="price {{ size }}">
+  {% if price.has_discount %}
+    <span class="price-was">{{ rp(price.base) }}</span>
+    <span class="price-now">{{ rp(price.final) }}</span>
+    <span class="price-off">-{{ price.pct }}%</span>
+  {% else %}
+    <span class="price-now">{{ rp(price.base) }}</span>
+  {% endif %}
+</span>
+{% endmacro %}
+
+{% macro sale_badge(price, t) %}
+  {% if price.has_discount %}<span class="sale-badge">{{ t.sale }} -{{ price.pct }}%</span>{% endif %}
+{% endmacro %}
+
+{% macro product_card(p, price, cover, rp, t, loc) %}
+<a class="card product-card" href="/product/{{ p.slug }}">
+  <div class="card-img">
+    {% if cover %}<img src="{{ cover }}" alt="{{ loc(p, 'name') }}" loading="lazy" width="480" height="480">
+    {% else %}<div class="img-ph">🍯</div>{% endif %}
+    {{ sale_badge(price, t) }}
+    {% if not p.in_stock %}<span class="stock-badge">{{ t.out_of_stock }}</span>{% endif %}
+  </div>
+  <div class="card-body">
+    <h3>{{ loc(p, 'name') }}</h3>
+    {% if p.size_label %}<p class="muted small">{{ p.size_label }}</p>{% endif %}
+    {% if loc(p, 'short') %}<p class="muted small">{{ loc(p, 'short')|truncate(90) }}</p>{% endif %}
+    {{ price_tag(price, rp, t) }}
+  </div>
+</a>
+{% endmacro %}
+
+{% macro treatment_card(tr, price, cover, rp, t, loc) %}
+<a class="card treatment-card" href="/treatment/{{ tr.slug }}">
+  <div class="card-img">
+    {% if cover %}<img src="{{ cover }}" alt="{{ loc(tr, 'name') }}" loading="lazy" width="480" height="360">
+    {% else %}<div class="img-ph">💆</div>{% endif %}
+    {{ sale_badge(price, t) }}
+  </div>
+  <div class="card-body">
+    <h3>{{ loc(tr, 'name') }}</h3>
+    <p class="muted small">{{ tr.duration_min }} {{ t.min }}</p>
+    {{ price_tag(price, rp, t) }}
+  </div>
+</a>
+{% endmacro %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section confirm">
+  <div class="confirm-card">
+    <h1>404</h1>
+    <p class="lead">{{ t.no_results }}</p>
+    <p>
+      <a class="btn btn-primary" href="/">{{ t.home }}</a>
+      <a class="btn btn-ghost" href="/products">{{ t.our_product_line }}</a>
+    </p>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Product groups</h1>
+<p class="muted">These are the sub-menu tabs on the products page.</p>
+
+<div class="panel">
+  <h2>{{ 'Edit group' if edit else 'Add group' }}</h2>
+  <form method="post" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label>Name (English) *<input type="text" name="name_en" required maxlength="90" value="{{ edit.name_en if edit }}"></label>
+    <label>Name (Indonesian)<input type="text" name="name_idn" maxlength="90" value="{{ edit.name_idn or '' if edit }}"></label>
+    <label>URL slug<input type="text" name="slug" maxlength="90" value="{{ edit.slug if edit }}" placeholder="auto from name"></label>
+    <label>Icon<input type="text" name="icon" maxlength="8" value="{{ edit.icon if edit else '🍯' }}"></label>
+    <label class="wide">Description (EN)<textarea name="desc_en" rows="3">{{ edit.desc_en or '' if edit }}</textarea></label>
+    <label class="wide">Description (ID)<textarea name="desc_idn" rows="3">{{ edit.desc_idn or '' if edit }}</textarea></label>
+    <label class="wide">SEO title<input type="text" name="seo_title" maxlength="180" value="{{ edit.seo_title or '' if edit }}"></label>
+    <label class="wide">SEO description<input type="text" name="seo_desc" maxlength="320" value="{{ edit.seo_desc or '' if edit }}"></label>
+    <label>Sort order<input type="number" name="sort_order" value="{{ edit.sort_order if edit else 0 }}"></label>
+    <label class="check"><input type="checkbox" name="is_active" {{ 'checked' if not edit or edit.is_active }}> Visible</label>
+    <div class="wide">
+      <button class="btn btn-primary" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-ghost" href="/admin/product-groups">Cancel</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Group</th><th>Slug</th><th>Products</th><th>Visible</th></tr></thead>
+    <tbody>
+    {% for g in rows %}
+      <tr>
+        <td><a href="/admin/product-groups?edit={{ g.id }}">{{ g.icon }} {{ g.name_en }}</a></td>
+        <td class="muted small">/products/{{ g.slug }}</td>
+        <td>{{ g.products|length }}</td>
+        <td>{{ '✅' if g.is_active else '—' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="muted">No groups yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

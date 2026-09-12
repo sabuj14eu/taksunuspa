@@ -1,0 +1,35 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>FAQ</h1>
+<p class="muted">These render on the home page and as FAQ structured data, which Google can show directly in search results.</p>
+
+<div class="panel">
+  <h2>{{ 'Edit question' if edit else 'Add question' }}</h2>
+  <form method="post" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label class="wide">Question (EN)<input type="text" name="question_en" maxlength="240" value="{{ edit.question_en or '' if edit }}"></label>
+    <label class="wide">Question (ID)<input type="text" name="question_idn" maxlength="240" value="{{ edit.question_idn or '' if edit }}"></label>
+    <label class="wide">Answer (EN)<textarea name="answer_en" rows="3">{{ edit.answer_en or '' if edit }}</textarea></label>
+    <label class="wide">Answer (ID)<textarea name="answer_idn" rows="3">{{ edit.answer_idn or '' if edit }}</textarea></label>
+    <label>Sort order<input type="number" name="sort_order" value="{{ edit.sort_order if edit else 0 }}"></label>
+    <label class="check"><input type="checkbox" name="is_visible" {{ 'checked' if not edit or edit.is_visible }}> Visible</label>
+    <div class="wide">
+      <button class="btn btn-primary" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-ghost" href="/admin/faq">Cancel</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Question</th><th>Visible</th></tr></thead>
+    <tbody>
+    {% for f in rows %}
+      <tr><td><a href="/admin/faq?edit={{ f.id }}">{{ f.question_en }}</a></td><td>{{ '✅' if f.is_visible else '—' }}</td></tr>
+    {% else %}
+      <tr><td colspan="2" class="muted">No questions yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

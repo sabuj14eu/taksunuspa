@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin — Taksu Nusa Spa</title>
+<link rel="icon" href="/static/icon.svg">
+<link rel="stylesheet" href="/static/css/app.css">
+{% block head %}{% endblock %}
+</head>
+<body class="admin">
+<div class="admin-layout">
+
+<aside class="admin-side">
+  <div class="admin-brand">🌺 Taksu Nusa Spa</div>
+  <a href="/admin/" class="{{ 'on' if active=='dash' }}">📊 Dashboard</a>
+
+  <div class="side-group">Shop</div>
+  <a href="/admin/products" class="{{ 'on' if active=='products' }}">🍯 Products</a>
+  <a href="/admin/product-groups" class="{{ 'on' if active=='groups' }}">🗂️ Product groups</a>
+  <a href="/admin/orders" class="{{ 'on' if active=='orders' }}">🛒 Orders</a>
+  <a href="/admin/delivery" class="{{ 'on' if active=='delivery' }}">🛵 Delivery zones</a>
+
+  <div class="side-group">Spa</div>
+  <a href="/admin/treatments" class="{{ 'on' if active=='treatments' }}">💆 Treatments</a>
+  <a href="/admin/treatment-categories" class="{{ 'on' if active=='spa_cats' }}">🗂️ Treatment groups</a>
+  <a href="/admin/bookings" class="{{ 'on' if active=='bookings' }}">📅 Bookings</a>
+  <a href="/admin/schedule" class="{{ 'on' if active=='schedule' }}">🕒 Hours & therapists</a>
+
+  <div class="side-group">Sales</div>
+  <a href="/admin/discounts" class="{{ 'on' if active=='discounts' }}">🏷️ Discounts</a>
+
+  <div class="side-group">Content</div>
+  <a href="/admin/media" class="{{ 'on' if active=='media' }}">🖼️ Photos</a>
+  <a href="/admin/pages" class="{{ 'on' if active=='pages' }}">📄 Pages</a>
+  <a href="/admin/menu" class="{{ 'on' if active=='menu' }}">🧭 Menu</a>
+  <a href="/admin/faq" class="{{ 'on' if active=='faq' }}">❓ FAQ</a>
+  <a href="/admin/reviews" class="{{ 'on' if active=='reviews' }}">⭐ Reviews</a>
+  <a href="/admin/messages" class="{{ 'on' if active=='messages' }}">📩 Messages</a>
+
+  <div class="side-group">System</div>
+  <a href="/admin/settings" class="{{ 'on' if active=='settings' }}">⚙️ Site settings</a>
+  <a href="/admin/account" class="{{ 'on' if active=='account' }}">🔐 My account</a>
+  <a href="/" target="_blank">🌐 View website</a>
+  <a href="/logout">↩ Sign out</a>
+</aside>
+
+<div class="admin-content">
+  {% with msgs = get_flashed_messages() %}
+    {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</div>
+
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

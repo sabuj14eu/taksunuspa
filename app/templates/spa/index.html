@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import treatment_card %}
+{% block content %}
+
+<section class="page-head">
+  <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ t.treatments }}</span>
+    {% if cat %} › <span>{{ loc(cat, 'name') }}</span>{% endif %}</nav>
+  <h1>{{ loc(cat, 'name') if cat else t.spa_menu }}</h1>
+  {% if cat and loc(cat, 'desc') %}<p class="lead">{{ loc(cat, 'desc') }}</p>{% endif %}
+</section>
+
+<nav class="submenu">
+  <a href="/treatments" class="{{ 'on' if not cat }}">{{ t.all }}</a>
+  {% for c in cats %}
+    <a href="/treatments/{{ c.slug }}" class="{{ 'on' if cat and c.id == cat.id }}">
+      {% if c.icon %}{{ c.icon }} {% endif %}{{ loc(c, 'name') }}
+    </a>
+  {% endfor %}
+</nav>
+
+{% if treatments %}
+<div class="grid grid-3 section">
+  {% for tr in treatments %}
+    {{ treatment_card(tr, price_of('treatment', tr), covers.get(tr.id) or tr.image_url, rp, t, loc) }}
+  {% endfor %}
+</div>
+{% else %}
+<p class="section muted">{{ t.no_results }}</p>
+{% endif %}
+
+{% endblock %}

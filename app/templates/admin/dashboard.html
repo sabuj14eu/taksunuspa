@@ -1,0 +1,77 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="stat-row">
+  <div class="stat"><span class="stat-n">{{ orders_open }}</span><span class="stat-l">Open orders</span></div>
+  <div class="stat"><span class="stat-n">{{ rp(revenue_week) }}</span><span class="stat-l">Last 7 days</span></div>
+  <div class="stat"><span class="stat-n">{{ bookings_today }}</span><span class="stat-l">Bookings today</span></div>
+  <div class="stat"><span class="stat-n">{{ unread }}</span><span class="stat-l">Unread messages</span></div>
+</div>
+
+{% if live_discounts %}
+<div class="panel">
+  <h2>Running discounts</h2>
+  {% for d in live_discounts %}
+    <p>🏷️ <strong>{{ d.label_en }}</strong> — {{ d.badge() }} on <em>{{ d.scope }}</em>
+      {% if d.code %} · code <code>{{ d.code }}</code>{% endif %}
+      {% if d.ends_on %} · until {{ d.ends_on }}{% endif %}</p>
+  {% endfor %}
+  <a class="btn btn-ghost" href="/admin/discounts">Manage discounts</a>
+</div>
+{% else %}
+<div class="panel">
+  <p class="muted">No discount is running. <a href="/admin/discounts">Create one</a> — it will show on every product and treatment automatically.</p>
+</div>
+{% endif %}
+
+<div class="panel">
+  <h2>Latest orders</h2>
+  <table class="table">
+    <thead><tr><th>Code</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for o in recent_orders %}
+      <tr>
+        <td><a href="/admin/orders/{{ o.id }}">{{ o.public_code }}</a></td>
+        <td>{{ o.customer_name or '—' }}<br><span class="muted small">{{ o.customer_phone }}</span></td>
+        <td>{{ rp(o.total_idr) }}</td>
+        <td>{{ o.payment_method }} / {{ o.payment_status }}</td>
+        <td><span class="pill pill-{{ o.status }}">{{ o.status }}</span></td>
+        <td class="right"><a href="/admin/orders/{{ o.id }}">Open</a></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="muted">No orders yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>Next bookings</h2>
+  <table class="table">
+    <thead><tr><th>Code</th><th>When</th><th>Treatment</th><th>Guest</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for b in next_bookings %}
+      <tr>
+        <td>{{ b.public_code }}</td>
+        <td>{{ b.starts_at.strftime('%a %d %b %H:%M') }}</td>
+        <td>{{ b.treatment_name }}</td>
+        <td>{{ b.customer_name or '—' }}<br><span class="muted small">{{ b.customer_phone }}</span></td>
+        <td><span class="pill pill-{{ b.status }}">{{ b.status }}</span></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">Nothing booked yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if low_stock %}
+<div class="panel">
+  <h2>Low stock</h2>
+  {% for p in low_stock %}
+    <p>{{ p.name_en }} — <strong>{{ p.stock }}</strong> left · <a href="/admin/products?edit={{ p.id }}">restock</a></p>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

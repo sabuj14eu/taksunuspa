@@ -1,0 +1,97 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Discounts</h1>
+<p class="muted">
+  One discount can cover everything, one group, or a single item — products and
+  spa treatments alike. Leave the code empty and it applies automatically, with
+  the old price struck through on every card and page.
+</p>
+
+<div class="panel">
+  <h2>{{ 'Edit discount' if edit else 'Add discount' }}</h2>
+  <form method="post" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+
+    <label>Name (English) *<input type="text" name="label_en" required maxlength="80" value="{{ edit.label_en if edit }}" placeholder="Grand opening"></label>
+    <label>Name (Indonesian)<input type="text" name="label_idn" maxlength="80" value="{{ edit.label_idn or '' if edit }}"></label>
+
+    <label>Applies to *
+      <select name="scope" id="scope">
+        <option value="all" {{ 'selected' if edit and edit.scope=='all' }}>Everything (products + treatments)</option>
+        <option value="products" {{ 'selected' if edit and edit.scope=='products' }}>All products</option>
+        <option value="treatments" {{ 'selected' if edit and edit.scope=='treatments' }}>All treatments</option>
+        <option value="product_group" {{ 'selected' if edit and edit.scope=='product_group' }}>One product group</option>
+        <option value="product" {{ 'selected' if edit and edit.scope=='product' }}>One product</option>
+        <option value="treatment_category" {{ 'selected' if edit and edit.scope=='treatment_category' }}>One treatment group</option>
+        <option value="treatment" {{ 'selected' if edit and edit.scope=='treatment' }}>One treatment</option>
+      </select>
+    </label>
+
+    <label>Target (only for the "one ..." options)
+      <select name="target_id">
+        <option value="">—</option>
+        <optgroup label="Product groups">
+          {% for g in groups %}<option value="{{ g.id }}" {{ 'selected' if edit and edit.scope=='product_group' and edit.target_id==g.id }}>{{ g.name_en }}</option>{% endfor %}
+        </optgroup>
+        <optgroup label="Products">
+          {% for p in products %}<option value="{{ p.id }}" {{ 'selected' if edit and edit.scope=='product' and edit.target_id==p.id }}>{{ p.name_en }}</option>{% endfor %}
+        </optgroup>
+        <optgroup label="Treatment groups">
+          {% for c in cats %}<option value="{{ c.id }}" {{ 'selected' if edit and edit.scope=='treatment_category' and edit.target_id==c.id }}>{{ c.name_en }}</option>{% endfor %}
+        </optgroup>
+        <optgroup label="Treatments">
+          {% for tr in treatments %}<option value="{{ tr.id }}" {{ 'selected' if edit and edit.scope=='treatment' and edit.target_id==tr.id }}>{{ tr.name_en }}</option>{% endfor %}
+        </optgroup>
+      </select>
+    </label>
+
+    <label>Type *
+      <select name="kind">
+        <option value="percent" {{ 'selected' if not edit or edit.kind=='percent' }}>Percent off (%)</option>
+        <option value="amount" {{ 'selected' if edit and edit.kind=='amount' }}>Rupiah off</option>
+      </select>
+    </label>
+    <label>Value *<input type="text" name="value" required value="{{ edit.value if edit else '' }}" placeholder="20"></label>
+
+    <label>Promo code (optional)<input type="text" name="code" maxlength="24" value="{{ edit.code or '' if edit }}" placeholder="empty = automatic"></label>
+    <label>Minimum order (IDR)<input type="text" name="min_subtotal_idr" value="{{ edit.min_subtotal_idr if edit else 0 }}"></label>
+
+    <label>Starts on<input type="date" name="starts_on" value="{{ edit.starts_on.isoformat() if edit and edit.starts_on }}"></label>
+    <label>Ends on<input type="date" name="ends_on" value="{{ edit.ends_on.isoformat() if edit and edit.ends_on }}"></label>
+
+    <label>Priority<input type="number" name="priority" value="{{ edit.priority if edit else 0 }}"></label>
+    <label class="check"><input type="checkbox" name="is_active" {{ 'checked' if not edit or edit.is_active }}> Active</label>
+
+    <div class="wide">
+      <button class="btn btn-primary" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-ghost" href="/admin/discounts">Cancel</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>All discounts</h2>
+  <table class="table">
+    <thead><tr><th>Name</th><th>Applies to</th><th>Off</th><th>Code</th><th>Window</th><th>Live now</th><th></th></tr></thead>
+    <tbody>
+    {% for d in rows %}
+      <tr>
+        <td><a href="/admin/discounts?edit={{ d.id }}">{{ d.label_en }}</a></td>
+        <td>{{ d.scope }}{% if d.target_id %} #{{ d.target_id }}{% endif %}</td>
+        <td>{{ d.badge() }}</td>
+        <td>{% if d.code %}<code>{{ d.code }}</code>{% else %}<span class="muted">automatic</span>{% endif %}</td>
+        <td class="muted small">{{ d.starts_on or '—' }} → {{ d.ends_on or '—' }}</td>
+        <td>{{ '🟢' if d.is_live(today) else '⚪' }}</td>
+        <td class="right">
+          <form method="post" action="/admin/discounts/{{ d.id }}/delete" onsubmit="return confirm('Delete {{ d.label_en }}?')">
+            <button class="link-btn" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7" class="muted">No discounts yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

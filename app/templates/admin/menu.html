@@ -1,0 +1,48 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Menu</h1>
+<p class="muted">Extra links in the header. Home, Treatments, Products and Contact are always there.</p>
+
+<div class="panel">
+  <h2>{{ 'Edit link' if edit else 'Add link' }}</h2>
+  <form method="post" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label>Label (EN) *<input type="text" name="label_en" required maxlength="60" value="{{ edit.label_en if edit }}"></label>
+    <label>Label (ID)<input type="text" name="label_idn" maxlength="60" value="{{ edit.label_idn or '' if edit }}"></label>
+    <label>URL *<input type="text" name="url" required maxlength="200" value="{{ edit.url if edit else '/' }}"></label>
+    <label>Icon<input type="text" name="icon" maxlength="8" value="{{ edit.icon or '' if edit }}"></label>
+    <label>Style
+      <select name="style">
+        <option value="normal" {{ 'selected' if not edit or edit.style == 'normal' }}>Normal</option>
+        <option value="cta" {{ 'selected' if edit and edit.style == 'cta' }}>Highlighted button</option>
+      </select>
+    </label>
+    <label>Sort order<input type="number" name="sort_order" value="{{ edit.sort_order if edit else 0 }}"></label>
+    <label class="check"><input type="checkbox" name="is_visible" {{ 'checked' if not edit or edit.is_visible }}> Visible</label>
+    <div class="wide">
+      <button class="btn btn-primary" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-ghost" href="/admin/menu">Cancel</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Label</th><th>URL</th><th>Visible</th><th></th></tr></thead>
+    <tbody>
+    {% for m in rows %}
+      <tr>
+        <td><a href="/admin/menu?edit={{ m.id }}">{{ m.icon }} {{ m.label_en }}</a></td>
+        <td class="muted small">{{ m.url }}</td>
+        <td>{{ '✅' if m.is_visible else '—' }}</td>
+        <td class="right">
+          <form method="post" action="/admin/menu/{{ m.id }}/delete"><button class="link-btn" type="submit">Delete</button></form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="muted">No extra links.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

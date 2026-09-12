@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Sign in</title>
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="auth-body">
+<form method="post" class="auth-card">
+  <h1>Taksu Nusa Spa</h1>
+  <p class="muted">Admin sign in</p>
+  {% with msgs = get_flashed_messages() %}
+    {% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}
+  {% endwith %}
+  <label>Phone<input type="text" name="phone" required autofocus></label>
+  <label>Password<input type="password" name="password" required></label>
+  <button class="btn btn-primary block" type="submit">Sign in</button>
+  <p class="muted small"><a href="/">← back to the website</a></p>
+</form>
+</body>
+</html>

@@ -1,0 +1,68 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Treatments</h1>
+
+<div class="panel">
+  <h2>{{ 'Edit treatment' if edit else 'Add treatment' }}</h2>
+  <form method="post" enctype="multipart/form-data" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label>Name (English) *<input type="text" name="name_en" required maxlength="160" value="{{ edit.name_en if edit }}"></label>
+    <label>Name (Indonesian)<input type="text" name="name_idn" maxlength="160" value="{{ edit.name_idn or '' if edit }}"></label>
+
+    <label>Group
+      <select name="category_id">
+        <option value="">— none —</option>
+        {% for c in cats %}
+          <option value="{{ c.id }}" {{ 'selected' if edit and edit.category_id == c.id }}>{{ c.name_en }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>URL slug<input type="text" name="slug" maxlength="160" value="{{ edit.slug if edit }}" placeholder="auto from name"></label>
+
+    <label>Price (IDR) *<input type="text" name="price_idr" required value="{{ edit.price_idr if edit else '' }}" placeholder="250000"></label>
+    <label>Duration (minutes) *<input type="number" name="duration_min" required value="{{ edit.duration_min if edit else 60 }}" min="15" step="5"></label>
+
+    <label class="wide">Description (EN)<textarea name="desc_en" rows="4">{{ edit.desc_en or '' if edit }}</textarea></label>
+    <label class="wide">Description (ID)<textarea name="desc_idn" rows="4">{{ edit.desc_idn or '' if edit }}</textarea></label>
+
+    <label class="wide">SEO title<input type="text" name="seo_title" maxlength="180" value="{{ edit.seo_title or '' if edit }}"></label>
+    <label class="wide">SEO description<input type="text" name="seo_desc" maxlength="320" value="{{ edit.seo_desc or '' if edit }}"></label>
+
+    <label>Photo<input type="file" name="photo" accept="image/*"></label>
+    <label>Sort order<input type="number" name="sort_order" value="{{ edit.sort_order if edit else 0 }}"></label>
+
+    <label class="check"><input type="checkbox" name="is_featured" {{ 'checked' if edit and edit.is_featured }}> Featured on the home page</label>
+    <label class="check"><input type="checkbox" name="is_active" {{ 'checked' if not edit or edit.is_active }}> Visible on the website</label>
+
+    <div class="wide">
+      <button class="btn btn-primary" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-ghost" href="/admin/treatments">Cancel</a>
+        <a class="btn btn-ghost" href="/admin/media?entity_type=treatment&entity_id={{ edit.id }}">Photos</a>
+        <a class="btn btn-ghost" href="/treatment/{{ edit.slug }}" target="_blank">View</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Spa menu</h2>
+  <table class="table">
+    <thead><tr><th></th><th>Treatment</th><th>Group</th><th>Time</th><th>Price</th><th>Now</th><th>Live</th></tr></thead>
+    <tbody>
+    {% for tr in rows %}
+      {% set pr = price_of('treatment', tr) %}
+      <tr>
+        <td>{% if covers.get(tr.id) or tr.image_url %}<img class="mini" src="{{ covers.get(tr.id) or tr.image_url }}" alt="">{% endif %}</td>
+        <td><a href="/admin/treatments?edit={{ tr.id }}">{{ tr.name_en }}</a></td>
+        <td>{{ tr.category.name_en if tr.category else '—' }}</td>
+        <td>{{ tr.duration_min }}'</td>
+        <td>{{ rp(tr.price_idr) }}</td>
+        <td>{% if pr.has_discount %}<strong>{{ rp(pr.final) }}</strong> <span class="pill pill-sale">-{{ pr.pct }}%</span>{% else %}—{% endif %}</td>
+        <td>{{ '✅' if tr.is_active else '—' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7" class="muted">No treatments yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-head">
+  <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ t.contact }}</span></nav>
+  <h1>{{ t.contact }}</h1>
+</section>
+
+<section class="section split">
+  <div>
+    <h2>{{ site.get('company_name','Taksu Nusa Spa') }}</h2>
+    {% if site.get('address') %}<p>{{ site['address'] }}</p>{% endif %}
+    {% if site.get('phone') %}<p><a href="tel:{{ site['phone']|replace(' ','') }}">{{ site['phone'] }}</a></p>{% endif %}
+    {% if site.get('email') %}<p><a href="mailto:{{ site['email'] }}">{{ site['email'] }}</a></p>{% endif %}
+    <p><a class="btn btn-primary" href="{{ wa() }}" target="_blank" rel="noopener">{{ t.order_whatsapp }}</a></p>
+    {% if site.get('maps_url') %}<p><a href="{{ site['maps_url'] }}" target="_blank" rel="noopener">Google Maps →</a></p>{% endif %}
+
+    <h2>{{ t.opening_hours }}</h2>
+    <table class="hours">
+      {% for day_name, window in opening %}
+      <tr><td>{{ day_name }}</td><td>{{ window or t.closed }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div>
+    <h2>{{ t.message }}</h2>
+    <form method="post" class="stackform">
+      <label>{{ t.name }}<input type="text" name="name" maxlength="80"></label>
+      <label>{{ t.phone }} *<input type="tel" name="phone" required maxlength="30"></label>
+      <label>{{ t.email }}<input type="email" name="email" maxlength="120"></label>
+      <label>{{ t.message }} *<textarea name="message" rows="5" required maxlength="2000"></textarea></label>
+      <button class="btn btn-primary" type="submit">{{ t.send }}</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

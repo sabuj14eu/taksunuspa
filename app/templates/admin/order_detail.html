@@ -1,0 +1,69 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Order {{ o.public_code }}</h1>
+<p><a href="/admin/orders">← all orders</a></p>
+
+<div class="panel">
+  <div class="split">
+    <div>
+      <h2>Customer</h2>
+      <p><strong>{{ o.customer_name or '—' }}</strong><br>
+        <a href="tel:{{ o.customer_phone }}">{{ o.customer_phone }}</a><br>
+        {% if o.customer_email %}{{ o.customer_email }}<br>{% endif %}
+        {% if o.address %}{{ o.address }}<br>{% endif %}
+        {% if o.city %}{{ o.city }}{% endif %}</p>
+      {% if o.note %}<p class="muted">“{{ o.note }}”</p>{% endif %}
+      <p><a class="btn btn-ghost" href="{{ wa('Order ' ~ o.public_code) }}" target="_blank" rel="noopener">WhatsApp customer</a></p>
+    </div>
+    <div>
+      <h2>Update</h2>
+      <form method="post" class="stackform">
+        <label>Order status
+          <select name="status">
+            {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if o.status == s }}>{{ s }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Payment status
+          <select name="payment_status">
+            {% for s in payment_statuses %}<option value="{{ s }}" {{ 'selected' if o.payment_status == s }}>{{ s }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Payment reference<input type="text" name="payment_ref" value="{{ o.payment_ref or '' }}" placeholder="transfer proof / gateway id"></label>
+        <button class="btn btn-primary" type="submit">Save</button>
+      </form>
+      <p class="muted small">Method: {{ o.payment_method }}</p>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Items</h2>
+  <table class="table">
+    <thead><tr><th>Product</th><th>Qty</th><th>Unit</th><th>Discount</th><th class="right">Total</th></tr></thead>
+    <tbody>
+    {% for i in o.items %}
+      <tr>
+        <td>{{ i.name }}{% if i.size_label %} <span class="muted small">· {{ i.size_label }}</span>{% endif %}</td>
+        <td>{{ i.qty }}</td>
+        <td>{% if i.unit_final_idr != i.unit_price_idr %}<span class="price-was">{{ rp(i.unit_price_idr) }}</span> {% endif %}{{ rp(i.unit_final_idr) }}</td>
+        <td class="muted small">{{ i.discount_label or '—' }}</td>
+        <td class="right">{{ rp(i.line_total_idr) }}</td>
+      </tr>
+    {% endfor %}
+      <tr><td colspan="4">Subtotal</td><td class="right">{{ rp(o.subtotal_idr) }}</td></tr>
+      {% if o.discount_idr %}<tr><td colspan="4">Discount</td><td class="right">-{{ rp(o.discount_idr) }}</td></tr>{% endif %}
+      {% if o.delivery_idr %}<tr><td colspan="4">Delivery</td><td class="right">{{ rp(o.delivery_idr) }}</td></tr>{% endif %}
+      <tr class="grand"><td colspan="4">Total</td><td class="right">{{ rp(o.total_idr) }}</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>History</h2>
+  {% for e in o.events %}
+    <p class="muted small">{{ e.created_at.strftime('%d %b %H:%M') }} · {{ e.kind }} · {{ e.detail }} ({{ e.actor }})</p>
+  {% else %}
+    <p class="muted">No events.</p>
+  {% endfor %}
+</div>
+{% endblock %}

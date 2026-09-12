@@ -1,0 +1,50 @@
+{% extends "admin/layout.html" %}
+{% set labels = {
+  'company_name': 'Business name',
+  'tagline_en': 'Tagline (EN)',
+  'tagline_idn': 'Tagline (ID)',
+  'about_en': 'About text (EN)',
+  'about_idn': 'About text (ID)',
+  'phone': 'Phone',
+  'whatsapp': 'WhatsApp number (digits, e.g. 6282339566156)',
+  'email': 'E-mail',
+  'address': 'Street address',
+  'city': 'City / area',
+  'postal_code': 'Postal code',
+  'lat': 'Latitude',
+  'lng': 'Longitude',
+  'maps_url': 'Google Maps link',
+  'price_range': 'Price range (e.g. $$)',
+  'facebook_url': 'Facebook URL',
+  'instagram_url': 'Instagram URL',
+  'tiktok_url': 'TikTok URL',
+  'og_image': 'Share image path (/static/uploads/...)',
+  'hero_image': 'Home hero image path',
+  'meta_desc': 'Default SEO description',
+  'bank_details': 'Bank transfer details (shown at checkout)',
+  'slot_step_min': 'Booking slot step (minutes, default 30)',
+  'footer_note_en': 'Footer note (EN)',
+  'footer_note_idn': 'Footer note (ID)',
+  'nib': 'NIB / business number',
+} %}
+{% set long_fields = ['about_en','about_idn','bank_details','meta_desc'] %}
+{% block content %}
+<h1>Site settings</h1>
+<p class="muted">These feed the website, the footer and the structured data search engines read.</p>
+
+<div class="panel">
+  <form method="post" class="gridform">
+    {% for key in keys %}
+      <label class="{{ 'wide' if key in long_fields }}">
+        {{ labels.get(key, key) }}
+        {% if key in long_fields %}
+          <textarea name="{{ key }}" rows="4">{{ cfg.get(key, '') }}</textarea>
+        {% else %}
+          <input type="text" name="{{ key }}" value="{{ cfg.get(key, '') }}">
+        {% endif %}
+      </label>
+    {% endfor %}
+    <div class="wide"><button class="btn btn-primary" type="submit">Save settings</button></div>
+  </form>
+</div>
+{% endblock %}

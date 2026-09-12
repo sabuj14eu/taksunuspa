@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-head">
+  <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ loc(p, 'title') }}</span></nav>
+  <h1>{{ loc(p, 'title') }}</h1>
+</section>
+<section class="section">
+  <div class="prose">{{ loc(p, 'body')|nl2br }}</div>
+</section>
+{% endblock %}
