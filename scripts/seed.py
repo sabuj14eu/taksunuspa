@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Seed the site with Taksu Nusa Spa's starting content.
+"""Seed the site with Taksu Nusa Spa's content.
 
-Safe to re-run: every row is matched on its slug or key and updated rather
-than duplicated. Prices marked PLACEHOLDER below are guesses — set the real
-ones in the admin panel before going live.
+Treatments, prices, service areas and therapists come from the approved
+redesign, which carried them over from the live site — so these are the real
+menu, not placeholders. The honey products come from the producer's labels.
+
+Safe to re-run: rows are matched on slug or key and updated, never duplicated.
 
     python -m scripts.seed
 """
@@ -13,84 +15,182 @@ import secrets
 from app import create_app
 from app.extensions import db
 from app.models.discount import Discount
+from app.models.media import Review
 from app.models.shop import DeliveryZone, Product, ProductGroup
 from app.models.site import FaqItem, Page, SiteSetting
-from app.models.spa import OpeningHour, Treatment, TreatmentCategory
+from app.models.spa import (Highlight, OpeningHour, ServiceArea, Therapist,
+                            Treatment, TreatmentCategory, TreatmentOption)
 from app.models.user import User
 
 SETTINGS = {
+    # identity
     "company_name": "Taksu Nusa Spa",
-    "tagline_en": "Balinese massage, natural treatments and pure Bali honey.",
-    "tagline_idn": "Pijat Bali, perawatan alami, dan madu asli Bali.",
-    "about_en": "Taksu Nusa Spa brings together traditional Balinese treatments "
-                "and natural products made on the island. Every treatment uses "
-                "our own oils and honey, sourced from small producers in Bali.",
-    "about_idn": "Taksu Nusa Spa memadukan perawatan tradisional Bali dengan "
-                 "produk alami buatan pulau ini. Setiap perawatan memakai minyak "
-                 "dan madu kami sendiri dari produsen kecil di Bali.",
-    "phone": "+62 823-3956-6156",
-    "whatsapp": "6282339566156",
+    "brand_short": "Taksu Nusa",
+    "tagline_en": "Professional therapists come to your villa, hotel or home. "
+                  "Authentic rituals, organic oils, and total relaxation — "
+                  "wherever you are in Bali.",
+    "tagline_idn": "Terapis profesional datang ke vila, hotel atau rumah Anda. "
+                   "Ritual autentik, minyak organik, dan relaksasi total — "
+                   "di mana pun Anda di Bali.",
+    "about_en": "Taksu Nusa Spa brings the full Balinese spa experience to "
+                "you. We carry the table, the towels, the music and the oils, "
+                "and our therapists work the way they were trained on the "
+                "island — unhurried, intuitive, and warm.",
+    "about_idn": "Taksu Nusa Spa membawa pengalaman spa Bali lengkap kepada "
+                 "Anda. Kami membawa meja, handuk, musik dan minyak, dan "
+                 "terapis kami bekerja seperti yang mereka pelajari di pulau "
+                 "ini — tenang, intuitif, dan hangat.",
+    "nib": "9120014231404",
+
+    # contact
+    "phone": "+62 812-3672-9448",
+    "whatsapp": "6281236729448",
     "email": "",
     "address": "Jalan Gatot Kaca No.5, Desa Kuwum, Mengwi",
-    "city": "Kabupaten Badung, Bali",
+    "city": "Bali",
     "postal_code": "80351",
+    "service_hours": "Daily 09:00 – 23:00",
+    "service_scope": "Bali-wide service",
     "price_range": "$$",
-    "meta_desc": "Balinese massage and spa treatments in Mengwi, Badung — plus "
-                 "pure Bali honey delivered across the island. Book online.",
+
+    # home page copy
+    "hero_eyebrow_en": "Balinese wellness · at your door",
+    "hero_eyebrow_idn": "Kesehatan Bali · di depan pintu Anda",
+    "hero_line1_en": "Bali Premium",
+    "hero_line1_idn": "Home Spa",
+    "hero_line2_en": "Home Spa.",
+    "hero_line2_idn": "Premium Bali.",
+    "rating_value": "4.9",
+    "rating_note_en": "rating · 1000+ happy guests",
+    "rating_note_idn": "rating · 1000+ tamu puas",
+
+    "treatments_eyebrow_en": "Traditional & therapeutic",
+    "treatments_intro_en": "Each treatment uses Balinese techniques, warm oils, "
+                           "and intuitive pressure to release tension and "
+                           "restore balance.",
+    "treatments_intro_idn": "Setiap perawatan memakai teknik Bali, minyak "
+                            "hangat, dan tekanan intuitif untuk melepas "
+                            "ketegangan dan memulihkan keseimbangan.",
+
+    "experience_eyebrow_en": "The difference",
+    "experience_title_en": "Why guests choose us",
+    "experience_title_idn": "Mengapa tamu memilih kami",
+
+    "therapists_eyebrow_en": "Your healers",
+    "therapists_title_en": "Meet our therapists",
+    "therapists_title_idn": "Kenali terapis kami",
+    "therapists_intro_en": "Certified therapists with years of practice, who "
+                           "come to you anywhere in Bali.",
+    "therapists_intro_idn": "Terapis bersertifikat berpengalaman, datang ke "
+                            "tempat Anda di seluruh Bali.",
+
+    "gallery_eyebrow_en": "A glimpse of bliss",
+    "products_eyebrow_en": "Take Bali home",
+
+    "areas_note_en": "Free travel inside our service areas — hotel, villa, "
+                     "guesthouse or private home.",
+    "areas_note_idn": "Transport gratis di dalam area layanan kami — hotel, "
+                      "vila, guesthouse atau rumah pribadi.",
+
+    "reviews_eyebrow_en": "From stress to bliss",
+    "reviews_title_en": "Guest reviews",
+    "reviews_title_idn": "Ulasan tamu",
+
+    "cta_eyebrow_en": "Ready in 60 seconds",
+    "cta_title_en": "Your relaxation is one tap away",
+    "cta_title_idn": "Relaksasi Anda tinggal satu ketukan",
+    "cta_text_en": "Choose your treatment, pick a time, and we'll bring the "
+                   "full spa experience to you.",
+    "cta_text_idn": "Pilih perawatan, pilih jam, dan kami bawa pengalaman spa "
+                    "lengkap ke tempat Anda.",
+
+    # plumbing
+    "meta_desc": "Professional Balinese therapists come to your villa, hotel "
+                 "or home. Massage, couple rituals and natural body care "
+                 "across Bali. Book online.",
     "bank_details": "Bank transfer details — set these in Admin → Site settings.",
     "slot_step_min": "30",
-    "footer_note_en": "Taksu Nusa Spa · Mengwi, Badung, Bali",
-    "footer_note_idn": "Taksu Nusa Spa · Mengwi, Badung, Bali",
-    "nib": "9120014231404",
+    "footer_note_en": "Premium Balinese home spa service across Bali.",
+    "footer_note_idn": "Layanan home spa Bali premium di seluruh Bali.",
 }
 
-# Opening hours: 09:00–21:00 every day (change in Admin → Hours).
-HOURS = {wd: (9 * 60, 21 * 60) for wd in range(7)}
+# Daily 09:00 – 23:00.
+HOURS = {wd: (9 * 60, 23 * 60) for wd in range(7)}
 
 TREATMENT_CATEGORIES = [
     ("massage", "Massage", "Pijat", "💆", 10,
-     "Traditional Balinese hands, warm oil, unhurried pressure."),
-    ("body-treatment", "Body Treatments", "Perawatan Tubuh", "🌿", 20,
-     "Scrubs, masks and boreh wraps made from island ingredients."),
-    ("facial", "Facials", "Perawatan Wajah", "✨", 30,
-     "Gentle facials using honey and natural botanicals."),
-    ("packages", "Spa Packages", "Paket Spa", "🎁", 40,
-     "Half-day and full-day combinations at a better price."),
+     "Traditional Balinese hands, warm oil, unhurried pressure — in your own "
+     "room."),
+    ("body-treatment", "Body Rituals", "Ritual Tubuh", "🌿", 20,
+     "Scrubs, masks and flower baths made from island ingredients."),
+    ("packages", "Packages", "Paket", "🎁", 30,
+     "Longer combinations for couples and half-day escapes."),
 ]
 
-# PLACEHOLDER prices — confirm with the owner, then edit in admin.
+# name, category, EN name, ID name, per_person, description,
+# [(minutes, price), ...]
 TREATMENTS = [
-    ("balinese-massage", "massage", "Balinese Massage", "Pijat Bali", 60, 150000,
-     "The classic full-body Balinese massage: long strokes, palm pressure and "
-     "warm coconut oil, working the whole body from feet to shoulders."),
-    ("aromatherapy-massage", "massage", "Aromatherapy Massage",
-     "Pijat Aromaterapi", 60, 175000,
-     "Slower and lighter than the Balinese, with an essential-oil blend chosen "
-     "for you at the start of the treatment."),
-    ("hot-stone-massage", "massage", "Hot Stone Massage", "Pijat Batu Panas",
-     90, 250000,
-     "Warmed volcanic stones rest along the spine while the therapist works "
-     "the surrounding muscles — good for deep tension and cold weather."),
-    ("foot-reflexology", "massage", "Foot Reflexology", "Refleksi Kaki", 45,
-     100000,
-     "Pressure-point work on the feet and lower legs. The usual first booking "
-     "for guests who have been walking all day."),
-    ("balinese-boreh", "body-treatment", "Balinese Boreh Body Wrap",
-     "Boreh Bali", 60, 200000,
-     "The warming spice wrap Balinese farmers have used for generations — "
-     "ginger, clove and rice powder, applied warm."),
-    ("honey-body-scrub", "body-treatment", "Honey & Sea Salt Scrub",
-     "Lulur Madu & Garam Laut", 45, 175000,
-     "Our own Bali honey blended with sea salt, then rinsed and finished with "
-     "coconut oil."),
-    ("honey-facial", "facial", "Pure Honey Facial", "Facial Madu Murni", 60,
-     185000,
-     "A calming facial built around raw Bali honey: cleanse, gentle exfoliation, "
-     "honey mask and a face and shoulder massage."),
-    ("half-day-retreat", "packages", "Half-Day Retreat", "Paket Setengah Hari",
-     180, 500000,
-     "Balinese massage, honey and sea salt scrub, and a pure honey facial, with "
-     "herbal tea between treatments."),
+    ("balinese-massage", "massage", "Balinese Massage", "Pijat Bali", False,
+     "Traditional full-body massage with aromatic oils to restore flow and "
+     "calm. Long strokes, palm pressure and warm coconut oil, working the "
+     "whole body from feet to shoulders.",
+     [(60, 300000), (90, 400000), (120, 550000)]),
+    ("deep-tissue-massage", "massage", "Deep Tissue Massage",
+     "Pijat Deep Tissue", False,
+     "Strong, focused pressure for muscle recovery and deep release. The one "
+     "to book after surfing, training or a long flight.",
+     [(60, 350000), (90, 450000)]),
+    ("couple-massage", "massage", "Couple Massage", "Pijat Pasangan", True,
+     "Two therapists, side by side, in your own room. Price is per person for "
+     "a shared ritual.",
+     [(60, 300000), (90, 400000)]),
+    ("foot-massage", "massage", "Foot Massage", "Pijat Kaki", False,
+     "Reflexology for tired feet using warming herbal oils. Pressure-point "
+     "work on the feet and lower legs.",
+     [(60, 250000)]),
+]
+
+THERAPISTS = [
+    ("Nyoman Suriyani", "Senior therapist", "Terapis senior",
+     "English, Indonesian", 10),
+    ("Wayan Narti", "Wellness therapist", "Terapis wellness",
+     "English, Indonesian", 20),
+]
+
+AREAS = ["Seminyak", "Ubud", "Kuta", "Legian", "Sanur", "Nusa Dua",
+         "Jimbaran", "Uluwatu"]
+
+HIGHLIGHTS = [
+    ("🛡️", "Certified therapists", "Terapis bersertifikat",
+     "Professionals with 5+ years of practice and formal spa training.",
+     "Profesional dengan pengalaman 5+ tahun dan pelatihan spa formal."),
+    ("🌿", "Organic botanicals", "Bahan organik",
+     "Cold-pressed coconut oil and essential oils, made and sourced in Bali.",
+     "Minyak kelapa cold-pressed dan minyak esensial, dibuat di Bali."),
+    ("🏡", "Private & discreet", "Privat & diskret",
+     "In-room hotel, villa, and home service with total discretion.",
+     "Layanan di kamar hotel, vila dan rumah dengan diskresi penuh."),
+    ("✨", "Full spa ritual", "Ritual spa lengkap",
+     "We bring the table, towels, music, and oils — everything you need.",
+     "Kami bawa meja, handuk, musik dan minyak — semua yang diperlukan."),
+    ("💧", "Fresh linens", "Linen bersih",
+     "Premium spa table with freshly laundered towels for every visit.",
+     "Meja spa premium dengan handuk yang baru dicuci setiap kunjungan."),
+    ("🧼", "Hygienic & safe", "Higienis & aman",
+     "Sanitised equipment and strict hygiene protocols on every booking.",
+     "Peralatan disanitasi dan protokol kebersihan ketat setiap pemesanan."),
+]
+
+REVIEWS = [
+    ("Sarah", "Australia", 5,
+     "Amazing Balinese massage in our Canggu villa. On time, professional, "
+     "pure bliss. Booked twice more!"),
+    ("Marco & Julia", "Italy", 5,
+     "Honeymoon package with a flower bath on our terrace at sunset. The most "
+     "romantic evening of our trip."),
+    ("Tomasz", "Poland", 5,
+     "Great value and totally professional. The booking took one minute and "
+     "WhatsApp confirmation came instantly."),
 ]
 
 PRODUCT_GROUPS = [
@@ -98,13 +198,13 @@ PRODUCT_GROUPS = [
      "Raw honey from stingless bees and wild hives in Bali, bottled by small "
      "producers. No added sugar, nothing heated."),
     ("spa-products", "Spa Products", "Produk Spa", "🧴", 20,
-     "The oils, scrubs and balms we use in the treatment rooms."),
+     "The oils, scrubs and balms we use in the treatment room."),
     ("gift-sets", "Gift Sets", "Paket Hadiah", "🎁", 30,
      "Honey and spa products boxed together, ready to give."),
 ]
 
-# From the product photos: Sari Madu Sedana, produced by Yustika in Balangan.
-# PLACEHOLDER prices — confirm before going live.
+# From the product labels: Sari Madu Sedana, produced by Yustika in Balangan.
+# PLACEHOLDER prices — confirm these before going live.
 PRODUCTS = [
     ("madu-kela-kela-250ml", "honey", "Madu Kela Kela 250 ml",
      "Madu Kela Kela 250 ml", "250 ml", 75000, 100,
@@ -115,8 +215,8 @@ PRODUCTS = [
      "marks honey from stingless bees.\n\n"
      "100% pure honey. No added sugar, no heating, nothing else in the bottle.\n\n"
      "Use it in warm (not hot) water, over yoghurt, or by the spoon.",
-     "Madu Kela Kela adalah madu cair dari rangkaian Sari Madu Sedana — dipanen "
-     "di Bali, cair, dengan rasa asam manis khas madu kelulut.\n\n"
+     "Madu Kela Kela adalah madu cair dari rangkaian Sari Madu Sedana — "
+     "dipanen di Bali, cair, dengan rasa asam manis khas madu kelulut.\n\n"
      "100% madu asli. Tanpa gula tambahan, tanpa pemanasan.\n\n"
      "Nikmati dengan air hangat, yoghurt, atau langsung satu sendok."),
     ("madu-kela-kela-500ml", "honey", "Madu Kela Kela 500 ml",
@@ -133,8 +233,8 @@ PRODUCTS = [
      "Madu Nyawan 500 ml", "500 ml", 160000, 40,
      "Thick honey with a dominant sweet taste.",
      "Madu kental dengan rasa dominan manis.",
-     "Madu Nyawan is the thick honey in the Sari Madu Sedana range: dense, slow "
-     "off the spoon, and clearly sweet rather than sour.\n\n"
+     "Madu Nyawan is the thick honey in the Sari Madu Sedana range: dense, "
+     "slow off the spoon, and clearly sweet rather than sour.\n\n"
      "100% pure honey. No added sugar.\n\n"
      "The one to choose if you find stingless-bee honey too sharp.",
      "Madu Nyawan adalah madu kental dari rangkaian Sari Madu Sedana: padat, "
@@ -147,49 +247,57 @@ PRODUCER = "Yustika — Sari Madu Sedana, Balangan"
 PRODUCT_NIB = "9120014231404"
 
 DELIVERY_ZONES = [
-    ("Mengwi & Badung", "Mengwi & Badung", 15000, 300000, 10),
-    ("Denpasar", "Denpasar", 25000, 300000, 20),
-    ("Canggu / Seminyak / Kuta", "Canggu / Seminyak / Kuta", 30000, 400000, 30),
+    ("Seminyak / Kuta / Legian", "Seminyak / Kuta / Legian", 25000, 300000, 10),
+    ("Denpasar & Badung", "Denpasar & Badung", 20000, 300000, 20),
+    ("Canggu", "Canggu", 30000, 400000, 30),
     ("Ubud", "Ubud", 35000, 400000, 40),
     ("Rest of Bali", "Bali lainnya", 50000, 500000, 50),
 ]
 
 FAQS = [
-    ("Do you deliver honey across Bali?",
-     "Apakah madu dikirim ke seluruh Bali?",
-     "Yes. We deliver across Bali. You can pay cash to the driver on delivery, "
-     "by bank transfer, or with an online payment link — whichever suits you.",
-     "Ya. Kami mengirim ke seluruh Bali. Anda bisa bayar tunai ke kurir saat "
-     "barang tiba, transfer bank, atau lewat tautan pembayaran online."),
+    ("Do you come to my hotel or villa?",
+     "Apakah kalian datang ke hotel atau vila saya?",
+     "Yes — that is the whole service. Our therapist brings the massage table, "
+     "fresh towels, oils and music to your villa, hotel room, guesthouse or "
+     "home anywhere in our service areas.",
+     "Ya — itu inti layanan kami. Terapis membawa meja pijat, handuk bersih, "
+     "minyak dan musik ke vila, kamar hotel, guesthouse atau rumah Anda di "
+     "seluruh area layanan kami."),
+    ("How do I pay?", "Bagaimana cara membayar?",
+     "Cash to the therapist after the treatment, bank transfer, or an online "
+     "payment link. For honey and products you can also pay cash on delivery.",
+     "Tunai ke terapis setelah perawatan, transfer bank, atau tautan "
+     "pembayaran online. Untuk madu dan produk bisa juga bayar di tempat."),
+    ("How far ahead should I book?", "Berapa lama sebelumnya harus memesan?",
+     "Booking online secures your time and therapist. We ask for at least two "
+     "hours' notice so the therapist can travel to you; evenings and weekends "
+     "fill up first.",
+     "Pesan online memastikan jam dan terapis Anda. Mohon pesan minimal dua "
+     "jam sebelumnya agar terapis sempat menuju lokasi; malam hari dan akhir "
+     "pekan biasanya penuh lebih dulu."),
     ("Is the honey pure?", "Apakah madunya murni?",
      "Yes — 100% honey with no added sugar and no heating. It is produced by "
      "Yustika in Balangan under the Sari Madu Sedana label, business number "
      "9120014231404.",
      "Ya — 100% madu tanpa gula tambahan dan tanpa pemanasan. Diproduksi oleh "
      "Yustika di Balangan dengan merek Sari Madu Sedana, NIB 9120014231404."),
-    ("Do I need to book a treatment in advance?",
-     "Apakah perlu memesan perawatan sebelumnya?",
-     "Booking online secures your time and therapist. Walk-ins are welcome when "
-     "a room is free, but weekends fill up.",
-     "Pesan online memastikan jam dan terapis Anda. Tanpa reservasi tetap kami "
-     "layani bila ada ruangan kosong, tetapi akhir pekan biasanya penuh."),
 ]
 
 PAGES = [
     ("about", "About Us", "Tentang Kami",
-     "Taksu Nusa Spa is a small Balinese spa in Mengwi, Badung.\n\n"
-     "Write your story here from Admin → Pages.",
-     "Taksu Nusa Spa adalah spa Bali kecil di Mengwi, Badung.\n\n"
-     "Tulis cerita Anda di Admin → Pages."),
+     "Taksu Nusa Spa is a Balinese home spa service. Our therapists travel to "
+     "you anywhere in Bali.\n\nWrite your story here from Admin → Pages.",
+     "Taksu Nusa Spa adalah layanan home spa Bali. Terapis kami datang ke "
+     "tempat Anda di seluruh Bali.\n\nTulis cerita Anda di Admin → Pages."),
     ("delivery-and-payment", "Delivery & Payment", "Pengiriman & Pembayaran",
-     "We deliver across Bali.\n\n"
-     "Payment options: cash on delivery, cash at the spa, bank transfer, or an "
-     "online payment link.\n\n"
-     "Orders placed before 15:00 usually go out the same day.",
-     "Kami mengirim ke seluruh Bali.\n\n"
-     "Pilihan pembayaran: bayar tunai saat pengiriman, tunai di spa, transfer "
-     "bank, atau tautan pembayaran online.\n\n"
-     "Pesanan sebelum pukul 15.00 biasanya dikirim hari itu juga."),
+     "Treatments: pay the therapist in cash after your treatment, by bank "
+     "transfer, or with an online payment link.\n\n"
+     "Products: we deliver across Bali. Pay cash on delivery, by transfer, or "
+     "online. Orders placed before 15:00 usually go out the same day.",
+     "Perawatan: bayar tunai ke terapis setelah perawatan, transfer bank, "
+     "atau lewat tautan pembayaran online.\n\n"
+     "Produk: kami kirim ke seluruh Bali. Bayar di tempat, transfer, atau "
+     "online. Pesanan sebelum pukul 15.00 biasanya dikirim hari itu juga."),
 ]
 
 
@@ -222,11 +330,38 @@ def run():
                                 desc_en=desc, is_active=True)
         db.session.flush()
 
-        for i, (slug, cat, en, idn, mins, price, desc) in enumerate(TREATMENTS):
-            upsert(Treatment, {"slug": slug}, name_en=en, name_idn=idn,
-                   category_id=cats[cat].id, duration_min=mins,
-                   price_idr=price, desc_en=desc, sort_order=i * 10,
-                   is_featured=i < 3, is_active=True)
+        for i, row in enumerate(TREATMENTS):
+            slug, cat, en, idn, per_person, desc, tiers = row
+            tr = upsert(Treatment, {"slug": slug}, name_en=en, name_idn=idn,
+                        category_id=cats[cat].id, desc_en=desc,
+                        per_person=per_person,
+                        duration_min=tiers[0][0], price_idr=tiers[0][1],
+                        sort_order=i * 10, is_featured=True, is_active=True)
+            db.session.flush()
+            for j, (minutes, price) in enumerate(tiers):
+                upsert(TreatmentOption,
+                       {"treatment_id": tr.id, "duration_min": minutes},
+                       price_idr=price, sort_order=j * 10, is_active=True)
+
+        for name, role_en, role_idn, languages, order in THERAPISTS:
+            upsert(Therapist, {"name": name}, role_en=role_en,
+                   role_idn=role_idn, languages=languages, sort_order=order,
+                   is_available_today=True, show_on_site=True, is_active=True)
+
+        for i, name in enumerate(AREAS):
+            upsert(ServiceArea, {"name": name},
+                   slug=name.lower().replace(" ", "-"), travel_fee_idr=0,
+                   sort_order=i * 10, is_active=True)
+
+        for i, (icon, t_en, t_idn, x_en, x_idn) in enumerate(HIGHLIGHTS):
+            upsert(Highlight, {"title_en": t_en}, icon=icon, title_idn=t_idn,
+                   text_en=x_en, text_idn=x_idn, sort_order=i * 10,
+                   is_visible=True)
+
+        for author, location, rating, text in REVIEWS:
+            upsert(Review, {"entity_type": "site", "author_name": author},
+                   entity_id=0, rating=rating, text=text,
+                   lang="en", is_approved=True)
 
         groups = {}
         for slug, en, idn, icon, order, desc in PRODUCT_GROUPS:
@@ -257,14 +392,16 @@ def run():
         for i, (slug, t_en, t_idn, b_en, b_idn) in enumerate(PAGES):
             upsert(Page, {"slug": slug}, title_en=t_en, title_idn=t_idn,
                    body_en=b_en, body_idn=b_idn, is_visible=True,
-                   sort_order=i * 10)
+                   show_in_menu=True, sort_order=i * 10)
 
-        # An example discount, switched off. Turn it on in admin and every
-        # product card and treatment page picks it up at once.
+        # The promotional pricing the redesign showed (300.000 struck through,
+        # 250.000 charged) is a 50.000 rupiah launch discount on treatments.
+        # Seeded switched off — turn it on in admin when the promo runs.
         if not Discount.query.first():
             db.session.add(Discount(
-                label_en="Grand opening", label_idn="Pembukaan",
-                scope="all", kind="percent", value=10, is_active=False))
+                label_en="Launch offer", label_idn="Promo peluncuran",
+                scope="treatments", kind="amount", value=50000,
+                is_active=False))
 
         admin = User.query.filter_by(phone=SETTINGS["whatsapp"]).first()
         password = None
@@ -283,7 +420,10 @@ def run():
             print(f"  phone:    {SETTINGS['whatsapp']}")
             print(f"  password: {password}")
             print("\n  Change it straight away in Admin -> My account.\n")
-        print("Prices are placeholders — set the real ones in the admin panel.")
+        print("Treatment prices are the real menu. Product prices are "
+              "placeholders — confirm them in the admin panel.")
+        print("Upload the hero, gallery, therapist and product photos in "
+              "Admin -> Photos.")
 
 
 if __name__ == "__main__":

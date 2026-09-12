@@ -1,0 +1,46 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Why guests choose us</h1>
+<p class="muted">The tiles in the dark green band on the home page.</p>
+
+<div class="panel">
+  <h2>{{ 'Edit tile' if edit else 'Add tile' }}</h2>
+  <form method="post" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label>Icon (emoji)<input type="text" name="icon" maxlength="8" value="{{ edit.icon if edit else '✦' }}"></label>
+    <label>Sort order<input type="number" name="sort_order" value="{{ edit.sort_order if edit else 0 }}"></label>
+    <label>Title (EN) *<input type="text" name="title_en" required maxlength="90" value="{{ edit.title_en if edit }}"></label>
+    <label>Title (ID)<input type="text" name="title_idn" maxlength="90" value="{{ edit.title_idn or '' if edit }}"></label>
+    <label class="wide">Text (EN)<textarea name="text_en" rows="2" maxlength="300">{{ edit.text_en or '' if edit }}</textarea></label>
+    <label class="wide">Text (ID)<textarea name="text_idn" rows="2" maxlength="300">{{ edit.text_idn or '' if edit }}</textarea></label>
+    <label class="check"><input type="checkbox" name="is_visible" {{ 'checked' if not edit or edit.is_visible }}> Visible</label>
+    <div class="wide">
+      <button class="btn btn-primary btn-sm" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-outline btn-sm" href="/admin/highlights">Cancel</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <table class="table">
+    <thead><tr><th></th><th>Title</th><th>Visible</th><th></th></tr></thead>
+    <tbody>
+    {% for h in rows %}
+      <tr>
+        <td>{{ h.icon }}</td>
+        <td><a href="/admin/highlights?edit={{ h.id }}">{{ h.title_en }}</a><br>
+          <span class="muted small">{{ h.text_en|truncate(70) }}</span></td>
+        <td>{{ '✅' if h.is_visible else '—' }}</td>
+        <td class="right">
+          <form method="post" action="/admin/highlights/{{ h.id }}/delete"
+                onsubmit="return confirm('Delete this tile?')">
+            <button class="link-btn" type="submit">Delete</button></form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="muted">No tiles yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,31 +1,70 @@
 {% extends "base.html" %}
-{% from "_macros.html" import treatment_card %}
+{% from "_icons.html" import icon %}
+{% from "_macros.html" import duration_chips %}
 {% block content %}
 
 <section class="page-head">
-  <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ t.treatments }}</span>
-    {% if cat %} › <span>{{ loc(cat, 'name') }}</span>{% endif %}</nav>
-  <h1>{{ loc(cat, 'name') if cat else t.spa_menu }}</h1>
-  {% if cat and loc(cat, 'desc') %}<p class="lead">{{ loc(cat, 'desc') }}</p>{% endif %}
+  <div class="wrap">
+    <nav class="crumbs">
+      <a href="/">{{ t.home }}</a> › <a href="/treatments">{{ t.treatments }}</a>
+      {% if cat %} › <span>{{ loc(cat, 'name') }}</span>{% endif %}
+    </nav>
+    <span class="eyebrow">{{ t.we_come_to_you }}</span>
+    <h2 style="font-size:clamp(2.25rem,5vw,3.5rem)">{{ loc(cat, 'name') if cat else t.spa_menu }}</h2>
+    <p class="lead">
+      {{ loc(cat, 'desc') if cat and loc(cat, 'desc') else site.get('treatments_intro_idn' if lang == 'id' else 'treatments_intro_en', '') }}
+    </p>
+
+    {% if cats %}
+    <nav class="pill-nav">
+      <a href="/treatments" class="{{ 'on' if not cat }}">{{ t.all }}</a>
+      {% for c in cats %}
+        <a href="/treatments/{{ c.slug }}" class="{{ 'on' if cat and c.id == cat.id }}">{{ loc(c, 'name') }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+  </div>
 </section>
 
-<nav class="submenu">
-  <a href="/treatments" class="{{ 'on' if not cat }}">{{ t.all }}</a>
-  {% for c in cats %}
-    <a href="/treatments/{{ c.slug }}" class="{{ 'on' if cat and c.id == cat.id }}">
-      {% if c.icon %}{{ c.icon }} {% endif %}{{ loc(c, 'name') }}
-    </a>
-  {% endfor %}
-</nav>
+<section class="section" style="padding-top:3rem">
+  <div class="wrap">
+    {% if treatments %}
+    <div class="grid grid-2">
+      {% for tr in treatments %}
+      <article class="treatment-row">
+        <div class="treatment-row-head">
+          <div>
+            <h3>{{ loc(tr, 'name') }}</h3>
+            <p>{{ loc(tr, 'desc')|truncate(140) }}</p>
+            {% if tr.per_person %}<p class="small muted" style="margin-top:.4rem">{{ t.per_person }}</p>{% endif %}
+          </div>
+          <a class="btn btn-soft" href="/treatment/{{ tr.slug }}">
+            {{ t.book }} {{ icon('arrow-right') }}
+          </a>
+        </div>
+        {{ duration_chips(tr, price_of, rp, t, loc) }}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+      <p class="muted">{{ t.no_results }}</p>
+    {% endif %}
+  </div>
+</section>
 
-{% if treatments %}
-<div class="grid grid-3 section">
-  {% for tr in treatments %}
-    {{ treatment_card(tr, price_of('treatment', tr), covers.get(tr.id) or tr.image_url, rp, t, loc) }}
-  {% endfor %}
-</div>
-{% else %}
-<p class="section muted">{{ t.no_results }}</p>
+{% if areas %}
+<section class="section section-forest">
+  <div class="wrap">
+    <div class="section-head center">
+      <span class="eyebrow center-rules on-dark">{{ t.we_come_to_you }}</span>
+      <h2>{{ t.areas_we_cover }}</h2>
+      <p>{{ site.get('areas_note_idn' if lang == 'id' else 'areas_note_en', '') }}</p>
+    </div>
+    <div class="area-pills">
+      {% for a in areas %}<span class="area-pill">{{ icon('map-pin') }}{{ a.name }}</span>{% endfor %}
+    </div>
+  </div>
+</section>
 {% endif %}
 
 {% endblock %}

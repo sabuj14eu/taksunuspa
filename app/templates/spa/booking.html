@@ -1,25 +1,33 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block content %}
-<section class="section confirm">
+<div class="wrap confirm">
   <div class="confirm-card">
     <div class="tick">✓</div>
-    <h1>{{ t.booking_received }}</h1>
-    <p class="lead">{{ t.we_will_confirm }}</p>
+    <h1 style="font-size:2rem">{{ t.booking_received }}</h1>
+    <p class="lead" style="margin-inline:auto">{{ t.we_will_confirm }}</p>
     <p class="code">{{ t.booking_code }}: <strong>{{ b.public_code }}</strong></p>
 
     <table class="table">
       <tr><td>{{ t.treatments }}</td><td class="right">{{ b.treatment_name }}</td></tr>
+      <tr><td>{{ t.duration }}</td><td class="right">{{ b.duration_min }} {{ t.min }}</td></tr>
       <tr><td>{{ t.day }}</td><td class="right">{{ b.starts_at.strftime('%a %d %b %Y') }}</td></tr>
       <tr><td>{{ t.time }}</td><td class="right">{{ b.starts_at.strftime('%H:%M') }} – {{ b.ends_at.strftime('%H:%M') }}</td></tr>
       {% if b.therapist %}<tr><td>{{ t.therapist }}</td><td class="right">{{ b.therapist.name }}</td></tr>{% endif %}
+      {% if b.area %}<tr><td>{{ t.area }}</td><td class="right">{{ b.area.name }}</td></tr>{% endif %}
+      {% if b.service_address %}<tr><td>{{ t.service_address }}</td><td class="right">{{ b.service_address }}</td></tr>{% endif %}
       {% if b.discount_idr %}<tr><td>{{ t.discount }}</td><td class="right">-{{ rp(b.discount_idr) }}</td></tr>{% endif %}
+      {% if b.travel_fee_idr %}<tr><td>{{ t.travel_fee }}</td><td class="right">{{ rp(b.travel_fee_idr) }}</td></tr>{% endif %}
       <tr class="grand"><td>{{ t.total }}</td><td class="right">{{ rp(b.total_idr) }}</td></tr>
     </table>
 
-    <p>
-      <a class="btn btn-primary" href="{{ wa(t.booking_code ~ ' ' ~ b.public_code) }}" target="_blank" rel="noopener">{{ t.order_whatsapp }}</a>
-      <a class="btn btn-ghost" href="/treatments">{{ t.treatments }}</a>
-    </p>
+    <p class="muted small">{{ t.payment }}: {{ b.payment_method }}</p>
+
+    <div class="hero-cta" style="justify-content:center">
+      <a class="btn btn-primary" href="{{ wa(t.booking_code ~ ' ' ~ b.public_code) }}"
+         target="_blank" rel="noopener">{{ icon('phone') }} WhatsApp</a>
+      <a class="btn btn-outline" href="/treatments">{{ t.treatments }}</a>
+    </div>
   </div>
-</section>
+</div>
 {% endblock %}

@@ -1,73 +1,78 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% from "_macros.html" import price_tag, sale_badge, product_card %}
 {% block content %}
 
-<nav class="crumbs page-head">
-  <a href="/">{{ t.home }}</a> › <a href="/products">{{ t.our_product_line }}</a>
-  {% if p.group %} › <a href="/products/{{ p.group.slug }}">{{ loc(p.group, 'name') }}</a>{% endif %}
-  › <span>{{ loc(p, 'name') }}</span>
-</nav>
+<section class="page-head">
+  <div class="wrap">
+    <nav class="crumbs">
+      <a href="/">{{ t.home }}</a> › <a href="/products">{{ t.our_product_line }}</a>
+      {% if p.group %} › <a href="/products/{{ p.group.slug }}">{{ loc(p.group, 'name') }}</a>{% endif %}
+      › <span>{{ loc(p, 'name') }}</span>
+    </nav>
+  </div>
+</section>
 
-<section class="detail">
+<div class="wrap detail">
   <div class="detail-media">
     {% set cover = gallery[0].url if gallery else p.image_url %}
     {% if cover %}
       <img src="{{ cover }}" alt="{{ loc(p, 'name') }}" width="800" height="800">
-    {% else %}<div class="img-ph big">🍯</div>{% endif %}
+    {% else %}<div class="img-ph big" style="aspect-ratio:1/1">🍯</div>{% endif %}
     {% if gallery|length > 1 %}
     <div class="thumbs">
-      {% for g in gallery %}<img src="{{ g.thumb_url or g.url }}" alt="{{ g.alt_en or loc(p,'name') }}" loading="lazy" width="120" height="120">{% endfor %}
+      {% for g in gallery %}<img src="{{ g.thumb_url or g.url }}" alt="{{ g.alt_en or loc(p,'name') }}" loading="lazy">{% endfor %}
     </div>
     {% endif %}
   </div>
 
   <div class="detail-body">
-    <h1>{{ loc(p, 'name') }}</h1>
+    {% if p.group %}<span class="eyebrow">{{ loc(p.group, 'name') }}</span>{% endif %}
+    <h1 style="font-size:clamp(2rem,4vw,2.75rem)">{{ loc(p, 'name') }}</h1>
     {% if p.size_label %}<p class="muted">{{ p.size_label }}{% if p.sku %} · {{ p.sku }}{% endif %}</p>{% endif %}
-    {{ sale_badge(price, t) }}
+
     {{ price_tag(price, rp, t, 'big') }}
     {% if price.has_discount %}
       <p class="save-line">{{ t.save }} {{ rp(price.off) }}{% if price.label %} — {{ price.label }}{% endif %}</p>
     {% endif %}
 
     {% if loc(p, 'short') %}<p class="lead">{{ loc(p, 'short') }}</p>{% endif %}
-
-    <p class="stock {{ 'ok' if p.in_stock else 'no' }}">
-      {{ t.in_stock if p.in_stock else t.out_of_stock }}
-    </p>
+    <p class="stock {{ 'ok' if p.in_stock else 'no' }}">{{ t.in_stock if p.in_stock else t.out_of_stock }}</p>
 
     <form method="post" action="/cart/add" class="buybox">
       <input type="hidden" name="product_id" value="{{ p.id }}">
       <input type="hidden" name="back" value="/product/{{ p.slug }}">
-      <label>{{ t.qty }}
+      <label style="margin-bottom:0">{{ t.qty }}
         <input type="number" name="qty" value="1" min="1" max="99" {{ 'disabled' if not p.in_stock }}>
       </label>
       <button class="btn btn-primary" type="submit" {{ 'disabled' if not p.in_stock }}>{{ t.add_to_cart }}</button>
-      <button class="btn btn-ghost" type="submit" name="buy_now" value="1" {{ 'disabled' if not p.in_stock }}>{{ t.checkout }}</button>
+      <button class="btn btn-outline" type="submit" name="buy_now" value="1" {{ 'disabled' if not p.in_stock }}>{{ t.checkout }}</button>
     </form>
 
-    <p><a class="wa-inline" href="{{ wa(loc(p,'name') ~ ' — ' ~ rp(price.final)) }}" target="_blank" rel="noopener">{{ t.order_whatsapp }}</a></p>
+    <p>
+      <a class="btn btn-outline btn-sm" href="{{ wa(loc(p,'name') ~ ' — ' ~ rp(price.final)) }}"
+         target="_blank" rel="noopener">{{ icon('phone') }} {{ t.order_whatsapp }}</a>
+    </p>
 
-    {% if loc(p, 'desc') %}
-    <div class="prose">{{ loc(p, 'desc')|nl2br }}</div>
-    {% endif %}
+    {% if loc(p, 'desc') %}<div class="prose">{{ loc(p, 'desc')|nl2br }}</div>{% endif %}
 
     {% if p.producer or p.nib %}
     <p class="muted small">
-      {% if p.producer %}{{ p.producer }}{% endif %}
-      {% if p.nib %} · NIB {{ p.nib }}{% endif %}
+      {% if p.producer %}{{ p.producer }}{% endif %}{% if p.nib %} · NIB {{ p.nib }}{% endif %}
     </p>
     {% endif %}
   </div>
-</section>
+</div>
 
 {% if related %}
-<section class="section section-alt">
-  <h2>{{ t.products }}</h2>
-  <div class="grid grid-4">
-    {% for r in related %}
-      {{ product_card(r, price_of('product', r), covers.get(r.id) or r.image_url, rp, t, loc) }}
-    {% endfor %}
+<section class="section section-sand">
+  <div class="wrap">
+    <div class="section-head"><h2>{{ t.products }}</h2></div>
+    <div class="grid grid-4" style="margin-top:2rem">
+      {% for r in related %}
+        {{ product_card(r, price_of('product', r), covers.get(r.id) or r.image_url, rp, t, loc) }}
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endif %}

@@ -21,8 +21,9 @@ from ...models.shop import (ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES,
                             DeliveryZone, Order, Product, ProductGroup)
 from ...models.site import (ContactMessage, FaqItem, MenuItem, Page,
                             SiteSetting)
-from ...models.spa import (BOOKING_STATUSES, Booking, HolidayHour, OpeningHour,
-                           Therapist, Treatment, TreatmentCategory)
+from ...models.spa import (BOOKING_STATUSES, Booking, Highlight, HolidayHour,
+                           OpeningHour, ServiceArea, Therapist, Treatment,
+                           TreatmentCategory, TreatmentOption)
 from ...models.user import User
 from ...money import to_int
 from ...services import media_service, seo_service, shop_service
@@ -31,11 +32,29 @@ from ...services.booking_service import hhmm
 bp = Blueprint("admin", __name__)
 
 SETTING_KEYS = [
-    "company_name", "tagline_en", "tagline_idn", "about_en", "about_idn",
+    # identity
+    "company_name", "brand_short", "tagline_en", "tagline_idn",
+    "about_en", "about_idn", "nib",
+    # contact
     "phone", "whatsapp", "email", "address", "city", "postal_code",
-    "lat", "lng", "maps_url", "price_range", "facebook_url", "instagram_url",
-    "tiktok_url", "og_image", "meta_desc", "bank_details", "slot_step_min",
-    "hero_image", "footer_note_en", "footer_note_idn", "nib",
+    "lat", "lng", "maps_url", "service_hours", "service_scope", "price_range",
+    "facebook_url", "instagram_url", "tiktok_url",
+    # home page copy
+    "hero_eyebrow_en", "hero_eyebrow_idn", "hero_line1_en", "hero_line1_idn",
+    "hero_line2_en", "hero_line2_idn", "hero_image",
+    "rating_value", "rating_note_en", "rating_note_idn",
+    "treatments_eyebrow_en", "treatments_intro_en", "treatments_intro_idn",
+    "experience_eyebrow_en", "experience_title_en", "experience_title_idn",
+    "therapists_eyebrow_en", "therapists_title_en", "therapists_title_idn",
+    "therapists_intro_en", "therapists_intro_idn",
+    "gallery_eyebrow_en", "products_eyebrow_en",
+    "areas_note_en", "areas_note_idn",
+    "reviews_eyebrow_en", "reviews_title_en", "reviews_title_idn",
+    "cta_eyebrow_en", "cta_title_en", "cta_title_idn",
+    "cta_text_en", "cta_text_idn",
+    # plumbing
+    "og_image", "meta_desc", "bank_details", "slot_step_min",
+    "footer_note_en", "footer_note_idn",
 ]
 
 
@@ -246,6 +265,7 @@ def treatments():
         tr.desc_idn = _s(f, "desc_idn")
         tr.duration_min = _i(f, "duration_min", 60) or 60
         tr.price_idr = to_int(_s(f, "price_idr"))
+        tr.per_person = _b(f, "per_person")
         tr.seo_title = _s(f, "seo_title")
         tr.seo_desc = _s(f, "seo_desc")
         tr.is_featured = _b(f, "is_featured")
@@ -288,6 +308,150 @@ def treatment_delete(tid):
     db.session.commit()
     flash(f"Archived: {tr.name_en}")
     return redirect(url_for("admin.treatments"))
+
+
+@bp.route("/treatments/<int:tid>/durations", methods=["POST"])
+def treatment_durations(tid):
+    """Add or update one duration tier — 60 / 90 / 120 minutes and its price."""
+    tr = _get_or_404(Treatment, tid)
+    f = request.form
+    oid = _i(f, "option_id")
+    if _s(f, "action") == "delete" and oid:
+        o = _get_or_404(TreatmentOption, oid)
+        if o.treatment_id == tr.id:
+            db.session.delete(o)
+            db.session.commit()
+            flash("Duration removed")
+        return redirect(url_for("admin.treatments", edit=tr.id))
+
+    o = _get_or_404(TreatmentOption, oid) if oid else TreatmentOption(
+        treatment_id=tr.id)
+    if o.treatment_id != tr.id:
+        abort(400)
+    o.duration_min = _i(f, "duration_min", 60) or 60
+    o.price_idr = to_int(_s(f, "price_idr"))
+    o.sort_order = _i(f, "sort_order")
+    o.is_active = _b(f, "is_active")
+    if not oid:
+        db.session.add(o)
+    db.session.commit()
+    flash(f"{tr.name_en}: {o.duration_min} min saved")
+    return redirect(url_for("admin.treatments", edit=tr.id))
+
+
+# ---------------------------------------------------------------- areas
+
+@bp.route("/areas", methods=["GET", "POST"])
+def areas():
+    if request.method == "POST":
+        f = request.form
+        aid = _i(f, "id")
+        a = _get_or_404(ServiceArea, aid) if aid else ServiceArea(name="", slug="")
+        a.name = _s(f, "name") or a.name or "Area"
+        a.slug = seo_service.unique_slug(ServiceArea, _s(f, "slug") or a.name,
+                                         ignore_id=a.id)
+        a.travel_fee_idr = to_int(_s(f, "travel_fee_idr"))
+        a.note_en = _s(f, "note_en")
+        a.note_idn = _s(f, "note_idn")
+        a.sort_order = _i(f, "sort_order")
+        a.is_active = _b(f, "is_active")
+        if not aid:
+            db.session.add(a)
+        _log("save", "service_area", a.name)
+        db.session.commit()
+        flash(f"Saved: {a.name}")
+        return redirect(url_for("admin.areas"))
+
+    edit_id = request.args.get("edit", type=int)
+    return render_template(
+        "admin/areas.html", active="areas",
+        rows=ServiceArea.query.order_by(ServiceArea.sort_order,
+                                        ServiceArea.id).all(),
+        edit=db.session.get(ServiceArea, edit_id) if edit_id else None)
+
+
+@bp.route("/areas/<int:aid>/delete", methods=["POST"])
+def area_delete(aid):
+    a = _get_or_404(ServiceArea, aid)
+    a.is_active = False       # bookings reference it
+    db.session.commit()
+    flash(f"Hidden: {a.name}")
+    return redirect(url_for("admin.areas"))
+
+
+# ---------------------------------------------------------------- therapists
+
+@bp.route("/therapists", methods=["GET", "POST"])
+def therapists():
+    if request.method == "POST":
+        f = request.form
+        tid = _i(f, "id")
+        th = _get_or_404(Therapist, tid) if tid else Therapist(name="")
+        th.name = _s(f, "name") or th.name or "Therapist"
+        th.role_en = _s(f, "role_en") or "Therapist"
+        th.role_idn = _s(f, "role_idn")
+        th.languages = _s(f, "languages")
+        th.bio_en = _s(f, "bio_en")
+        th.bio_idn = _s(f, "bio_idn")
+        th.is_available_today = _b(f, "is_available_today")
+        th.show_on_site = _b(f, "show_on_site")
+        th.sort_order = _i(f, "sort_order")
+        th.is_active = _b(f, "is_active")
+        if not tid:
+            db.session.add(th)
+        db.session.flush()
+
+        photo = request.files.get("photo")
+        if photo and photo.filename:
+            img = media_service.save_upload(photo, "therapist", th.id,
+                                            alt_en=th.name)
+            if img:
+                th.photo_url = img.url
+        _log("save", "therapist", th.name)
+        db.session.commit()
+        flash(f"Saved: {th.name}")
+        return redirect(url_for("admin.therapists"))
+
+    edit_id = request.args.get("edit", type=int)
+    return render_template(
+        "admin/therapists.html", active="therapists",
+        rows=Therapist.query.order_by(Therapist.sort_order, Therapist.id).all(),
+        edit=db.session.get(Therapist, edit_id) if edit_id else None)
+
+
+# ---------------------------------------------------------------- highlights
+
+@bp.route("/highlights", methods=["GET", "POST"])
+def highlights():
+    if request.method == "POST":
+        f = request.form
+        hid = _i(f, "id")
+        h = _get_or_404(Highlight, hid) if hid else Highlight(title_en="")
+        h.icon = _s(f, "icon") or "✦"
+        h.title_en = _s(f, "title_en") or "Highlight"
+        h.title_idn = _s(f, "title_idn")
+        h.text_en = _s(f, "text_en")
+        h.text_idn = _s(f, "text_idn")
+        h.sort_order = _i(f, "sort_order")
+        h.is_visible = _b(f, "is_visible")
+        if not hid:
+            db.session.add(h)
+        db.session.commit()
+        flash(f"Saved: {h.title_en}")
+        return redirect(url_for("admin.highlights"))
+
+    edit_id = request.args.get("edit", type=int)
+    return render_template(
+        "admin/highlights.html", active="highlights",
+        rows=Highlight.query.order_by(Highlight.sort_order, Highlight.id).all(),
+        edit=db.session.get(Highlight, edit_id) if edit_id else None)
+
+
+@bp.route("/highlights/<int:hid>/delete", methods=["POST"])
+def highlight_delete(hid):
+    db.session.delete(_get_or_404(Highlight, hid))
+    db.session.commit()
+    return redirect(url_for("admin.highlights"))
 
 
 @bp.route("/treatment-categories", methods=["GET", "POST"])
@@ -457,16 +621,6 @@ def schedule():
             _log("save", "hours", "opening hours")
             db.session.commit()
             flash("Opening hours saved")
-        elif f.get("form") == "therapist":
-            tid = _i(f, "id")
-            th = _get_or_404(Therapist, tid) if tid else Therapist(name="")
-            th.name = _s(f, "name") or "Therapist"
-            th.sort_order = _i(f, "sort_order")
-            th.is_active = _b(f, "is_active")
-            if not tid:
-                db.session.add(th)
-            db.session.commit()
-            flash(f"Saved: {th.name}")
         elif f.get("form") == "holiday":
             day = _day(f, "day")
             if day:
@@ -483,8 +637,6 @@ def schedule():
     hours = {h.weekday: h for h in OpeningHour.query.all()}
     return render_template(
         "admin/schedule.html", active="schedule", hours=hours, hhmm=hhmm,
-        therapists=Therapist.query.order_by(Therapist.sort_order,
-                                            Therapist.id).all(),
         holidays=HolidayHour.query.filter(HolidayHour.day >= date.today())
         .order_by(HolidayHour.day).all())
 
@@ -649,11 +801,13 @@ def messages():
 def media():
     if request.method == "POST":
         entity_type = _s(request.form, "entity_type")
+        # Site-wide collections (hero, gallery) hang off id 0, so an id of
+        # zero is valid here and only a missing type is rejected.
         entity_id = _i(request.form, "entity_id")
         files = request.files.getlist("photos")
         saved = 0
         for fs in files:
-            if fs and fs.filename and entity_type and entity_id:
+            if fs and fs.filename and entity_type:
                 if media_service.save_upload(fs, entity_type, entity_id,
                                              alt_en=_s(request.form, "alt_en")):
                     saved += 1
@@ -663,13 +817,15 @@ def media():
 
     entity_type = request.args.get("entity_type", "product")
     entity_id = request.args.get("entity_id", type=int)
-    rows = (media_service.gallery(entity_type, entity_id) if entity_id
+    rows = (media_service.gallery(entity_type, entity_id)
+            if entity_id is not None and entity_type
             else MediaImage.query.order_by(MediaImage.id.desc()).limit(60).all())
     return render_template(
         "admin/media.html", active="media", rows=rows,
         entity_type=entity_type, entity_id=entity_id,
         products=Product.query.order_by(Product.sort_order).all(),
-        treatments=Treatment.query.order_by(Treatment.sort_order).all())
+        treatments=Treatment.query.order_by(Treatment.sort_order).all(),
+        therapists=Therapist.query.order_by(Therapist.sort_order).all())
 
 
 @bp.route("/media/<int:mid>/delete", methods=["POST"])

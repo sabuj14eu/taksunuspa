@@ -1,5 +1,7 @@
 {# One price renderer for the whole site, so a discount looks the same on a
-   jar of honey and on a massage. `price` is a dict from pricing_service. #}
+   jar of honey, a massage, and a cart line. `price` is a dict from
+   pricing_service.price_of(). #}
+
 {% macro price_tag(price, rp, t, size='') %}
 <span class="price {{ size }}">
   {% if price.has_discount %}
@@ -16,8 +18,37 @@
   {% if price.has_discount %}<span class="sale-badge">{{ t.sale }} -{{ price.pct }}%</span>{% endif %}
 {% endmacro %}
 
+{# A treatment's duration tiers side by side — 60 / 90 / 120 min, each with
+   its own price and its own sale treatment. Falls back to the treatment's
+   own price when no durations are configured. #}
+{% macro duration_chips(tr, price_of, rp, t, loc, link=true) %}
+<div class="duration-chips">
+  {% if tr.active_options %}
+    {% for o in tr.active_options %}
+      {% set p = price_of('treatment', o) %}
+      <a class="duration-chip" href="/treatment/{{ tr.slug }}?option={{ o.id }}">
+        <div class="mins">{{ o.duration_min }} {{ t.min }}</div>
+        <div class="amounts">
+          {% if p.has_discount %}<span class="was">{{ rp(p.base) }}</span>{% endif %}
+          <span class="now">{{ rp(p.final) }}</span>
+        </div>
+      </a>
+    {% endfor %}
+  {% else %}
+    {% set p = price_of('treatment', tr) %}
+    <a class="duration-chip" href="/treatment/{{ tr.slug }}">
+      <div class="mins">{{ tr.duration_min }} {{ t.min }}</div>
+      <div class="amounts">
+        {% if p.has_discount %}<span class="was">{{ rp(p.base) }}</span>{% endif %}
+        <span class="now">{{ rp(p.final) }}</span>
+      </div>
+    </a>
+  {% endif %}
+</div>
+{% endmacro %}
+
 {% macro product_card(p, price, cover, rp, t, loc) %}
-<a class="card product-card" href="/product/{{ p.slug }}">
+<a class="card" href="/product/{{ p.slug }}">
   <div class="card-img">
     {% if cover %}<img src="{{ cover }}" alt="{{ loc(p, 'name') }}" loading="lazy" width="480" height="480">
     {% else %}<div class="img-ph">🍯</div>{% endif %}
@@ -26,24 +57,34 @@
   </div>
   <div class="card-body">
     <h3>{{ loc(p, 'name') }}</h3>
-    {% if p.size_label %}<p class="muted small">{{ p.size_label }}</p>{% endif %}
-    {% if loc(p, 'short') %}<p class="muted small">{{ loc(p, 'short')|truncate(90) }}</p>{% endif %}
+    {% if p.size_label %}<p class="muted small" style="margin:0">{{ p.size_label }}</p>{% endif %}
     {{ price_tag(price, rp, t) }}
   </div>
 </a>
 {% endmacro %}
 
-{% macro treatment_card(tr, price, cover, rp, t, loc) %}
-<a class="card treatment-card" href="/treatment/{{ tr.slug }}">
-  <div class="card-img">
-    {% if cover %}<img src="{{ cover }}" alt="{{ loc(tr, 'name') }}" loading="lazy" width="480" height="360">
+{% macro treatment_card(tr, price_of, cover, rp, t, loc) %}
+{% set p = price_of('treatment', tr.cheapest_option or tr) %}
+<a class="card" href="/treatment/{{ tr.slug }}">
+  <div class="card-img" style="aspect-ratio:4/3">
+    {% if cover %}<img src="{{ cover }}" alt="{{ loc(tr, 'name') }}" loading="lazy" width="600" height="450">
     {% else %}<div class="img-ph">💆</div>{% endif %}
-    {{ sale_badge(price, t) }}
+    {{ sale_badge(p, t) }}
   </div>
   <div class="card-body">
     <h3>{{ loc(tr, 'name') }}</h3>
-    <p class="muted small">{{ tr.duration_min }} {{ t.min }}</p>
-    {{ price_tag(price, rp, t) }}
+    <p class="muted small" style="margin:0">
+      {% if tr.active_options %}
+        {{ tr.active_options|map(attribute='duration_min')|join(' · ') }} {{ t.min }}
+      {% else %}{{ tr.duration_min }} {{ t.min }}{% endif %}
+      {%- if tr.per_person %} · {{ t.per_person }}{% endif %}
+    </p>
+    <span class="price">
+      <span class="muted small">{{ t.from }}</span>
+      {% if p.has_discount %}<span class="price-was">{{ rp(p.base) }}</span>{% endif %}
+      <span class="price-now">{{ rp(p.final) }}</span>
+      {% if p.has_discount %}<span class="price-off">-{{ p.pct }}%</span>{% endif %}
+    </span>
   </div>
 </a>
 {% endmacro %}

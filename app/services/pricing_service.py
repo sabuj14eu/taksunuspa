@@ -27,11 +27,14 @@ def _candidates(kind: str, item, with_code=None):
         "treatment_category": kind == "treatment" and category_id is not None,
         "treatment": kind == "treatment",
     }
+    # A treatment duration is priced as its parent treatment, so a discount
+    # scoped to "Balinese Massage" marks the 60, 90 and 120 minute rows alike.
+    own_id = getattr(item, "discount_target_id", None) or item.id
     target = {
         "product_group": group_id,
-        "product": item.id,
+        "product": own_id,
         "treatment_category": category_id,
-        "treatment": item.id,
+        "treatment": own_id,
     }
     out = []
     for d in Discount.query.filter_by(is_active=True).all():

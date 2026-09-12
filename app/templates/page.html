@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="page-head">
-  <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ loc(p, 'title') }}</span></nav>
-  <h1>{{ loc(p, 'title') }}</h1>
+  <div class="wrap">
+    <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ loc(p, 'title') }}</span></nav>
+    <h2 style="font-size:clamp(2.25rem,5vw,3.5rem)">{{ loc(p, 'title') }}</h2>
+  </div>
 </section>
-<section class="section">
-  <div class="prose">{{ loc(p, 'body')|nl2br }}</div>
+<section class="section" style="padding-top:2rem">
+  <div class="wrap"><div class="prose">{{ loc(p, 'body')|nl2br }}</div></div>
 </section>
 {% endblock %}

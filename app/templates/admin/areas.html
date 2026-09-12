@@ -1,0 +1,44 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Service areas</h1>
+<p class="muted">Where the therapists travel. These show as the “Areas we cover”
+  section on the website and in the booking form. A travel fee of 0 shows as
+  free travel.</p>
+
+<div class="panel">
+  <h2>{{ 'Edit area' if edit else 'Add area' }}</h2>
+  <form method="post" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label>Name *<input type="text" name="name" required maxlength="90" value="{{ edit.name if edit }}" placeholder="Seminyak"></label>
+    <label>Travel fee (IDR, 0 = free)<input type="text" name="travel_fee_idr" value="{{ edit.travel_fee_idr if edit else 0 }}"></label>
+    <label>Note (EN)<input type="text" name="note_en" maxlength="200" value="{{ edit.note_en or '' if edit }}"></label>
+    <label>Note (ID)<input type="text" name="note_idn" maxlength="200" value="{{ edit.note_idn or '' if edit }}"></label>
+    <label>Sort order<input type="number" name="sort_order" value="{{ edit.sort_order if edit else 0 }}"></label>
+    <label class="check"><input type="checkbox" name="is_active" {{ 'checked' if not edit or edit.is_active }}> Active</label>
+    <div class="wide">
+      <button class="btn btn-primary btn-sm" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-outline btn-sm" href="/admin/areas">Cancel</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Area</th><th>Travel fee</th><th>Active</th><th></th></tr></thead>
+    <tbody>
+    {% for a in rows %}
+      <tr>
+        <td><a href="/admin/areas?edit={{ a.id }}">{{ a.name }}</a></td>
+        <td>{{ rp(a.travel_fee_idr) if a.travel_fee_idr else 'Free' }}</td>
+        <td>{{ '✅' if a.is_active else '—' }}</td>
+        <td class="right">
+          <form method="post" action="/admin/areas/{{ a.id }}/delete"><button class="link-btn" type="submit">Hide</button></form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="muted">No areas yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

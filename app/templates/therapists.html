@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block content %}
+
+<section class="page-head">
+  <div class="wrap">
+    <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ t.therapists }}</span></nav>
+    <span class="eyebrow">{{ site.get('therapists_eyebrow_en','Your healers') }}</span>
+    <h2 style="font-size:clamp(2.25rem,5vw,3.5rem)">{{ t.therapists }}</h2>
+    <p class="lead">{{ site.get('therapists_intro_idn' if lang == 'id' else 'therapists_intro_en', '') }}</p>
+  </div>
+</section>
+
+<section class="section" style="padding-top:3rem">
+  <div class="wrap">
+    {% if rows %}
+    <div class="grid grid-2">
+      {% for th in rows %}
+      <article class="therapist-card">
+        <div class="photo">
+          {% if th.photo_url %}
+            <img src="{{ th.photo_url }}" alt="{{ th.name }}" loading="lazy" width="600" height="800">
+          {% else %}<div class="img-ph">🌸</div>{% endif %}
+        </div>
+        <div class="info">
+          {% if th.is_available_today %}
+          <span class="tag"><span class="dot"></span>{{ t.available_today }}</span>
+          {% endif %}
+          <h3>{{ th.name }}</h3>
+          <p class="muted small" style="margin:0">{{ loc(th, 'role') }}</p>
+          {% if th.languages %}<p class="small" style="margin-top:.75rem">{{ th.languages }}</p>{% endif %}
+          {% if loc(th, 'bio') %}<p class="small muted">{{ loc(th, 'bio') }}</p>{% endif %}
+          <p style="margin-top:1.25rem;margin-bottom:0">
+            <a class="btn btn-primary btn-sm" href="/treatments">
+              {{ t.book }} {{ icon('arrow-right') }}
+            </a>
+          </p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+      <p class="muted">{{ t.no_results }}</p>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

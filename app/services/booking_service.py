@@ -1,19 +1,23 @@
 # -*- coding: utf-8 -*-
-"""Treatment booking engine.
+"""Booking engine for a travelling spa.
 
-Carried over from the LokalnyDowoz spa vertical: opening hours give a slot
+Carried over from the LokalnyDowoz spa vertical: service hours give a slot
 grid, a therapist without an overlapping booking claims the slot, and the
-same overlap check runs again at write time so two people clicking the same
+same overlap check runs again at write time so two guests clicking the same
 slot cannot both get it.
+
+Adapted for a home spa — the guest picks a duration, gives the address the
+therapist should come to, and the area may add a travel fee.
 """
 from datetime import date, datetime, timedelta
 
 from ..extensions import db
-from ..models.spa import (OpeningHour, HolidayHour, Therapist, Booking,
-                          BOOKING_ACTIVE)
+from ..models.spa import (BOOKING_ACTIVE, Booking, HolidayHour, OpeningHour,
+                          ServiceArea, Therapist)
 from . import pricing_service
 
 LEAD_HOURS = 2          # earliest bookable slot from now
+TRAVEL_BUFFER_MIN = 30  # time between two bookings for the same therapist
 
 
 def hhmm(minutes) -> str:
@@ -35,8 +39,13 @@ def hours_for_day(day: date):
 
 
 def _free_therapist(starts_at, ends_at, therapist_id=None):
-    """The first therapist with no overlapping active booking. With no
-    therapist rows at all the spa books as one room, returning "venue"."""
+    """The first therapist with no overlapping booking. Because they travel
+    between guests, a buffer is added either side of each existing booking.
+    With no therapist rows at all the spa books as one resource."""
+    buffer = timedelta(minutes=TRAVEL_BUFFER_MIN)
+    window_start = starts_at - buffer
+    window_end = ends_at + buffer
+
     if therapist_id:
         pool = [db.session.get(Therapist, therapist_id)]
     else:
@@ -48,49 +57,59 @@ def _free_therapist(starts_at, ends_at, therapist_id=None):
         clash = (Booking.query
                  .filter(Booking.therapist_id.is_(None),
                          Booking.status.in_(BOOKING_ACTIVE),
-                         Booking.starts_at < ends_at,
-                         Booking.ends_at > starts_at).first())
+                         Booking.starts_at < window_end,
+                         Booking.ends_at > window_start).first())
         return None if clash else "venue"
 
     for t in pool:
         clash = (Booking.query
                  .filter(Booking.therapist_id == t.id,
                          Booking.status.in_(BOOKING_ACTIVE),
-                         Booking.starts_at < ends_at,
-                         Booking.ends_at > starts_at).first())
+                         Booking.starts_at < window_end,
+                         Booking.ends_at > window_start).first())
         if not clash:
             return t
     return None
 
 
-def slots_for(treatment, day: date, therapist_id=None, step_min=30):
+def duration_of(treatment, option=None) -> int:
+    if option is not None:
+        return option.duration_min
+    cheapest = treatment.cheapest_option
+    return cheapest.duration_min if cheapest else treatment.duration_min
+
+
+def slots_for(treatment, day: date, therapist_id=None, option=None,
+              step_min=30):
     win = hours_for_day(day)
     if not win or not treatment:
         return []
+    minutes = duration_of(treatment, option)
     step = max(15, step_min)
     cutoff = datetime.now() + timedelta(hours=LEAD_HOURS)
     out = []
     t = win[0]
-    while t + treatment.duration_min <= win[1]:
+    while t + minutes <= win[1]:
         starts = datetime.combine(day, datetime.min.time()) + timedelta(minutes=t)
         if starts >= cutoff:
-            ends = starts + timedelta(minutes=treatment.duration_min)
+            ends = starts + timedelta(minutes=minutes)
             if _free_therapist(starts, ends, therapist_id):
                 out.append({"time_min": t, "label": hhmm(t)})
         t += step
     return out
 
 
-def book(treatment, day: date, time_min: int, *, name, phone, email="", note="",
-         guests=1, therapist_id=None, lang="en", via="web",
-         payment_method="pay_at_spa"):
+def book(treatment, day: date, time_min: int, *, name, phone, option=None,
+         email="", note="", guests=1, therapist_id=None, area_id=None,
+         service_address="", lang="en", via="web", payment_method="cash"):
     """(booking, error_key). error_key is an i18n key, not a message."""
+    minutes = duration_of(treatment, option)
     win = hours_for_day(day)
-    if not win or time_min < win[0] or time_min + treatment.duration_min > win[1]:
+    if not win or time_min < win[0] or time_min + minutes > win[1]:
         return None, "slot_gone"
 
     starts = datetime.combine(day, datetime.min.time()) + timedelta(minutes=time_min)
-    ends = starts + timedelta(minutes=treatment.duration_min)
+    ends = starts + timedelta(minutes=minutes)
     if starts < datetime.now():
         return None, "slot_gone"
 
@@ -98,21 +117,33 @@ def book(treatment, day: date, time_min: int, *, name, phone, email="", note="",
     if not picked:
         return None, "slot_gone"
 
-    # Price the booking through the same engine the menu used, so the
-    # customer is charged the discount they were shown.
-    p = pricing_service.price_treatment(treatment)
+    # Priced through the same engine the menu used, so the guest is charged
+    # the discount they were shown.
+    priced = option if option is not None else treatment
+    p = pricing_service.price_of("treatment", priced)
+
     guests = max(1, int(guests or 1))
+    # A per-person treatment (couple massage) multiplies by heads; everything
+    # else is one price for the session however many people are in the room.
+    units = guests if treatment.per_person else 1
+
+    area = db.session.get(ServiceArea, int(area_id)) if area_id else None
+    travel = (area.travel_fee_idr or 0) if area else 0
 
     b = Booking(
         treatment_id=treatment.id,
+        option_id=option.id if option is not None else None,
         therapist_id=None if picked == "venue" else picked.id,
+        area_id=area.id if area else None,
         customer_name=(name or "")[:80], customer_phone=phone[:30],
         customer_email=(email or "")[:120],
+        service_address=(service_address or "")[:400],
         starts_at=starts, ends_at=ends, guests=guests,
-        treatment_name=treatment.name_en[:160],
-        base_price_idr=p["base"] * guests,
-        discount_idr=p["off"] * guests,
-        total_idr=p["final"] * guests,
+        treatment_name=treatment.name_en[:160], duration_min=minutes,
+        base_price_idr=p["base"] * units,
+        discount_idr=p["off"] * units,
+        travel_fee_idr=travel,
+        total_idr=p["final"] * units + travel,
         discount_label=(p["label"] or "")[:80] or None,
         payment_method=payment_method,
         note=(note or "")[:400], lang=lang, created_via=via)

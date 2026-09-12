@@ -1,0 +1,48 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Therapists</h1>
+<p class="muted">Each active therapist can take one guest at a time, with a
+  travel gap between bookings. With nobody listed the spa books as a single
+  resource. “Show on website” controls the public therapists section.</p>
+
+<div class="panel">
+  <h2>{{ 'Edit therapist' if edit else 'Add therapist' }}</h2>
+  <form method="post" enctype="multipart/form-data" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label>Name *<input type="text" name="name" required maxlength="80" value="{{ edit.name if edit }}"></label>
+    <label>Role (EN)<input type="text" name="role_en" maxlength="80" value="{{ edit.role_en if edit else 'Therapist' }}" placeholder="Senior therapist"></label>
+    <label>Role (ID)<input type="text" name="role_idn" maxlength="80" value="{{ edit.role_idn or '' if edit }}"></label>
+    <label>Languages<input type="text" name="languages" maxlength="120" value="{{ edit.languages if edit else 'English, Indonesian' }}"></label>
+    <label class="wide">Short bio (EN)<textarea name="bio_en" rows="3">{{ edit.bio_en or '' if edit }}</textarea></label>
+    <label class="wide">Short bio (ID)<textarea name="bio_idn" rows="3">{{ edit.bio_idn or '' if edit }}</textarea></label>
+    <label>Photo<input type="file" name="photo" accept="image/*"></label>
+    <label>Sort order<input type="number" name="sort_order" value="{{ edit.sort_order if edit else 0 }}"></label>
+    <label class="check"><input type="checkbox" name="is_available_today" {{ 'checked' if not edit or edit.is_available_today }}> Show “Available today”</label>
+    <label class="check"><input type="checkbox" name="show_on_site" {{ 'checked' if not edit or edit.show_on_site }}> Show on website</label>
+    <label class="check"><input type="checkbox" name="is_active" {{ 'checked' if not edit or edit.is_active }}> Takes bookings</label>
+    <div class="wide">
+      <button class="btn btn-primary btn-sm" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-outline btn-sm" href="/admin/therapists">Cancel</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <table class="table">
+    <thead><tr><th></th><th>Name</th><th>Role</th><th>On site</th><th>Bookable</th></tr></thead>
+    <tbody>
+    {% for th in rows %}
+      <tr>
+        <td>{% if th.photo_url %}<img class="mini" src="{{ th.photo_url }}" alt="">{% endif %}</td>
+        <td><a href="/admin/therapists?edit={{ th.id }}">{{ th.name }}</a></td>
+        <td>{{ th.role_en }}</td>
+        <td>{{ '✅' if th.show_on_site else '—' }}</td>
+        <td>{{ '✅' if th.is_active else '—' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">No therapists — booking as one resource.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

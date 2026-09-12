@@ -1,3 +1,4 @@
+{% from "_icons.html" import icon, wa_icon %}
 <!doctype html>
 <html lang="{{ lang }}">
 <head>
@@ -20,10 +21,10 @@
 <meta name="twitter:card" content="summary_large_image">
 
 <link rel="icon" href="/static/icon.svg">
-<meta name="theme-color" content="#1b4332">
+<meta name="theme-color" content="#1f4a3a">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/app.css">
 {% if jsonld %}<script type="application/ld+json">{{ jsonld|safe }}</script>{% endif %}
 {% if jsonld_crumbs %}<script type="application/ld+json">{{ jsonld_crumbs|safe }}</script>{% endif %}
@@ -33,34 +34,63 @@
 <body>
 
 {% if banner_discount %}
-<div class="promo-bar">
-  🎉 {{ loc(banner_discount, 'label') }} — {{ banner_discount.badge() }}
-</div>
+<div class="promo-bar">{{ loc(banner_discount, 'label') }} — {{ banner_discount.badge() }}</div>
 {% endif %}
 
-<header class="topbar">
-  <a class="brand" href="/">
-    <span class="brand-mark">🌺</span>
-    <span class="brand-text">{{ site.get('company_name','Taksu Nusa Spa') }}</span>
-  </a>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">TN</span>
+      <span class="brand-text">{{ site.get('brand_short','Taksu Nusa') }}</span>
+    </a>
 
-  <nav class="mainnav">
-    <a href="/" class="{{ 'on' if current_path == '/' }}">{{ t.home }}</a>
-    <a href="/treatments" class="{{ 'on' if current_path.startswith('/treatment') }}">{{ t.treatments }}</a>
-    <a href="/products" class="{{ 'on' if current_path.startswith('/product') }}">{{ t.our_product_line }}</a>
-    {% for it in nav_items %}
-      <a href="{{ it.url }}" class="{{ 'cta' if it.style == 'cta' }}">{% if it.icon %}{{ it.icon }} {% endif %}{{ loc(it, 'label') }}</a>
-    {% endfor %}
-    <a href="/contact" class="{{ 'on' if current_path == '/contact' }}">{{ t.contact }}</a>
-  </nav>
+    <nav class="mainnav">
+      <a href="/treatments" class="{{ 'on' if current_path.startswith('/treatment') }}">{{ t.treatments }}</a>
+      <a href="/#experience">{{ t.experience }}</a>
+      <a href="/therapists" class="{{ 'on' if current_path == '/therapists' }}">{{ t.therapists }}</a>
+      <a href="/#gallery">{{ t.gallery }}</a>
+      <a href="/products" class="{{ 'on' if current_path.startswith('/product') }}">{{ t.products }}</a>
+      <a href="/#areas">{{ t.areas }}</a>
+      {% for it in nav_items %}<a href="{{ it.url }}">{{ loc(it, 'label') }}</a>{% endfor %}
+    </nav>
 
-  <div class="topbar-actions">
-    <a class="cart-link" href="/cart" aria-label="{{ t.cart }}">🛒{% if cart_count %}<span class="badge">{{ cart_count }}</span>{% endif %}</a>
-    {% if site.get('phone') %}<a class="phone" href="tel:{{ site['phone']|replace(' ','') }}">{{ site['phone'] }}</a>{% endif %}
-    <span class="lang-switch">
-      <a href="/lang/en" class="{{ 'on' if lang == 'en' }}">EN</a>
-      <a href="/lang/id" class="{{ 'on' if lang == 'id' }}">ID</a>
-    </span>
+    <div class="header-actions">
+      <a class="cart-link" href="/cart" aria-label="{{ t.cart }}">
+        {{ icon('cart') }}{% if cart_count %}<span class="count">{{ cart_count }}</span>{% endif %}
+      </a>
+      <span class="lang-switch">
+        <a href="/lang/en" class="{{ 'on' if lang == 'en' }}">EN</a>
+        <a href="/lang/id" class="{{ 'on' if lang == 'id' }}">ID</a>
+      </span>
+      <a class="btn btn-outline btn-sm" href="{{ wa() }}" target="_blank" rel="noopener">
+        {{ icon('phone') }} WhatsApp
+      </a>
+      <a class="btn btn-primary btn-sm" href="/treatments">{{ t.book_now }}</a>
+      <button class="menu-toggle" type="button" aria-label="Menu"
+              aria-expanded="false" aria-controls="mobile-nav"
+              onclick="var n=document.getElementById('mobile-nav');
+                       var o=n.classList.toggle('open');
+                       this.setAttribute('aria-expanded',o)">
+        {{ icon('menu') }}
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-nav" id="mobile-nav">
+    <a href="/treatments">{{ t.treatments }}</a>
+    <a href="/#experience">{{ t.experience }}</a>
+    <a href="/therapists">{{ t.therapists }}</a>
+    <a href="/#gallery">{{ t.gallery }}</a>
+    <a href="/products">{{ t.products }}</a>
+    <a href="/#areas">{{ t.areas }}</a>
+    <a href="/contact">{{ t.contact }}</a>
+    {% for it in nav_items %}<a href="{{ it.url }}">{{ loc(it, 'label') }}</a>{% endfor %}
+    <a class="btn btn-outline btn-block" href="{{ wa() }}" target="_blank" rel="noopener">
+      {{ icon('phone') }} WhatsApp</a>
+    <a class="btn btn-primary btn-block" href="/treatments">{{ t.book_now }}</a>
+    <p class="small muted" style="margin-top:1rem">
+      <a href="/lang/en">English</a> · <a href="/lang/id">Bahasa Indonesia</a>
+    </p>
   </div>
 </header>
 
@@ -72,39 +102,57 @@
 </main>
 
 <footer class="site-footer">
-  <div class="foot-cols">
-    <div>
-      <h4>{{ site.get('company_name','Taksu Nusa Spa') }}</h4>
-      <p class="muted">{{ site.get('tagline_idn' if lang == 'id' else 'tagline_en', '') }}</p>
-      {% if site.get('address') %}<p class="muted">{{ site['address'] }}</p>{% endif %}
-      {% if site.get('phone') %}<p><a href="tel:{{ site['phone']|replace(' ','') }}">{{ site['phone'] }}</a></p>{% endif %}
-      {% if site.get('email') %}<p><a href="mailto:{{ site['email'] }}">{{ site['email'] }}</a></p>{% endif %}
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="/">
+          <span class="brand-mark">TN</span>
+          <span class="brand-text">{{ site.get('brand_short','Taksu Nusa') }}</span>
+        </a>
+        <p class="muted small" style="margin-top:1rem;max-width:24rem">
+          {{ site.get('tagline_idn' if lang == 'id' else 'tagline_en', '') }}
+        </p>
+      </div>
+
+      <div>
+        <h4>{{ t.explore }}</h4>
+        <a class="foot-link" href="/treatments">{{ t.treatments }}</a>
+        <a class="foot-link" href="/therapists">{{ t.therapists }}</a>
+        <a class="foot-link" href="/products">{{ t.products }}</a>
+        <a class="foot-link" href="/#areas">{{ t.areas }}</a>
+        <a class="foot-link" href="/contact">{{ t.contact }}</a>
+      </div>
+
+      <div>
+        <h4>{{ t.treatments }}</h4>
+        {% for c in spa_cats %}<a class="foot-link" href="/treatments/{{ c.slug }}">{{ loc(c, 'name') }}</a>{% endfor %}
+        {% for g in product_groups %}<a class="foot-link" href="/products/{{ g.slug }}">{{ loc(g, 'name') }}</a>{% endfor %}
+      </div>
+
+      <div>
+        <h4>{{ t.contact }}</h4>
+        {% if site.get('service_hours') %}<p class="foot-link">{{ site['service_hours'] }}</p>{% endif %}
+        {% if wa_number %}<a class="foot-link" href="{{ wa() }}" target="_blank" rel="noopener">WhatsApp: +{{ wa_number }}</a>{% endif %}
+        {% if site.get('phone') %}<a class="foot-link" href="tel:{{ site['phone']|replace(' ','') }}">{{ site['phone'] }}</a>{% endif %}
+        {% if site.get('email') %}<a class="foot-link" href="mailto:{{ site['email'] }}">{{ site['email'] }}</a>{% endif %}
+        {% if site.get('city') %}<p class="foot-link">{{ site['city'] }}</p>{% endif %}
+        {% if site.get('instagram_url') %}<a class="foot-link" href="{{ site['instagram_url'] }}" rel="noopener">Instagram</a>{% endif %}
+        {% if site.get('facebook_url') %}<a class="foot-link" href="{{ site['facebook_url'] }}" rel="noopener">Facebook</a>{% endif %}
+        {% for p in footer_pages %}<a class="foot-link" href="/p/{{ p.slug }}">{{ loc(p, 'title') }}</a>{% endfor %}
+      </div>
     </div>
-    <div>
-      <h4>{{ t.treatments }}</h4>
-      {% for c in spa_cats %}<a class="foot-link" href="/treatments/{{ c.slug }}">{{ loc(c, 'name') }}</a>{% endfor %}
+
+    <div class="foot-bottom">
+      <p>© {{ year }} {{ site.get('company_name','Taksu Nusa Spa') }}. {{ t.rights }}</p>
+      <p>{{ site.get('footer_note_idn' if lang == 'id' else 'footer_note_en', '') }}
+        {% if site.get('nib') %} · NIB {{ site['nib'] }}{% endif %}</p>
     </div>
-    <div>
-      <h4>{{ t.our_product_line }}</h4>
-      {% for g in product_groups %}<a class="foot-link" href="/products/{{ g.slug }}">{{ loc(g, 'name') }}</a>{% endfor %}
-    </div>
-    <div>
-      <h4>{{ t.contact }}</h4>
-      {% for p in footer_pages %}<a class="foot-link" href="/p/{{ p.slug }}">{{ loc(p, 'title') }}</a>{% endfor %}
-      <a class="foot-link" href="/contact">{{ t.contact }}</a>
-      {% if site.get('instagram_url') %}<a class="foot-link" href="{{ site['instagram_url'] }}" rel="noopener">Instagram</a>{% endif %}
-      {% if site.get('facebook_url') %}<a class="foot-link" href="{{ site['facebook_url'] }}" rel="noopener">Facebook</a>{% endif %}
-    </div>
-  </div>
-  <div class="foot-note muted">
-    {{ site.get('footer_note_idn' if lang == 'id' else 'footer_note_en', '') }}
-    {% if site.get('nib') %}<br>NIB: {{ site['nib'] }}{% endif %}
   </div>
 </footer>
 
 {% if wa_number %}
 <a class="wa-float" href="{{ wa() }}" target="_blank" rel="noopener" aria-label="WhatsApp">
-  <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.25-8.23a8.23 8.23 0 0 1 0 16.47m4.52-6.16c-.25-.12-1.47-.72-1.69-.81s-.39-.12-.56.13-.64.8-.79.97-.29.19-.54.06a6.7 6.7 0 0 1-1.98-1.22 7.4 7.4 0 0 1-1.37-1.7c-.14-.25-.01-.38.11-.5s.25-.29.37-.44.17-.25.25-.41a.46.46 0 0 0-.02-.44c-.06-.12-.56-1.35-.77-1.85s-.4-.42-.56-.43h-.47a.9.9 0 0 0-.65.31 2.75 2.75 0 0 0-.86 2.05c0 1.21.88 2.38 1 2.54s1.73 2.65 4.2 3.71c.59.26 1.04.41 1.4.52.59.19 1.12.16 1.55.1.47-.07 1.47-.6 1.67-1.18s.21-1.08.15-1.18-.22-.19-.47-.31"/></svg>
+  {{ wa_icon() }}
 </a>
 {% endif %}
 

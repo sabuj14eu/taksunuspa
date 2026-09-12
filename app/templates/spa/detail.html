@@ -1,86 +1,178 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% from "_macros.html" import price_tag, sale_badge %}
 {% block content %}
 
-<nav class="crumbs page-head">
-  <a href="/">{{ t.home }}</a> › <a href="/treatments">{{ t.treatments }}</a>
-  {% if tr.category %} › <a href="/treatments/{{ tr.category.slug }}">{{ loc(tr.category, 'name') }}</a>{% endif %}
-  › <span>{{ loc(tr, 'name') }}</span>
-</nav>
+<section class="page-head">
+  <div class="wrap">
+    <nav class="crumbs">
+      <a href="/">{{ t.home }}</a> › <a href="/treatments">{{ t.treatments }}</a>
+      {% if tr.category %} › <a href="/treatments/{{ tr.category.slug }}">{{ loc(tr.category, 'name') }}</a>{% endif %}
+      › <span>{{ loc(tr, 'name') }}</span>
+    </nav>
+  </div>
+</section>
 
-<section class="detail">
+<div class="wrap detail">
   <div class="detail-media">
     {% set cover = gallery[0].url if gallery else tr.image_url %}
-    {% if cover %}<img src="{{ cover }}" alt="{{ loc(tr, 'name') }}" width="800" height="600">
+    {% if cover %}
+      <img src="{{ cover }}" alt="{{ loc(tr, 'name') }}" width="900" height="675">
     {% else %}<div class="img-ph big">💆</div>{% endif %}
+    {% if gallery|length > 1 %}
+    <div class="thumbs">
+      {% for g in gallery %}<img src="{{ g.thumb_url or g.url }}" alt="{{ g.alt_en or loc(tr,'name') }}" loading="lazy">{% endfor %}
+    </div>
+    {% endif %}
   </div>
 
   <div class="detail-body">
-    <h1>{{ loc(tr, 'name') }}</h1>
-    <p class="muted">{{ tr.duration_min }} {{ t.min }}</p>
-    {{ sale_badge(price, t) }}
+    <span class="eyebrow">{{ loc(tr.category, 'name') if tr.category else t.treatments }}</span>
+    <h1 style="font-size:clamp(2rem,4vw,2.75rem)">{{ loc(tr, 'name') }}</h1>
+    <p class="muted">
+      {{ (option.duration_min if option else tr.duration_min) }} {{ t.min }}
+      {%- if tr.per_person %} · {{ t.per_person }}{% endif %}
+    </p>
+
     {{ price_tag(price, rp, t, 'big') }}
     {% if price.has_discount %}
       <p class="save-line">{{ t.save }} {{ rp(price.off) }}{% if price.label %} — {{ price.label }}{% endif %}</p>
     {% endif %}
 
-    {% if loc(tr, 'desc') %}<div class="prose">{{ loc(tr, 'desc')|nl2br }}</div>{% endif %}
+    {% if loc(tr, 'desc') %}<div class="prose" style="margin-top:1.5rem">{{ loc(tr, 'desc')|nl2br }}</div>{% endif %}
+
+    <p style="margin-top:1.5rem">
+      <a class="btn btn-outline" href="{{ wa(loc(tr,'name') ~ ' — ' ~ rp(price.final)) }}"
+         target="_blank" rel="noopener">{{ icon('phone') }} {{ t.book_whatsapp }}</a>
+    </p>
   </div>
-</section>
+</div>
 
-<section class="section section-alt" id="book">
-  <h2>{{ t.book_treatment }}</h2>
-
-  <form method="get" class="daypicker">
-    <label>{{ t.day }}
-      <select name="day" onchange="this.form.submit()">
-        {% for d in days %}
-          <option value="{{ d.isoformat() }}" {{ 'selected' if d == day }}>{{ d.strftime('%a %d %b') }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    {% if therapists %}
-    <label>{{ t.therapist }}
-      <select name="therapist" onchange="this.form.submit()">
-        <option value="">{{ t.any_therapist }}</option>
-        {% for th in therapists %}
-          <option value="{{ th.id }}" {{ 'selected' if therapist_id == th.id }}>{{ th.name }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    {% endif %}
-    <noscript><button class="btn btn-ghost" type="submit">{{ t.update }}</button></noscript>
-  </form>
-
-  {% if slots %}
-  <form method="post" action="/treatment/{{ tr.slug }}/book" class="bookform">
-    <input type="hidden" name="day" value="{{ day.isoformat() }}">
-    {% if therapist_id %}<input type="hidden" name="therapist_id" value="{{ therapist_id }}">{% endif %}
-
-    <fieldset class="slots">
-      <legend>{{ t.time }}</legend>
-      {% for s in slots %}
-        <label class="slot">
-          <input type="radio" name="time_min" value="{{ s.time_min }}" required>
-          <span>{{ s.label }}</span>
-        </label>
-      {% endfor %}
-    </fieldset>
-
-    <div class="bookfields">
-      <label>{{ t.name }}<input type="text" name="name" maxlength="80"></label>
-      <label>{{ t.phone }} *<input type="tel" name="phone" required maxlength="30" placeholder="+62 ..."></label>
-      <label>{{ t.email }}<input type="email" name="email" maxlength="120"></label>
-      <label>{{ t.qty }}<input type="number" name="guests" value="1" min="1" max="10"></label>
-      <label class="wide">{{ t.note }}<textarea name="note" rows="2" maxlength="400"></textarea></label>
+<section class="section section-ivory" id="book">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">{{ t.we_come_to_you }}</span>
+      <h2>{{ t.book_treatment }}</h2>
     </div>
 
-    <button class="btn btn-primary big" type="submit">{{ t.book }} — {{ rp(price.final) }}</button>
-  </form>
-  {% else %}
-    <p class="muted">{{ t.no_slots }}</p>
-    <p><a class="btn btn-primary" href="{{ wa(loc(tr,'name')) }}" target="_blank" rel="noopener">{{ t.order_whatsapp }}</a></p>
-  {% endif %}
+    <div class="booking-panel" style="margin-top:2rem">
+      {# Duration and day reload the slot grid, so they sit in their own GET
+         form; the POST below carries the choice the guest lands on. #}
+      <form method="get" class="daypicker">
+        {% if option %}<input type="hidden" name="option" value="{{ option.id }}">{% endif %}
+        <label>{{ t.day }}
+          <select name="day" onchange="this.form.submit()">
+            {% for d in days %}
+              <option value="{{ d.isoformat() }}" {{ 'selected' if d == day }}>{{ d.strftime('%a %d %b') }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        {% if therapists %}
+        <label>{{ t.therapist }}
+          <select name="therapist" onchange="this.form.submit()">
+            <option value="">{{ t.any_therapist }}</option>
+            {% for th in therapists %}
+              <option value="{{ th.id }}" {{ 'selected' if therapist_id == th.id }}>{{ th.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        {% endif %}
+        <noscript><button class="btn btn-outline btn-sm" type="submit">{{ t.update }}</button></noscript>
+      </form>
+
+      {% if options %}
+      <div class="option-picker">
+        {% for o in options %}
+          {% set op = price_of('treatment', o) %}
+          <a class="opt {{ 'is-on' if option and o.id == option.id }}"
+             href="/treatment/{{ tr.slug }}?option={{ o.id }}&day={{ day.isoformat() }}{% if therapist_id %}&therapist={{ therapist_id }}{% endif %}"
+             style="{{ 'border-color:var(--primary);background:oklch(0.36 0.06 160 / .06)' if option and o.id == option.id }}">
+            <span class="mins">{{ o.duration_min }} {{ t.min }}</span>
+            <span class="amounts">
+              {% if op.has_discount %}<span class="price-was">{{ rp(op.base) }}</span>{% endif %}
+              <span class="price-now" style="font-size:1rem">{{ rp(op.final) }}</span>
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if slots %}
+      <form method="post" action="/treatment/{{ tr.slug }}/book">
+        <input type="hidden" name="day" value="{{ day.isoformat() }}">
+        {% if option %}<input type="hidden" name="option_id" value="{{ option.id }}">{% endif %}
+        {% if therapist_id %}<input type="hidden" name="therapist_id" value="{{ therapist_id }}">{% endif %}
+
+        <fieldset class="slots">
+          <legend>{{ t.time }}</legend>
+          <div class="slot-grid">
+            {% for s in slots %}
+            <label class="slot">
+              <input type="radio" name="time_min" value="{{ s.time_min }}" required>
+              <span>{{ s.label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <div class="bookfields">
+          <label>{{ t.name }}<input type="text" name="name" maxlength="80"></label>
+          <label>{{ t.phone }} *<input type="tel" name="phone" required maxlength="30" placeholder="+62 ..."></label>
+          <label>{{ t.email }}<input type="email" name="email" maxlength="120"></label>
+          <label>{{ t.guests }}<input type="number" name="guests" value="1" min="1" max="10"></label>
+
+          {% if areas %}
+          <label>{{ t.area }} *
+            <select name="area_id" required>
+              <option value="">{{ t.pick_area }}</option>
+              {% for a in areas %}
+                <option value="{{ a.id }}">{{ a.name }}{% if a.travel_fee_idr %} — {{ t.travel_fee }} {{ rp(a.travel_fee_idr) }}{% else %} — {{ t.free_travel }}{% endif %}</option>
+              {% endfor %}
+            </select>
+          </label>
+          {% endif %}
+
+          <label class="wide">{{ t.service_address }} *
+            <textarea name="service_address" rows="2" required maxlength="400"
+                      placeholder="{{ t.service_address_help }}"></textarea>
+          </label>
+
+          <label class="wide">{{ t.note }}<textarea name="note" rows="2" maxlength="400"></textarea></label>
+
+          <div class="wide">
+            <label style="margin-bottom:.5rem">{{ t.payment }}</label>
+            <div class="pay-options">
+              <label class="pay-opt">
+                <input type="radio" name="payment_method" value="cash" checked>
+                <span><strong>Cash to the therapist</strong><br>
+                  <span class="muted small">Pay after the treatment.</span></span>
+              </label>
+              <label class="pay-opt">
+                <input type="radio" name="payment_method" value="transfer">
+                <span><strong>Bank transfer</strong><br>
+                  <span class="muted small">We send the details when we confirm.</span></span>
+              </label>
+              <label class="pay-opt">
+                <input type="radio" name="payment_method" value="online">
+                <span><strong>Online payment</strong><br>
+                  <span class="muted small">Pay by link (QRIS / card).</span></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" type="submit">
+          {{ t.book }} — {{ rp(price.final) }} {{ icon('arrow-right') }}
+        </button>
+      </form>
+      {% else %}
+        <p class="muted">{{ t.no_slots }}</p>
+        <a class="btn btn-primary" href="{{ wa(loc(tr,'name')) }}" target="_blank" rel="noopener">
+          {{ icon('phone') }} {{ t.book_whatsapp }}
+        </a>
+      {% endif %}
+    </div>
+  </div>
 </section>
 
 {% endblock %}

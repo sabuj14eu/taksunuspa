@@ -8,12 +8,15 @@
   <form method="post" enctype="multipart/form-data" class="gridform">
     <label>Attach to
       <select name="entity_type">
-        <option value="product" {{ 'selected' if entity_type == 'product' }}>Product</option>
-        <option value="treatment" {{ 'selected' if entity_type == 'treatment' }}>Treatment</option>
-        <option value="site" {{ 'selected' if entity_type == 'site' }}>Site (hero / share image)</option>
+        <option value="hero" {{ 'selected' if entity_type == 'hero' }}>Home page hero (site-wide)</option>
+        <option value="gallery" {{ 'selected' if entity_type == 'gallery' }}>Home page gallery (site-wide)</option>
+        <option value="treatment_hero" {{ 'selected' if entity_type == 'treatment_hero' }}>Treatments section image (site-wide)</option>
+        <option value="product" {{ 'selected' if entity_type == 'product' }}>A product</option>
+        <option value="treatment" {{ 'selected' if entity_type == 'treatment' }}>A treatment</option>
+        <option value="therapist" {{ 'selected' if entity_type == 'therapist' }}>A therapist</option>
       </select>
     </label>
-    <label>Item
+    <label>Which item (ignored for site-wide)
       <select name="entity_id">
         <option value="0">— site-wide —</option>
         <optgroup label="Products">
@@ -22,8 +25,15 @@
         <optgroup label="Treatments">
           {% for tr in treatments %}<option value="{{ tr.id }}" {{ 'selected' if entity_type=='treatment' and entity_id == tr.id }}>{{ tr.name_en }}</option>{% endfor %}
         </optgroup>
+        <optgroup label="Therapists">
+          {% for th in therapists %}<option value="{{ th.id }}" {{ 'selected' if entity_type=='therapist' and entity_id == th.id }}>{{ th.name }}</option>{% endfor %}
+        </optgroup>
       </select>
     </label>
+    <p class="wide muted small">
+      Site-wide collections use “— site-wide —”. The hero is the big photo
+      behind the home page headline; the gallery is the three-up row.
+    </p>
     <label class="wide">ALT text (English, helps image search)<input type="text" name="alt_en" maxlength="200"></label>
     <label class="wide">Files<input type="file" name="photos" accept="image/*" multiple></label>
     <div class="wide"><button class="btn btn-primary" type="submit">Upload</button></div>

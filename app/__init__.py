@@ -68,7 +68,8 @@ def create_app():
             cfg = SiteSetting.all_dict()
             nav = (MenuItem.query.filter_by(is_visible=True)
                    .order_by(MenuItem.sort_order, MenuItem.id).all())
-            footer_pages = (Page.query.filter_by(is_visible=True)
+            footer_pages = (Page.query.filter_by(is_visible=True,
+                                                 show_in_menu=True)
                             .order_by(Page.sort_order, Page.id).all())
             product_groups = (ProductGroup.query.filter_by(is_active=True)
                               .order_by(ProductGroup.sort_order,
@@ -96,6 +97,7 @@ def create_app():
             "site_url": app.config["SITE_URL"],
             "cart_count": _cart_count(),
             "current_path": request.path,
+            "year": date.today().year,
         }
 
     @app.template_filter("nl2br")

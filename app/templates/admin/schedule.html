@@ -1,11 +1,13 @@
 {% extends "admin/layout.html" %}
 {% set weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] %}
 {% block content %}
-<h1>Hours &amp; therapists</h1>
+<h1>Service hours</h1>
+<p class="muted">Therapists are managed on <a href="/admin/therapists">their own page</a>.</p>
 
 <div class="panel">
-  <h2>Opening hours</h2>
-  <p class="muted">These drive the bookable time slots and the opening hours Google reads.</p>
+  <h2>Daily hours</h2>
+  <p class="muted">When a treatment can start. These drive the bookable time
+    slots and the opening hours Google reads.</p>
   <form method="post">
     <input type="hidden" name="form" value="hours">
     <table class="table">
@@ -24,44 +26,6 @@
     </table>
     <button class="btn btn-primary" type="submit">Save hours</button>
   </form>
-</div>
-
-<div class="panel">
-  <h2>Therapists</h2>
-  <p class="muted">Each therapist can take one guest at a time. With no therapists listed the spa books as a single room.</p>
-  <form method="post" class="gridform">
-    <input type="hidden" name="form" value="therapist">
-    <label>Name *<input type="text" name="name" required maxlength="80"></label>
-    <label>Sort order<input type="number" name="sort_order" value="0"></label>
-    <label class="check"><input type="checkbox" name="is_active" checked> Active</label>
-    <div class="wide"><button class="btn btn-primary" type="submit">Add therapist</button></div>
-  </form>
-
-  <table class="table">
-    <thead><tr><th>Name</th><th>Active</th></tr></thead>
-    <tbody>
-    {% for th in therapists %}
-      <tr>
-        <td>{{ th.name }}</td>
-        <td>
-          <form method="post" class="inline">
-            <input type="hidden" name="form" value="therapist">
-            <input type="hidden" name="id" value="{{ th.id }}">
-            <input type="hidden" name="name" value="{{ th.name }}">
-            <input type="hidden" name="sort_order" value="{{ th.sort_order }}">
-            {% if th.is_active %}
-              <button class="link-btn" type="submit">Deactivate</button>
-            {% else %}
-              <button class="link-btn" type="submit" name="is_active" value="1">Activate</button>
-            {% endif %}
-          </form>
-        </td>
-      </tr>
-    {% else %}
-      <tr><td colspan="2" class="muted">No therapists — booking as one room.</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
 </div>
 
 <div class="panel">

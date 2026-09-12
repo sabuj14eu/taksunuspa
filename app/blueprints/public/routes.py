@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Home, CMS pages, contact."""
+"""Home, therapists, CMS pages, contact."""
 from flask import (Blueprint, abort, current_app, flash, redirect,
                    render_template, request, url_for)
 
 from ...extensions import db
 from ...i18n import lang, loc, t
+from ...models.media import MediaImage, Review
 from ...models.shop import Product
 from ...models.site import ContactMessage, FaqItem, Page, SiteSetting
-from ...models.spa import OpeningHour, Treatment
+from ...models.spa import (Highlight, OpeningHour, ServiceArea, Therapist,
+                           Treatment)
 from ...services import media_service, seo_service
 from ...services.booking_service import hhmm
 from ...services.notify_service import telegram_admin
@@ -22,9 +24,20 @@ WEEKDAYS = {
 SCHEMA_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
                "Saturday", "Sunday"]
 
+TRUST_ITEMS = {
+    "en": [("shield", "Certified therapists"),
+           ("users", "Female & male therapists"),
+           ("map-pin", "Hotel & villa service"),
+           ("card", "Cash & online payment")],
+    "id": [("shield", "Terapis bersertifikat"),
+           ("users", "Terapis pria & wanita"),
+           ("map-pin", "Layanan hotel & vila"),
+           ("card", "Bayar tunai & online")],
+}
+
 
 def opening_rows():
-    """[(day name, "09:00 – 21:00" or None)] for the footer and contact page."""
+    """[(day name, "09:00 – 23:00" or None)] for the footer and contact page."""
     names = WEEKDAYS.get(lang(), WEEKDAYS["en"])
     rows = {h.weekday: h for h in OpeningHour.query.all()}
     out = []
@@ -38,7 +51,6 @@ def opening_rows():
 
 
 def opening_schema():
-    """openingHoursSpecification for the DaySpa JSON-LD."""
     out = []
     for h in OpeningHour.query.order_by(OpeningHour.weekday).all():
         if h.is_closed or h.open_min is None:
@@ -50,6 +62,14 @@ def opening_schema():
 
 
 def spa_jsonld(site):
+    """DaySpa, with the areas served — the search signal that matters most
+    for a business that travels to the guest rather than the other way round."""
+    rating, count = media_service.rating_of("site", 0)
+    areas = [a.name for a in ServiceArea.query.filter_by(is_active=True)
+             .order_by(ServiceArea.sort_order).all()]
+    extra = {}
+    if areas:
+        extra["areaServed"] = [{"@type": "Place", "name": n} for n in areas]
     return seo_service.jsonld_spa(
         name=site.get("company_name", "Taksu Nusa Spa"),
         url=current_app.config["SITE_URL"],
@@ -59,39 +79,71 @@ def spa_jsonld(site):
         postal=site.get("postal_code"), phone=site.get("phone"),
         lat=site.get("lat"), lng=site.get("lng"),
         price_range=site.get("price_range", "$$"),
-        opening=opening_schema())
+        opening=opening_schema(), rating=rating, review_count=count,
+        extra=extra)
 
 
 @bp.route("/")
 def home():
     site = SiteSetting.all_dict()
+
     treatments = (Treatment.query.filter_by(is_active=True, is_featured=True)
-                  .order_by(Treatment.sort_order, Treatment.id).limit(6).all())
+                  .order_by(Treatment.sort_order, Treatment.id).limit(4).all())
     if not treatments:
         treatments = (Treatment.query.filter_by(is_active=True)
                       .order_by(Treatment.sort_order, Treatment.id)
-                      .limit(6).all())
+                      .limit(4).all())
+
     products = (Product.query.filter_by(is_active=True, is_featured=True)
-                .order_by(Product.sort_order, Product.id).limit(8).all())
+                .order_by(Product.sort_order, Product.id).limit(4).all())
     if not products:
         products = (Product.query.filter_by(is_active=True)
-                    .order_by(Product.sort_order, Product.id).limit(8).all())
+                    .order_by(Product.sort_order, Product.id).limit(4).all())
+
+    faqs = (FaqItem.query.filter_by(is_visible=True)
+            .order_by(FaqItem.sort_order, FaqItem.id).all())
 
     title, desc = seo_service.meta_for(
         "home", lang(), brand=site.get("company_name", "Taksu Nusa Spa"),
         city=site.get("city", "Bali"), seo_desc=site.get("meta_desc"))
-    faqs = (FaqItem.query.filter_by(is_visible=True)
-            .order_by(FaqItem.sort_order, FaqItem.id).all())
+
     return render_template(
         "home.html", meta_title=title, meta_desc=desc,
+        hero_image=site.get("hero_image") or media_service.cover_url("hero", 0),
+        treatment_hero=media_service.cover_url("treatment_hero", 0),
         treatments=treatments, products=products,
-        product_covers=media_service.covers_for("product", [p.id for p in products]),
-        treatment_covers=media_service.covers_for("treatment",
-                                                  [x.id for x in treatments]),
-        faqs=faqs, opening=opening_rows(),
+        product_covers=media_service.covers_for("product",
+                                                [p.id for p in products]),
+        highlights=(Highlight.query.filter_by(is_visible=True)
+                    .order_by(Highlight.sort_order, Highlight.id).all()),
+        therapists=(Therapist.query.filter_by(is_active=True, show_on_site=True)
+                    .order_by(Therapist.sort_order, Therapist.id).limit(2).all()),
+        gallery_images=(MediaImage.query.filter_by(entity_type="gallery")
+                        .order_by(MediaImage.sort_order, MediaImage.id)
+                        .limit(6).all()),
+        areas=(ServiceArea.query.filter_by(is_active=True)
+               .order_by(ServiceArea.sort_order, ServiceArea.id).all()),
+        reviews=(Review.query.filter_by(is_approved=True)
+                 .order_by(Review.created_at.desc()).limit(3).all()),
+        faqs=faqs, trust_items=TRUST_ITEMS.get(lang(), TRUST_ITEMS["en"]),
         jsonld=spa_jsonld(site),
         jsonld_faq=seo_service.jsonld_faq(
             [(loc(f, "question"), loc(f, "answer")) for f in faqs]))
+
+
+@bp.route("/therapists")
+def therapists():
+    site = SiteSetting.all_dict()
+    rows = (Therapist.query.filter_by(is_active=True, show_on_site=True)
+            .order_by(Therapist.sort_order, Therapist.id).all())
+    base = current_app.config["SITE_URL"]
+    title, desc = seo_service.meta_for(
+        "therapists", lang(), brand=site.get("company_name", "Taksu Nusa Spa"),
+        city=site.get("city", "Bali"))
+    return render_template(
+        "therapists.html", meta_title=title, meta_desc=desc, rows=rows,
+        jsonld_crumbs=seo_service.jsonld_breadcrumbs(
+            [(t()["home"], base + "/"), (t()["therapists"], None)]))
 
 
 @bp.route("/p/<slug>")
@@ -103,8 +155,8 @@ def page(slug):
         "page", lang(), name=loc(p, "title"), seo_title=p.seo_title,
         seo_desc=p.seo_desc)
     return render_template("page.html", p=p, meta_title=title, meta_desc=desc,
-                           jsonld=seo_service.jsonld_breadcrumbs(
-                               [("Home", current_app.config["SITE_URL"] + "/"),
+                           jsonld_crumbs=seo_service.jsonld_breadcrumbs(
+                               [(t()["home"], current_app.config["SITE_URL"] + "/"),
                                 (loc(p, "title"), None)]))
 
 
@@ -131,5 +183,8 @@ def contact():
     title, desc = seo_service.meta_for(
         "contact", lang(), brand=site.get("company_name", "Taksu Nusa Spa"),
         city=site.get("city", "Bali"))
-    return render_template("contact.html", meta_title=title, meta_desc=desc,
-                           opening=opening_rows(), jsonld=spa_jsonld(site))
+    return render_template(
+        "contact.html", meta_title=title, meta_desc=desc,
+        opening=opening_rows(), jsonld=spa_jsonld(site),
+        areas=(ServiceArea.query.filter_by(is_active=True)
+               .order_by(ServiceArea.sort_order).all()))

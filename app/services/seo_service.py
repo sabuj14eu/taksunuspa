@@ -60,35 +60,41 @@ def meta_for(kind: str, lang="en", **kw):
 
     if lang == "id":
         titles = {
-            "home": f"{brand} — Spa & Pijat di {city} | Booking Online",
-            "treatments": f"Menu Spa & Harga Pijat {city} {year} | {brand}",
-            "treatment": f"{name} — Pijat & Spa {city} | {brand}",
+            "home": f"{brand} — Home Spa & Pijat Panggilan {city} | Booking Online",
+            "treatments": f"Menu & Harga Pijat Panggilan {city} {year} | {brand}",
+            "treatment": f"{name} — Pijat Panggilan ke Vila & Hotel {city} | {brand}",
             "products": f"Produk Kami — Madu Asli Bali & Produk Spa | {brand}",
             "product_group": f"{name} — Produk Alami Bali | {brand}",
             "product": f"{name} {price} — Kirim ke Seluruh {city} | {brand}",
-            "contact": f"Kontak & Lokasi — {brand}, {city}",
+            "contact": f"Kontak & Area Layanan — {brand}, {city}",
+            "therapists": f"Terapis Kami — Pijat ke Vila & Hotel {city} | {brand}",
         }
         default_desc = {
             "product": f"{name} asli, tanpa gula tambahan. Pesan online, "
                        f"bayar tunai saat pengiriman atau transfer.",
-            "treatment": f"{name} di {brand}. Booking online, terapis "
-                         f"berpengalaman, harga jelas.",
+            "treatment": f"{name} — terapis datang ke vila, hotel atau rumah "
+                         f"Anda di {city}. Booking online, harga jelas.",
+            "therapists": f"Terapis bersertifikat {brand} — datang ke vila, "
+                          f"hotel atau rumah Anda di {city}.",
         }
     else:
         titles = {
-            "home": f"{brand} — Balinese Spa & Massage in {city} | Book Online",
-            "treatments": f"Spa Menu & Massage Prices {city} {year} | {brand}",
-            "treatment": f"{name} — Massage & Spa in {city} | {brand}",
+            "home": f"{brand} — Premium Balinese Home Spa in {city} | Book Online",
+            "treatments": f"Massage Menu & Prices {city} {year} | {brand}",
+            "treatment": f"{name} — Villa & Hotel Massage in {city} | {brand}",
             "products": f"Our Product Line — Pure Bali Honey & Spa Products | {brand}",
             "product_group": f"{name} — Natural Bali Products | {brand}",
             "product": f"{name} {price} — Delivered Across {city} | {brand}",
-            "contact": f"Contact & Location — {brand}, {city}",
+            "contact": f"Contact & Service Areas — {brand}, {city}",
+            "therapists": f"Our Therapists — Villa & Hotel Massage {city} | {brand}",
         }
         default_desc = {
             "product": f"{name} — 100% natural, no added sugar. Order online, "
                        f"pay cash on delivery or by transfer. Delivery across {city}.",
-            "treatment": f"Book {name} at {brand}. Online booking, experienced "
-                         f"therapists, clear pricing.",
+            "treatment": f"Book {name} — our therapist comes to your villa, "
+                         f"hotel or home in {city}. Online booking, clear pricing.",
+            "therapists": f"Certified {brand} therapists who come to your "
+                          f"villa, hotel or home anywhere in {city}.",
         }
 
     title = titles.get(kind) or (f"{name} | {brand}" if name else brand)
@@ -102,7 +108,7 @@ def meta_for(kind: str, lang="en", **kw):
 
 def jsonld_spa(*, name, url, image=None, address=None, city="Bali",
                postal=None, phone=None, lat=None, lng=None, price_range=None,
-               opening=None, rating=None, review_count=0):
+               opening=None, rating=None, review_count=0, extra=None):
     data = {"@context": "https://schema.org", "@type": "DaySpa",
             "name": name, "url": url}
     if image:
@@ -126,6 +132,8 @@ def jsonld_spa(*, name, url, image=None, address=None, city="Bali",
         data["aggregateRating"] = {"@type": "AggregateRating",
                                    "ratingValue": rating, "bestRating": 5,
                                    "reviewCount": review_count}
+    if extra:
+        data.update(extra)
     return json.dumps(data, ensure_ascii=False)
 
 

@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block content %}
-<section class="section confirm">
+<div class="wrap confirm">
   <div class="confirm-card">
     <div class="tick">✓</div>
-    <h1>{{ t.order_received }}</h1>
-    <p class="lead">{{ t.we_will_confirm }}</p>
+    <h1 style="font-size:2rem">{{ t.order_received }}</h1>
+    <p class="lead" style="margin-inline:auto">{{ t.we_will_confirm }}</p>
     <p class="code">{{ t.order_code }}: <strong>{{ o.public_code }}</strong></p>
 
     <table class="table">
@@ -19,16 +20,15 @@
       <tr class="grand"><td>{{ t.total }}</td><td class="right">{{ rp(o.total_idr) }}</td></tr>
     </table>
 
-    <p class="muted">{{ t.payment }}: {{ o.payment_method }}</p>
-    {% if o.payment_method == 'transfer' and bank %}
-      <div class="bank-box">{{ bank|nl2br }}</div>
-    {% endif %}
-    {% if o.address %}<p class="muted">{{ t.address }}: {{ o.address }}</p>{% endif %}
+    <p class="muted small">{{ t.payment }}: {{ o.payment_method }}</p>
+    {% if o.payment_method == 'transfer' and bank %}<div class="bank-box">{{ bank|nl2br }}</div>{% endif %}
+    {% if o.address %}<p class="muted small">{{ t.address }}: {{ o.address }}</p>{% endif %}
 
-    <p>
-      <a class="btn btn-primary" href="{{ wa(t.order_code ~ ' ' ~ o.public_code) }}" target="_blank" rel="noopener">{{ t.order_whatsapp }}</a>
-      <a class="btn btn-ghost" href="/products">{{ t.continue_shopping }}</a>
-    </p>
+    <div class="hero-cta" style="justify-content:center">
+      <a class="btn btn-primary" href="{{ wa(t.order_code ~ ' ' ~ o.public_code) }}"
+         target="_blank" rel="noopener">{{ icon('phone') }} WhatsApp</a>
+      <a class="btn btn-outline" href="/products">{{ t.continue_shopping }}</a>
+    </div>
   </div>
-</section>
+</div>
 {% endblock %}

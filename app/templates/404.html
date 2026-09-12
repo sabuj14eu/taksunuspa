@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="section confirm">
+<div class="wrap confirm">
   <div class="confirm-card">
-    <h1>404</h1>
-    <p class="lead">{{ t.no_results }}</p>
-    <p>
+    <h1 style="font-size:4rem;margin-bottom:.2em">404</h1>
+    <p class="lead" style="margin-inline:auto">{{ t.no_results }}</p>
+    <div class="hero-cta" style="justify-content:center">
       <a class="btn btn-primary" href="/">{{ t.home }}</a>
-      <a class="btn btn-ghost" href="/products">{{ t.our_product_line }}</a>
-    </p>
+      <a class="btn btn-outline" href="/treatments">{{ t.treatments }}</a>
+    </div>
   </div>
-</section>
+</div>
 {% endblock %}

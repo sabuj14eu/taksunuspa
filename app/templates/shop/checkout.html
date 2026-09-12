@@ -1,67 +1,72 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="page-head"><h1>{{ t.checkout }}</h1></section>
+<section class="page-head">
+  <div class="wrap"><h2 style="font-size:clamp(2rem,4vw,3rem)">{{ t.checkout }}</h2></div>
+</section>
 
-<form method="post" class="section checkout">
-  <div class="checkout-form">
-    <h2>{{ t.your_details }}</h2>
-    <label>{{ t.name }}<input type="text" name="name" required maxlength="80"></label>
-    <label>{{ t.phone }} *<input type="tel" name="phone" required maxlength="30" placeholder="+62 ..."></label>
-    <label>{{ t.email }}<input type="email" name="email" maxlength="120"></label>
-    <label>{{ t.address }}<textarea name="address" rows="3" maxlength="400"></textarea></label>
+<section class="section" style="padding-top:2rem">
+  <div class="wrap">
+    <form method="post" class="checkout">
+      <div>
+        <h3 style="font-family:var(--font-display);font-size:1.5rem">{{ t.your_details }}</h3>
+        <div class="gridform">
+          <label class="wide">{{ t.name }}<input type="text" name="name" required maxlength="80"></label>
+          <label>{{ t.phone }} *<input type="tel" name="phone" required maxlength="30" placeholder="+62 ..."></label>
+          <label>{{ t.email }}<input type="email" name="email" maxlength="120"></label>
+          <label class="wide">{{ t.address }}<textarea name="address" rows="3" maxlength="400"></textarea></label>
+          {% if zones %}
+          <label class="wide">{{ t.delivery }}
+            <select name="zone_id">
+              <option value="">—</option>
+              {% for z in zones %}
+                <option value="{{ z.id }}" {{ 'selected' if zone_id == z.id }}>{{ loc(z, 'name') }} — {{ rp(z.fee_idr) }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          {% endif %}
+          <label class="wide">{{ t.note }}<textarea name="note" rows="2" maxlength="400"></textarea></label>
+        </div>
 
-    {% if zones %}
-    <label>{{ t.delivery }}
-      <select name="zone_id">
-        <option value="">—</option>
-        {% for z in zones %}
-          <option value="{{ z.id }}" {{ 'selected' if zone_id == z.id }}>
-            {{ loc(z, 'name') }} — {{ rp(z.fee_idr) }}
-          </option>
-        {% endfor %}
-      </select>
-    </label>
-    {% endif %}
+        <h3 style="font-family:var(--font-display);font-size:1.5rem">{{ t.payment }}</h3>
+        <div class="pay-options">
+          <label class="pay-opt">
+            <input type="radio" name="payment_method" value="cod" checked>
+            <span><strong>Cash on delivery</strong><br>
+              <span class="muted small">Pay the driver when your order arrives.</span></span>
+          </label>
+          <label class="pay-opt">
+            <input type="radio" name="payment_method" value="cash">
+            <span><strong>Cash on collection</strong><br>
+              <span class="muted small">Collect and pay in person.</span></span>
+          </label>
+          <label class="pay-opt">
+            <input type="radio" name="payment_method" value="transfer">
+            <span><strong>Bank transfer</strong><br>
+              <span class="muted small">We send the account details with your confirmation.</span></span>
+          </label>
+          <label class="pay-opt">
+            <input type="radio" name="payment_method" value="online">
+            <span><strong>Online payment</strong><br>
+              <span class="muted small">Pay by link (QRIS / card) — sent right after you order.</span></span>
+          </label>
+        </div>
 
-    <label>{{ t.note }}<textarea name="note" rows="2" maxlength="400"></textarea></label>
-
-    <h2>{{ t.payment }}</h2>
-    <div class="pay-options">
-      <label class="pay-opt">
-        <input type="radio" name="payment_method" value="cod" checked>
-        <span><strong>Cash on delivery</strong><br><span class="muted small">Pay the driver when your order arrives.</span></span>
-      </label>
-      <label class="pay-opt">
-        <input type="radio" name="payment_method" value="cash">
-        <span><strong>Cash at the spa</strong><br><span class="muted small">Collect and pay in person.</span></span>
-      </label>
-      <label class="pay-opt">
-        <input type="radio" name="payment_method" value="transfer">
-        <span><strong>Bank transfer</strong><br><span class="muted small">We send the account details with your order confirmation.</span></span>
-      </label>
-      <label class="pay-opt">
-        <input type="radio" name="payment_method" value="online">
-        <span><strong>Online payment</strong><br><span class="muted small">Pay by link (QRIS / card) — we send it right after you order.</span></span>
-      </label>
-    </div>
-
-    <button class="btn btn-primary big" type="submit">{{ t.place_order }}</button>
-  </div>
-
-  <aside class="checkout-summary">
-    <h2>{{ t.cart }}</h2>
-    {% for row in totals.lines %}
-      <div class="sum-line">
-        <span>{{ row.qty }} × {{ loc(row.product, 'name') }}</span>
-        <span>{{ rp(row.line_total) }}</span>
+        <button class="btn btn-primary btn-lg" type="submit">{{ t.place_order }}</button>
       </div>
-    {% endfor %}
-    <hr>
-    <div class="sum-line"><span>{{ t.subtotal }}</span><span>{{ rp(totals.subtotal) }}</span></div>
-    {% if totals.discount %}<div class="sum-line off"><span>{{ t.discount }}</span><span>-{{ rp(totals.discount) }}</span></div>{% endif %}
-    {% if totals.zone %}<div class="sum-line"><span>{{ t.delivery }}</span><span>{{ rp(totals.delivery) }}</span></div>{% endif %}
-    <div class="sum-line grand"><span>{{ t.total }}</span><span>{{ rp(totals.total) }}</span></div>
-    {% if bank %}<p class="muted small">{{ bank|nl2br }}</p>{% endif %}
-  </aside>
-</form>
+
+      <aside class="totals-box">
+        <h4 style="font-family:var(--font-display);font-size:1.25rem;margin-top:0">{{ t.cart }}</h4>
+        {% for row in totals.lines %}
+          <div><span>{{ row.qty }} × {{ loc(row.product, 'name') }}</span><span>{{ rp(row.line_total) }}</span></div>
+        {% endfor %}
+        <div style="border-top:1px solid var(--border);margin:.75rem 0;padding-top:.75rem">
+          <span>{{ t.subtotal }}</span><span>{{ rp(totals.subtotal) }}</span></div>
+        {% if totals.discount %}<div class="off"><span>{{ t.discount }}</span><span>-{{ rp(totals.discount) }}</span></div>{% endif %}
+        {% if totals.zone %}<div><span>{{ t.delivery }}</span><span>{{ rp(totals.delivery) }}</span></div>{% endif %}
+        <div class="grand"><span>{{ t.total }}</span><span>{{ rp(totals.total) }}</span></div>
+        {% if bank %}<p class="muted small" style="margin-top:1rem">{{ bank|nl2br }}</p>{% endif %}
+      </aside>
+    </form>
+  </div>
+</section>
 {% endblock %}

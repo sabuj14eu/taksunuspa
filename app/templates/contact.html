@@ -1,36 +1,56 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block content %}
+
 <section class="page-head">
-  <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ t.contact }}</span></nav>
-  <h1>{{ t.contact }}</h1>
+  <div class="wrap">
+    <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ t.contact }}</span></nav>
+    <span class="eyebrow">{{ t.we_come_to_you }}</span>
+    <h2 style="font-size:clamp(2.25rem,5vw,3.5rem)">{{ t.contact }}</h2>
+  </div>
 </section>
 
-<section class="section split">
-  <div>
-    <h2>{{ site.get('company_name','Taksu Nusa Spa') }}</h2>
-    {% if site.get('address') %}<p>{{ site['address'] }}</p>{% endif %}
-    {% if site.get('phone') %}<p><a href="tel:{{ site['phone']|replace(' ','') }}">{{ site['phone'] }}</a></p>{% endif %}
-    {% if site.get('email') %}<p><a href="mailto:{{ site['email'] }}">{{ site['email'] }}</a></p>{% endif %}
-    <p><a class="btn btn-primary" href="{{ wa() }}" target="_blank" rel="noopener">{{ t.order_whatsapp }}</a></p>
-    {% if site.get('maps_url') %}<p><a href="{{ site['maps_url'] }}" target="_blank" rel="noopener">Google Maps →</a></p>{% endif %}
+<section class="section" style="padding-top:2.5rem">
+  <div class="wrap section-split">
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:1.5rem">{{ site.get('company_name','Taksu Nusa Spa') }}</h3>
+      {% if site.get('address') %}<p>{{ site['address'] }}</p>{% endif %}
+      {% if site.get('city') %}<p class="muted">{{ site['city'] }}</p>{% endif %}
+      {% if site.get('phone') %}<p><a href="tel:{{ site['phone']|replace(' ','') }}">{{ site['phone'] }}</a></p>{% endif %}
+      {% if site.get('email') %}<p><a href="mailto:{{ site['email'] }}">{{ site['email'] }}</a></p>{% endif %}
 
-    <h2>{{ t.opening_hours }}</h2>
-    <table class="hours">
-      {% for day_name, window in opening %}
-      <tr><td>{{ day_name }}</td><td>{{ window or t.closed }}</td></tr>
-      {% endfor %}
-    </table>
-  </div>
+      <p>
+        <a class="btn btn-primary" href="{{ wa() }}" target="_blank" rel="noopener">
+          {{ icon('phone') }} WhatsApp
+        </a>
+      </p>
+      {% if site.get('maps_url') %}
+      <p><a class="text-link" href="{{ site['maps_url'] }}" target="_blank" rel="noopener">Google Maps {{ icon('arrow-right') }}</a></p>
+      {% endif %}
 
-  <div>
-    <h2>{{ t.message }}</h2>
-    <form method="post" class="stackform">
-      <label>{{ t.name }}<input type="text" name="name" maxlength="80"></label>
-      <label>{{ t.phone }} *<input type="tel" name="phone" required maxlength="30"></label>
-      <label>{{ t.email }}<input type="email" name="email" maxlength="120"></label>
-      <label>{{ t.message }} *<textarea name="message" rows="5" required maxlength="2000"></textarea></label>
-      <button class="btn btn-primary" type="submit">{{ t.send }}</button>
-    </form>
+      <h3 style="font-family:var(--font-display);font-size:1.5rem;margin-top:2.5rem">{{ t.opening_hours }}</h3>
+      <table class="hours">
+        {% for day_name, window in opening %}
+        <tr><td>{{ day_name }}</td><td>{{ window or t.closed }}</td></tr>
+        {% endfor %}
+      </table>
+
+      {% if areas %}
+      <h3 style="font-family:var(--font-display);font-size:1.5rem;margin-top:2.5rem">{{ t.areas_we_cover }}</h3>
+      <p class="muted">{{ areas|map(attribute='name')|join(' · ') }}</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:1.5rem">{{ t.message }}</h3>
+      <form method="post" class="stackform">
+        <label>{{ t.name }}<input type="text" name="name" maxlength="80"></label>
+        <label>{{ t.phone }} *<input type="tel" name="phone" required maxlength="30"></label>
+        <label>{{ t.email }}<input type="email" name="email" maxlength="120"></label>
+        <label>{{ t.message }} *<textarea name="message" rows="5" required maxlength="2000"></textarea></label>
+        <button class="btn btn-primary" type="submit">{{ t.send }}</button>
+      </form>
+    </div>
   </div>
 </section>
 {% endblock %}

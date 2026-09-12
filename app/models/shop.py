@@ -71,6 +71,10 @@ class Product(db.Model):
         return self.price_idr
 
     @property
+    def discount_target_id(self):
+        return self.id
+
+    @property
     def in_stock(self):
         return (not self.track_stock) or (self.stock or 0) > 0
 

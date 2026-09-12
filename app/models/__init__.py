@@ -1,7 +1,8 @@
 from .user import User                                          # noqa: F401
 from .site import (SiteSetting, Page, MenuItem, FaqItem,         # noqa: F401
                    ContactMessage)
-from .spa import (TreatmentCategory, Treatment, Therapist,       # noqa: F401
+from .spa import (TreatmentCategory, Treatment, TreatmentOption,  # noqa: F401
+                  Therapist, ServiceArea, Highlight,
                   OpeningHour, HolidayHour, Booking,
                   BOOKING_ACTIVE, BOOKING_STATUSES)
 from .shop import (ProductGroup, Product, Order, OrderItem,      # noqa: F401

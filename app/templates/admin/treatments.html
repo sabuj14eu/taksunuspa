@@ -19,8 +19,12 @@
     </label>
     <label>URL slug<input type="text" name="slug" maxlength="160" value="{{ edit.slug if edit }}" placeholder="auto from name"></label>
 
-    <label>Price (IDR) *<input type="text" name="price_idr" required value="{{ edit.price_idr if edit else '' }}" placeholder="250000"></label>
-    <label>Duration (minutes) *<input type="number" name="duration_min" required value="{{ edit.duration_min if edit else 60 }}" min="15" step="5"></label>
+    <label>Base price (IDR) *<input type="text" name="price_idr" required value="{{ edit.price_idr if edit else '' }}" placeholder="250000"></label>
+    <label>Base duration (minutes) *<input type="number" name="duration_min" required value="{{ edit.duration_min if edit else 60 }}" min="15" step="5"></label>
+
+    <label class="check"><input type="checkbox" name="per_person" {{ 'checked' if edit and edit.per_person }}> Price is per person (couple massage)</label>
+    <p class="wide muted small">The base price and duration are used only when no
+      duration tiers are added below.</p>
 
     <label class="wide">Description (EN)<textarea name="desc_en" rows="4">{{ edit.desc_en or '' if edit }}</textarea></label>
     <label class="wide">Description (ID)<textarea name="desc_idn" rows="4">{{ edit.desc_idn or '' if edit }}</textarea></label>
@@ -43,24 +47,71 @@
   </form>
 </div>
 
+{% if edit %}
+<div class="panel">
+  <h2>Duration tiers — {{ edit.name_en }}</h2>
+  <p class="muted">60 / 90 / 120 minutes, each with its own price. The website
+    shows them side by side and the guest books one. A discount on this
+    treatment marks every tier at once.</p>
+
+  <table class="table">
+    <thead><tr><th>Minutes</th><th>Price</th><th>With discount</th><th>Active</th><th></th></tr></thead>
+    <tbody>
+    {% for o in edit.options|sort(attribute='duration_min') %}
+      {% set op = price_of('treatment', o) %}
+      <tr>
+        <td>
+          <form method="post" action="/admin/treatments/{{ edit.id }}/durations" class="inline" id="opt{{ o.id }}">
+            <input type="hidden" name="option_id" value="{{ o.id }}">
+            <input type="number" name="duration_min" value="{{ o.duration_min }}" min="15" step="5" style="width:6rem">
+        </td>
+        <td><input type="text" name="price_idr" value="{{ o.price_idr }}" style="width:8rem"></td>
+        <td>{% if op.has_discount %}<strong>{{ rp(op.final) }}</strong>
+            <span class="pill pill-sale">-{{ op.pct }}%</span>{% else %}—{% endif %}</td>
+        <td><input type="checkbox" name="is_active" {{ 'checked' if o.is_active }}></td>
+        <td class="right">
+          <button class="btn btn-primary btn-sm" type="submit">Save</button>
+          <button class="link-btn" type="submit" name="action" value="delete"
+                  onclick="return confirm('Remove this duration?')">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">No tiers — the base price above is used.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <form method="post" action="/admin/treatments/{{ edit.id }}/durations" class="gridform" style="margin-top:1rem">
+    <label>Minutes<input type="number" name="duration_min" value="90" min="15" step="5"></label>
+    <label>Price (IDR)<input type="text" name="price_idr" placeholder="350000"></label>
+    <label class="check"><input type="checkbox" name="is_active" checked> Active</label>
+    <div class="wide"><button class="btn btn-primary btn-sm" type="submit">Add duration</button></div>
+  </form>
+</div>
+{% endif %}
+
 <div class="panel">
   <h2>Spa menu</h2>
   <table class="table">
-    <thead><tr><th></th><th>Treatment</th><th>Group</th><th>Time</th><th>Price</th><th>Now</th><th>Live</th></tr></thead>
+    <thead><tr><th></th><th>Treatment</th><th>Group</th><th>Durations</th><th>From</th><th>Live</th></tr></thead>
     <tbody>
     {% for tr in rows %}
-      {% set pr = price_of('treatment', tr) %}
+      {% set pr = price_of('treatment', tr.cheapest_option or tr) %}
       <tr>
         <td>{% if covers.get(tr.id) or tr.image_url %}<img class="mini" src="{{ covers.get(tr.id) or tr.image_url }}" alt="">{% endif %}</td>
-        <td><a href="/admin/treatments?edit={{ tr.id }}">{{ tr.name_en }}</a></td>
+        <td><a href="/admin/treatments?edit={{ tr.id }}">{{ tr.name_en }}</a>
+          {% if tr.per_person %}<span class="muted small"> · per person</span>{% endif %}</td>
         <td>{{ tr.category.name_en if tr.category else '—' }}</td>
-        <td>{{ tr.duration_min }}'</td>
-        <td>{{ rp(tr.price_idr) }}</td>
-        <td>{% if pr.has_discount %}<strong>{{ rp(pr.final) }}</strong> <span class="pill pill-sale">-{{ pr.pct }}%</span>{% else %}—{% endif %}</td>
+        <td>{% if tr.active_options %}{{ tr.active_options|map(attribute='duration_min')|join(' · ') }} min
+            {% else %}<span class="muted">{{ tr.duration_min }} min (base)</span>{% endif %}</td>
+        <td>{% if pr.has_discount %}<span class="price-was">{{ rp(pr.base) }}</span>
+            <strong>{{ rp(pr.final) }}</strong> <span class="pill pill-sale">-{{ pr.pct }}%</span>
+            {% else %}{{ rp(pr.base) }}{% endif %}</td>
         <td>{{ '✅' if tr.is_active else '—' }}</td>
       </tr>
     {% else %}
-      <tr><td colspan="7" class="muted">No treatments yet.</td></tr>
+      <tr><td colspan="6" class="muted">No treatments yet.</td></tr>
     {% endfor %}
     </tbody>
   </table>

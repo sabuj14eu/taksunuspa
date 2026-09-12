@@ -1,86 +1,275 @@
 {% extends "base.html" %}
-{% from "_macros.html" import product_card, treatment_card %}
+{% from "_icons.html" import icon, stars %}
+{% from "_macros.html" import product_card, duration_chips, price_tag %}
 {% block content %}
 
-<section class="hero"{% if site.get('hero_image') %} style="background-image:linear-gradient(rgba(12,32,24,.55),rgba(12,32,24,.65)),url('{{ site['hero_image'] }}')"{% endif %}>
+{# ------------------------------------------------------------------ hero #}
+<section class="hero">
+  <div class="hero-bg {{ '' if hero_image else 'no-image' }}">
+    {% if hero_image %}
+      <img src="{{ hero_image }}" width="1920" height="1088" fetchpriority="high"
+           alt="Balinese home spa setting with massage table, tropical plants and frangipani flowers">
+    {% endif %}
+  </div>
+
   <div class="hero-inner">
-    <h1>{{ site.get('company_name','Taksu Nusa Spa') }}</h1>
-    <p class="hero-lead">{{ site.get('tagline_idn' if lang == 'id' else 'tagline_en', '') }}</p>
-    <div class="hero-cta">
-      <a class="btn btn-primary" href="/treatments">{{ t.book }}</a>
-      <a class="btn btn-ghost" href="/products">{{ t.our_product_line }}</a>
+    <div class="hero-copy">
+      <span class="eyebrow">{{ site.get('hero_eyebrow_idn' if lang == 'id' else 'hero_eyebrow_en', t.we_come_to_you) }}</span>
+
+      <h1>
+        {{ site.get('hero_line1_idn' if lang == 'id' else 'hero_line1_en', 'Bali Premium') }}
+        <span class="accent">{{ site.get('hero_line2_idn' if lang == 'id' else 'hero_line2_en', 'Home Spa.') }}</span>
+      </h1>
+
+      <p class="hero-lead">{{ site.get('tagline_idn' if lang == 'id' else 'tagline_en', '') }}</p>
+
+      {% if site.get('rating_value') %}
+      <div class="hero-rating">
+        {{ stars(5) }}
+        <span>{{ site['rating_value'] }} {{ site.get('rating_note_idn' if lang == 'id' else 'rating_note_en', '') }}</span>
+      </div>
+      {% endif %}
+
+      <div class="hero-cta">
+        <a class="btn btn-primary btn-lg" href="/treatments">
+          {{ t.book_relaxation }} {{ icon('arrow-right') }}
+        </a>
+        <a class="btn btn-outline btn-lg" href="{{ wa() }}" target="_blank" rel="noopener">
+          {{ icon('phone') }} WhatsApp
+        </a>
+      </div>
     </div>
   </div>
 </section>
 
+{# -------------------------------------------------------------- trust bar #}
+<section class="trustbar">
+  <div class="trustbar-grid">
+    {% for ic, label in trust_items %}
+    <div class="trust-item">{{ icon(ic) }}<span>{{ label }}</span></div>
+    {% endfor %}
+  </div>
+</section>
+
+{# ------------------------------------------------------------- treatments #}
 {% if treatments %}
-<section class="section">
-  <div class="section-head">
-    <h2>{{ t.spa_menu }}</h2>
-    <a class="more" href="/treatments">{{ t.read_more }} →</a>
-  </div>
-  <div class="grid grid-3">
-    {% for tr in treatments %}
-      {{ treatment_card(tr, price_of('treatment', tr), treatment_covers.get(tr.id) or tr.image_url, rp, t, loc) }}
-    {% endfor %}
+<section class="section" id="treatments">
+  <div class="wrap section-split">
+    <div>
+      <span class="eyebrow">{{ site.get('treatments_eyebrow_en','Traditional & therapeutic') }}</span>
+      <h2>{{ t.spa_menu }}</h2>
+      <p class="lead">{{ site.get('treatments_intro_idn' if lang == 'id' else 'treatments_intro_en', '') }}</p>
+      {% if treatment_hero %}
+      <div style="margin-top:2.5rem;aspect-ratio:4/3;overflow:hidden;border-radius:1rem">
+        <img src="{{ treatment_hero }}" alt="{{ t.treatments }}" loading="lazy"
+             style="width:100%;height:100%;object-fit:cover">
+      </div>
+      {% endif %}
+      <p style="margin-top:2rem">
+        <a class="text-link" href="/treatments">{{ t.spa_menu }} {{ icon('arrow-right') }}</a>
+      </p>
+    </div>
+
+    <div class="grid" style="gap:1.5rem">
+      {% for tr in treatments %}
+      <article class="treatment-row">
+        <div class="treatment-row-head">
+          <div>
+            <h3>{{ loc(tr, 'name') }}</h3>
+            <p>{{ loc(tr, 'desc')|truncate(120) }}</p>
+          </div>
+          <a class="btn btn-soft" href="/treatment/{{ tr.slug }}">
+            {{ t.book }} {{ icon('arrow-right') }}
+          </a>
+        </div>
+        {{ duration_chips(tr, price_of, rp, t, loc) }}
+      </article>
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endif %}
 
+{# -------------------------------------------------------- why choose us #}
+{% if highlights %}
+<section class="section section-primary" id="experience">
+  <div class="wrap">
+    <div class="section-head center">
+      <span class="eyebrow center-rules on-dark">{{ site.get('experience_eyebrow_en','The difference') }}</span>
+      <h2>{{ site.get('experience_title_idn' if lang == 'id' else 'experience_title_en', 'Why guests choose us') }}</h2>
+    </div>
+    <div class="grid grid-3" style="margin-top:4rem">
+      {% for h in highlights %}
+      <div class="tile">
+        <div class="tile-icon">{{ h.icon }}</div>
+        <h3>{{ loc(h, 'title') }}</h3>
+        <p>{{ loc(h, 'text') }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# -------------------------------------------------------------- therapists #}
+{% if therapists %}
+<section class="section" id="therapists">
+  <div class="wrap">
+    <div class="section-topbar">
+      <div>
+        <span class="eyebrow">{{ site.get('therapists_eyebrow_en','Your healers') }}</span>
+        <h2>{{ site.get('therapists_title_idn' if lang == 'id' else 'therapists_title_en', 'Meet our therapists') }}</h2>
+      </div>
+      <a class="text-link" href="/therapists">{{ t.view_all_therapists }} {{ icon('arrow-right') }}</a>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:4rem">
+      {% for th in therapists %}
+      <article class="therapist-card">
+        <div class="photo">
+          {% if th.photo_url %}
+            <img src="{{ th.photo_url }}" alt="{{ th.name }}" loading="lazy" width="600" height="800">
+          {% else %}<div class="img-ph">🌸</div>{% endif %}
+        </div>
+        <div class="info">
+          {% if th.is_available_today %}
+          <span class="tag"><span class="dot"></span>{{ t.available_today }}</span>
+          {% endif %}
+          <h3>{{ th.name }}</h3>
+          <p class="muted small" style="margin:0">{{ loc(th, 'role') }}</p>
+          {% if th.languages %}
+          <p class="small" style="margin-top:1rem">{{ t.language if t.language is defined else 'Languages' }}: {{ th.languages }}</p>
+          {% endif %}
+          <p style="margin-top:1.5rem;margin-bottom:0">
+            <a class="btn btn-primary btn-sm" href="/treatments?therapist={{ th.id }}">
+              {{ t.book }} {{ th.name.split(' ')[0] }}
+            </a>
+          </p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ----------------------------------------------------------------- gallery #}
+{% if gallery_images %}
+<section class="section section-sand" id="gallery">
+  <div class="wrap">
+    <div class="section-head center">
+      <span class="eyebrow center-rules">{{ site.get('gallery_eyebrow_en','A glimpse of bliss') }}</span>
+      <h2>{{ t.gallery }}</h2>
+    </div>
+    <div class="gallery-grid" style="margin-top:4rem">
+      {% for img in gallery_images %}
+      <figure>
+        <img src="{{ img.url }}" alt="{{ img.alt_en or (site.get('company_name','') ~ ' gallery') }}"
+             loading="lazy" width="800" height="1000">
+      </figure>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------------------------------------------------------------- products #}
 {% if products %}
-<section class="section section-alt">
-  <div class="section-head">
-    <h2>{{ t.our_product_line }}</h2>
-    <a class="more" href="/products">{{ t.read_more }} →</a>
-  </div>
-  <p class="muted section-lead">{{ t.delivery_note }}</p>
-  <div class="grid grid-4">
-    {% for p in products %}
-      {{ product_card(p, price_of('product', p), product_covers.get(p.id) or p.image_url, rp, t, loc) }}
-    {% endfor %}
+<section class="section" id="products">
+  <div class="wrap">
+    <div class="section-topbar">
+      <div>
+        <span class="eyebrow">{{ site.get('products_eyebrow_en','Take Bali home') }}</span>
+        <h2>{{ t.our_product_line }}</h2>
+        <p class="lead">{{ t.delivery_note }}</p>
+      </div>
+      <a class="text-link" href="/products">{{ t.products }} {{ icon('arrow-right') }}</a>
+    </div>
+
+    <div class="grid grid-4" style="margin-top:3rem">
+      {% for p in products %}
+        {{ product_card(p, price_of('product', p), product_covers.get(p.id) or p.image_url, rp, t, loc) }}
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endif %}
 
-{% if site.get('about_en') or site.get('about_idn') %}
+{# ------------------------------------------------------------------- areas #}
+{% if areas %}
+<section class="section section-forest" id="areas">
+  <div class="wrap">
+    <div class="section-head center">
+      <span class="eyebrow center-rules on-dark">{{ t.we_come_to_you }}</span>
+      <h2>{{ t.areas_we_cover }}</h2>
+      <p>{{ site.get('areas_note_idn' if lang == 'id' else 'areas_note_en', '') }}</p>
+    </div>
+    <div class="area-pills">
+      {% for a in areas %}
+      <a class="area-pill" href="/treatments">{{ icon('map-pin') }}{{ a.name }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ----------------------------------------------------------------- reviews #}
+{% if reviews %}
 <section class="section">
-  <div class="prose">
-    <h2>{{ t.about }}</h2>
-    <p>{{ site.get('about_idn' if lang == 'id' else 'about_en','')|nl2br }}</p>
+  <div class="wrap">
+    <div class="section-head center">
+      <span class="eyebrow center-rules">{{ site.get('reviews_eyebrow_en','From stress to bliss') }}</span>
+      <h2>{{ site.get('reviews_title_idn' if lang == 'id' else 'reviews_title_en', 'Guest reviews') }}</h2>
+    </div>
+    <div class="grid grid-3" style="margin-top:4rem">
+      {% for r in reviews %}
+      <div class="review">
+        {{ stars(r.rating) }}
+        <blockquote>“{{ r.text }}”</blockquote>
+        <div class="who">{{ r.author_name }}</div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endif %}
 
-<section class="section section-alt">
-  <div class="split">
-    <div>
-      <h2>{{ t.opening_hours }}</h2>
-      <table class="hours">
-        {% for day_name, window in opening %}
-        <tr><td>{{ day_name }}</td><td>{{ window or t.closed }}</td></tr>
-        {% endfor %}
-      </table>
+{# --------------------------------------------------------------- final CTA #}
+<section class="cta-band">
+  <div class="cta-inner">
+    <span class="eyebrow center-rules on-dark">{{ site.get('cta_eyebrow_en','Ready in 60 seconds') }}</span>
+    <h2>{{ site.get('cta_title_idn' if lang == 'id' else 'cta_title_en', 'Your relaxation is one tap away') }}</h2>
+    <p style="color:oklch(0.975 0.01 95 / .7)">
+      {{ site.get('cta_text_idn' if lang == 'id' else 'cta_text_en', '') }}
+    </p>
+    <div class="hero-cta" style="justify-content:center">
+      <a class="btn btn-ivory btn-lg" href="/treatments">
+        {{ t.book_treatment }} {{ icon('arrow-right') }}
+      </a>
+      <a class="btn btn-on-dark btn-lg" href="{{ wa() }}" target="_blank" rel="noopener">
+        {{ icon('phone') }} WhatsApp
+      </a>
     </div>
-    <div>
-      <h2>{{ t.contact }}</h2>
-      {% if site.get('address') %}<p>{{ site['address'] }}</p>{% endif %}
-      {% if site.get('phone') %}<p><a href="tel:{{ site['phone']|replace(' ','') }}">{{ site['phone'] }}</a></p>{% endif %}
-      <p><a class="btn btn-primary" href="{{ wa() }}" target="_blank" rel="noopener">{{ t.order_whatsapp }}</a></p>
-      {% if site.get('maps_url') %}<p><a href="{{ site['maps_url'] }}" target="_blank" rel="noopener">Google Maps →</a></p>{% endif %}
+    <div class="cta-meta">
+      {% if site.get('service_hours') %}<span>{{ icon('clock') }} {{ site['service_hours'] }}</span>{% endif %}
+      {% if site.get('service_scope') %}<span>{{ icon('map-pin') }} {{ site['service_scope'] }}</span>{% endif %}
     </div>
   </div>
 </section>
 
+{# --------------------------------------------------------------------- FAQ #}
 {% if faqs %}
-<section class="section">
-  <h2>FAQ</h2>
-  <div class="faq">
-    {% for f in faqs %}
-    <details>
-      <summary>{{ loc(f, 'question') }}</summary>
-      <div>{{ loc(f, 'answer')|nl2br }}</div>
-    </details>
-    {% endfor %}
+<section class="section section-ivory">
+  <div class="wrap">
+    <div class="section-head center"><h2>FAQ</h2></div>
+    <div class="faq prose" style="margin:2rem auto 0">
+      {% for f in faqs %}
+      <details>
+        <summary>{{ loc(f, 'question') }}</summary>
+        <div>{{ loc(f, 'answer')|nl2br }}</div>
+      </details>
+      {% endfor %}
+    </div>
   </div>
 </section>
 {% endif %}
