@@ -66,6 +66,25 @@
   </table>
 </div>
 
+{% if missing %}
+<div class="panel">
+  <h2>Photos still needed <span class="muted">({{ missing|length }})</span></h2>
+  <p class="muted">These are live on the site with a plain branded tile where a
+    photo should be. Guests notice. Each link opens the right screen.</p>
+  <table class="table">
+    <tbody>
+    {% for kind, name, url in missing %}
+      <tr>
+        <td class="muted small" style="width:8rem">{{ kind }}</td>
+        <td>{{ name }}</td>
+        <td class="right"><a class="btn btn-outline btn-sm" href="{{ url }}">Add photo</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
 {% if low_stock %}
 <div class="panel">
   <h2>Low stock</h2>

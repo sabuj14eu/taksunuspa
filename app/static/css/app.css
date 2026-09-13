@@ -367,8 +367,26 @@ a.card:hover .card-img img{transform:scale(1.05)}
 .card-body{padding:1.25rem 1.5rem 1.75rem;display:flex;flex-direction:column;flex:1}
 .card-body h3{font-size:1.25rem;margin-bottom:.25rem}
 .card-body .price{margin-top:auto;padding-top:.75rem}
-.img-ph{display:grid;place-items:center;height:100%;font-size:2.5rem;opacity:.35}
-.img-ph.big{aspect-ratio:4/3;font-size:4rem;border-radius:1rem;background:var(--secondary)}
+/* Shown wherever a photo has not been uploaded yet. A 4rem emoji faded to 35%
+   on flat grey reads as a broken image; this reads as the brand's own tile, so
+   a half-filled photo library looks deliberate rather than unfinished. */
+.img-ph{
+  display:grid;place-items:center;align-content:center;gap:.5rem;
+  width:100%;height:100%;font-size:1.5rem;opacity:1;
+  color:oklch(0.36 0.06 160 / .55);
+  background:
+    radial-gradient(ellipse at 28% 22%, oklch(0.93 0.035 95 / .85), transparent 62%),
+    linear-gradient(155deg, var(--secondary), oklch(0.92 0.022 112));
+}
+.img-ph::after{
+  content:"TAKSU NUSA";
+  font-family:var(--font-body);font-size:.5rem;font-weight:600;
+  letter-spacing:.24em;color:oklch(0.26 0.03 160 / .32);
+}
+.img-ph.big{aspect-ratio:4/3;font-size:2.75rem;border-radius:1rem}
+.img-ph.big::after{font-size:.65rem}
+/* Too small for a wordmark — the mark alone. */
+.treatment-thumb .img-ph::after,.card-img .img-ph.tiny::after{content:none}
 
 /* treatment rows: name, blurb, and a chip per duration */
 .treatment-row{

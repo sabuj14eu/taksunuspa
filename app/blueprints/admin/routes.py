@@ -163,6 +163,44 @@ def _get_or_404(model, obj_id):
 
 # ---------------------------------------------------------------- dashboard
 
+def _missing_photos():
+    """Everything live on the site with no photo behind it.
+
+    A card with no photo falls back to a branded tile, which is tidy but still
+    reads as unfinished to a guest. Rather than leave the owner to spot those
+    by browsing the site, list them here with a link straight to the screen
+    that fixes each one.
+    """
+    def has(kind, ids):
+        return {i for (i,) in db.session.query(MediaImage.entity_id)
+                .filter(MediaImage.entity_type == kind,
+                        MediaImage.entity_id.in_(ids or [0])).distinct()}
+
+    out = []
+
+    prods = Product.query.filter_by(is_active=True).all()
+    covered = has("product", [p.id for p in prods])
+    out += [("Product", p.name_en, f"/admin/products?edit={p.id}")
+            for p in prods if p.id not in covered and not p.image_url]
+
+    trs = Treatment.query.filter_by(is_active=True).all()
+    covered = has("treatment", [t.id for t in trs])
+    out += [("Treatment", t.name_en, f"/admin/treatments?edit={t.id}")
+            for t in trs if t.id not in covered and not t.image_url]
+
+    out += [("Therapist", th.name, f"/admin/therapists?edit={th.id}")
+            for th in Therapist.query.filter_by(is_active=True,
+                                                show_on_site=True).all()
+            if not th.photo_url]
+
+    if not MediaImage.query.filter_by(entity_type="gallery").first():
+        out.append(("Gallery", "No gallery photos yet", "/admin/media"))
+    if not MediaImage.query.filter_by(entity_type="hero").first() \
+            and not SiteSetting.all_dict().get("hero_image"):
+        out.append(("Home page", "No hero photo", "/admin/media"))
+    return out
+
+
 @bp.route("/")
 def dashboard():
     today = date.today()
@@ -181,7 +219,7 @@ def dashboard():
                                       Product.stock <= 5)
                  .order_by(Product.stock).limit(10).all())
     return render_template(
-        "admin/dashboard.html", active="dash",
+        "admin/dashboard.html", active="dash", missing=_missing_photos(),
         orders_open=orders_open, revenue_week=revenue_week,
         bookings_today=bookings_today, low_stock=low_stock,
         recent_orders=Order.query.order_by(Order.created_at.desc()).limit(8).all(),
