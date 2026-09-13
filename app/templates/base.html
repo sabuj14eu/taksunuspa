@@ -162,6 +162,34 @@
 </a>
 {% endif %}
 
+{# Phone-only tab bar. The five things a guest actually wants within reach of
+   a thumb, with booking raised in the middle. Hidden on desktop, where the
+   header nav does this job. #}
+<nav class="tabbar" aria-label="Quick menu">
+  <a href="/" class="tab {{ 'on' if current_path == '/' }}">
+    {{ icon('home') }}<span>{{ t.home }}</span>
+  </a>
+  <a href="/treatments" class="tab {{ 'on' if current_path.startswith('/treatment') }}">
+    {{ icon('leaf') }}<span>{{ t.treatments }}</span>
+  </a>
+  <a href="/treatments" class="tab tab-cta" aria-label="{{ t.book_now }}">
+    <span class="tab-cta-circle">{{ icon('calendar') }}</span>
+    <span>{{ t.book }}</span>
+  </a>
+  <a href="/products" class="tab {{ 'on' if current_path.startswith('/product') }}">
+    {{ icon('bag') }}<span>{{ t.products }}</span>
+  </a>
+  {% if wa_number %}
+  <a href="{{ wa() }}" class="tab" target="_blank" rel="noopener">
+    {{ wa_icon(22) }}<span>WhatsApp</span>
+  </a>
+  {% else %}
+  <a href="/contact" class="tab {{ 'on' if current_path == '/contact' }}">
+    {{ icon('phone') }}<span>{{ t.contact }}</span>
+  </a>
+  {% endif %}
+</nav>
+
 {% block scripts %}{% endblock %}
 </body>
 </html>

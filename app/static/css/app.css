@@ -620,6 +620,51 @@ textarea{resize:vertical}
 }
 .wa-float:hover{color:#fff}
 
+/* ---------------------------------------------------------------- tab bar */
+/* Phone-only bottom navigation. Hidden by default and switched on in the
+   phone media query, so desktop never pays for it. */
+.tabbar{display:none}
+@media (max-width:720px){
+  .tabbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:60;
+    display:grid;grid-template-columns:repeat(5,1fr);
+    background:var(--forest);
+    border-top:1px solid oklch(0.98 0.005 95 / .12);
+    /* Sits above the iPhone home indicator instead of under it. */
+    padding-bottom:env(safe-area-inset-bottom,0);
+    box-shadow:0 -6px 20px oklch(0.26 0.03 160 / .18);
+  }
+  .tabbar .tab{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.2rem;padding:.55rem .25rem .5rem;min-height:3.5rem;
+    color:oklch(0.98 0.005 95 / .72);
+    font-size:.62rem;font-weight:600;letter-spacing:.04em;
+    text-align:center;line-height:1.2;
+  }
+  .tabbar .tab .ico,.tabbar .tab svg{width:1.35rem;height:1.35rem}
+  .tabbar .tab.on{color:var(--brass)}
+  .tabbar .tab:active{background:oklch(0.98 0.005 95 / .08)}
+
+  /* The booking tab is raised and brass — the one action worth interrupting
+     the row for. */
+  .tabbar .tab-cta{color:var(--ivory);justify-content:flex-end}
+  .tabbar .tab-cta-circle{
+    position:absolute;top:-1.4rem;
+    width:3.25rem;height:3.25rem;border-radius:50%;
+    display:grid;place-items:center;
+    background:var(--brass);color:var(--forest);
+    border:3px solid var(--forest);
+    box-shadow:0 6px 16px oklch(0.26 0.03 160 / .3);
+  }
+  .tabbar .tab-cta{position:relative;padding-top:1.9rem}
+  .tabbar .tab-cta .ico{width:1.5rem;height:1.5rem}
+
+  /* Room for the bar, so nothing at the bottom of a page is unreachable. */
+  body{padding-bottom:calc(4rem + env(safe-area-inset-bottom,0px))}
+  /* WhatsApp lives in the bar now; a floating button as well is clutter. */
+  .wa-float{display:none}
+}
+
 /* ---------------------------------------------------------------- auth */
 .auth-body{display:grid;place-items:center;min-height:100vh;background:var(--sand)}
 .auth-card{background:var(--card);padding:2.5rem;border-radius:1rem;
