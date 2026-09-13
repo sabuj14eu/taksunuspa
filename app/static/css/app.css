@@ -298,6 +298,27 @@ main{min-height:60vh}
 .section-primary .section-head p,.section-forest .section-head p{
   color:oklch(0.975 0.01 95 / .7)}
 .section-split{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start}
+/* Rides down beside a much longer list instead of leaving it stranded at the
+   top with a screen of blank page underneath. 5.5rem clears the sticky header. */
+.split-sticky{position:sticky;top:5.5rem}
+
+.travel-card{
+  margin-top:2.5rem;padding:1.5rem;
+  border:1px solid var(--border);border-radius:1rem;background:var(--card);
+}
+.travel-card h3{display:flex;align-items:center;gap:.5rem;
+  font-size:1.125rem;margin-bottom:.4rem}
+.travel-card h3 .ico{width:1.05rem;height:1.05rem;color:var(--brass)}
+.travel-card p{margin-bottom:1rem}
+.travel-links{display:flex;flex-wrap:wrap;gap:.5rem}
+.travel-links a{
+  display:inline-flex;align-items:center;gap:.35rem;
+  border:1px solid var(--border);border-radius:999px;
+  padding:.35rem .85rem;font-size:.8125rem;color:var(--foreground);
+}
+.travel-links a:hover{background:var(--secondary)}
+.travel-links a.all{border-color:var(--primary);color:var(--primary);font-weight:500}
+.travel-links a.all .ico{width:.85rem;height:.85rem}
 .section-topbar{display:flex;align-items:flex-end;justify-content:space-between;
   gap:1.5rem;flex-wrap:wrap}
 
@@ -816,6 +837,8 @@ body.admin{background:var(--sand)}
 @media (max-width:1024px){
   .section-split,.detail,.checkout,.cart-foot,.foot-grid,
   .therapist-card,.gallery-grid{grid-template-columns:1fr}
+  /* One column now, so there is nothing to ride alongside. */
+  .split-sticky{position:static}
   .therapist-card .photo{aspect-ratio:16/10}
   .mainnav{display:none}
   .menu-toggle{display:inline-flex}

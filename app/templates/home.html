@@ -55,7 +55,11 @@
 {% if treatments %}
 <section class="section" id="treatments">
   <div class="wrap section-split">
-    <div>
+    {# The menu on the right is far taller than this column, which left a
+       screen of empty page beside it. Sticky keeps it alongside the list the
+       whole way down, and the travel card below fills the rest with the
+       question guests actually ask next: do you come to me? #}
+    <div class="split-sticky">
       <span class="eyebrow">{{ site.get('treatments_eyebrow_en','Traditional & therapeutic') }}</span>
       <h2>{{ t.spa_menu }}</h2>
       <p class="lead">{{ site.get('treatments_intro_idn' if lang == 'id' else 'treatments_intro_en', '') }}</p>
@@ -68,6 +72,22 @@
       <p style="margin-top:2rem">
         <a class="text-link" href="/treatments">{{ t.spa_menu }} {{ icon('arrow-right') }}</a>
       </p>
+
+      {% if areas %}
+      <div class="travel-card">
+        <h3>{{ icon('map-pin') }} {{ t.we_come_to_you }}</h3>
+        {# Only promise free travel when every area really is free. #}
+        <p class="muted small">
+          {% if areas|selectattr('travel_fee_idr')|list|length == 0 %}{{ t.free_travel }} — {% endif %}
+          {{ areas|map(attribute='name')|join(' · ') }}</p>
+        <div class="travel-links">
+          {% for a in areas[:6] %}
+          <a href="/areas/{{ a.slug }}">{{ a.name }}</a>
+          {% endfor %}
+          <a class="all" href="/areas">{{ t.service_areas }} {{ icon('arrow-right') }}</a>
+        </div>
+      </div>
+      {% endif %}
     </div>
 
     <div class="grid" style="gap:1.5rem">
