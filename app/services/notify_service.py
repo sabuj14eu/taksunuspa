@@ -1,51 +1,224 @@
 # -*- coding: utf-8 -*-
-"""Outbound alerts.
+"""Outbound messages: WhatsApp to the owner and the therapist, Telegram as a
+backup channel.
 
-Telegram is the fast path for "a booking just came in"; the WhatsApp helper
-builds a prefilled chat link, which is how most Bali customers actually want
-to finish an order.
+A server cannot send a WhatsApp message just by knowing a number. It needs an
+account with a provider, so this speaks to whichever one is configured:
+
+    WA_PROVIDER=fonnte   WA_TOKEN=...              (Indonesian, simplest)
+    WA_PROVIDER=wablas   WA_TOKEN=...  WA_API_URL=https://xxx.wablas.com
+    WA_PROVIDER=meta     WA_TOKEN=...  WA_PHONE_ID=...   (Meta Cloud API)
+
+With none configured, nothing is sent automatically and the admin screens fall
+back to a prefilled wa.me link — one tap to send by hand. That is the honest
+default: silent failure would be worse than a button.
+
+Note on Meta: outside a 24-hour window since the person last messaged you,
+Meta only delivers pre-approved templates. Fonnte and Wablas drive a real
+WhatsApp session and have no such restriction, which is why they suit a small
+spa better.
 """
 import os
 from urllib.parse import quote
 
 import requests
 
-
-def _send(chat_id: str, text: str):
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if not token or not chat_id:
-        return
-    try:
-        requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
-                      json={"chat_id": chat_id, "text": text}, timeout=4)
-    except Exception:
-        pass
+TIMEOUT = 8
 
 
-def telegram_admin(text: str):
-    _send(os.getenv("ADMIN_TELEGRAM_CHAT", ""), text)
+# ---------------------------------------------------------------- helpers
+
+def digits(number: str) -> str:
+    """62812... — strips spaces, dashes and a leading +."""
+    return "".join(c for c in (number or "") if c.isdigit())
 
 
 def whatsapp_link(number: str, text: str = "") -> str:
-    digits = "".join(c for c in (number or "") if c.isdigit())
-    return f"https://wa.me/{digits}" + (f"?text={quote(text)}" if text else "")
+    """A chat link a human taps to send. Always available, no account needed."""
+    return f"https://wa.me/{digits(number)}" + (f"?text={quote(text)}" if text else "")
 
 
-def notify_order(order, site_url=""):
-    lines = [f"🛒 New order {order.public_code} — Rp {order.total_idr:,}".replace(",", "."),
-             f"{order.customer_name or '-'} · {order.customer_phone}",
-             f"Payment: {order.payment_method}"]
-    if order.address:
-        lines.append(f"Deliver to: {order.address}")
+def wa_configured() -> bool:
+    return bool(os.getenv("WA_TOKEN") and os.getenv("WA_PROVIDER", "none") != "none")
+
+
+# ---------------------------------------------------------------- sending
+
+def _send_whatsapp(number: str, text: str):
+    """(ok, detail). Never raises — a failed message must not fail a booking."""
+    provider = os.getenv("WA_PROVIDER", "none").lower()
+    token = os.getenv("WA_TOKEN", "")
+    to = digits(number)
+
+    if not to:
+        return False, "no phone number"
+    if provider == "none" or not token:
+        return False, "no WhatsApp provider configured"
+
+    try:
+        if provider == "fonnte":
+            r = requests.post("https://api.fonnte.com/send",
+                              headers={"Authorization": token},
+                              data={"target": to, "message": text},
+                              timeout=TIMEOUT)
+        elif provider == "wablas":
+            base = os.getenv("WA_API_URL", "https://console.wablas.com").rstrip("/")
+            r = requests.post(f"{base}/api/send-message",
+                              headers={"Authorization": token},
+                              data={"phone": to, "message": text},
+                              timeout=TIMEOUT)
+        elif provider == "meta":
+            phone_id = os.getenv("WA_PHONE_ID", "")
+            if not phone_id:
+                return False, "WA_PHONE_ID is not set"
+            r = requests.post(
+                f"https://graph.facebook.com/v20.0/{phone_id}/messages",
+                headers={"Authorization": f"Bearer {token}",
+                         "Content-Type": "application/json"},
+                json={"messaging_product": "whatsapp", "to": to,
+                      "type": "text", "text": {"body": text}},
+                timeout=TIMEOUT)
+        else:
+            return False, f"unknown provider '{provider}'"
+
+        ok = 200 <= r.status_code < 300
+        return ok, f"{r.status_code} {r.text[:200]}"
+    except requests.RequestException as exc:
+        return False, str(exc)[:200]
+
+
+def _send_telegram(chat_id: str, text: str):
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token or not chat_id:
+        return False, "Telegram not configured"
+    try:
+        r = requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
+                          json={"chat_id": chat_id, "text": text},
+                          timeout=TIMEOUT)
+        return 200 <= r.status_code < 300, f"{r.status_code} {r.text[:200]}"
+    except requests.RequestException as exc:
+        return False, str(exc)[:200]
+
+
+def _log(channel, purpose, recipient, name, body, ok, detail):
+    """Recorded outside the caller's transaction: an alert that fails to log
+    must not roll back the booking it was announcing."""
+    from ..extensions import db
+    from ..models.messaging import MessageLog
+    try:
+        db.session.add(MessageLog(
+            channel=channel, purpose=purpose, recipient=str(recipient)[:60],
+            recipient_name=(name or "")[:80], body=(body or "")[:4000],
+            ok=ok, detail=(detail or "")[:300]))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+
+def send_whatsapp(number, text, purpose="message", name=""):
+    ok, detail = _send_whatsapp(number, text)
+    _log("whatsapp", purpose, digits(number), name, text, ok, detail)
+    return ok, detail
+
+
+def telegram_admin(text: str, purpose="message"):
+    chat = os.getenv("ADMIN_TELEGRAM_CHAT", "")
+    ok, detail = _send_telegram(chat, text)
+    if chat:
+        _log("telegram", purpose, chat, "admin", text, ok, detail)
+    return ok, detail
+
+
+def notify_admin(text: str, purpose="message"):
+    """Owner's WhatsApp first, Telegram as well when it is set up."""
+    from ..models.site import SiteSetting
+    try:
+        cfg = SiteSetting.all_dict()
+    except Exception:
+        cfg = {}
+    number = cfg.get("admin_whatsapp") or cfg.get("whatsapp") or \
+        os.getenv("WHATSAPP_NUMBER", "")
+    if number and wa_configured():
+        send_whatsapp(number, text, purpose=purpose, name="admin")
+    telegram_admin(text, purpose=purpose)
+
+
+# ---------------------------------------------------------------- messages
+
+def booking_text(b, site_url="", for_therapist=False) -> str:
+    """The message body. Kept in one place so the automatic send and the
+    one-tap link never say different things."""
+    when = f"{b.starts_at:%a %d %b, %H:%M}"
+    lines = ["💆 " + ("New treatment for you" if for_therapist
+                      else f"New booking {b.public_code}"),
+             f"{b.treatment_name} · {b.duration_min} min",
+             f"When: {when}"]
+    if b.guests and b.guests > 1:
+        lines.append(f"Guests: {b.guests}")
+    lines.append(f"Guest: {b.customer_name or '-'} · {b.customer_phone}")
+    if b.area:
+        lines.append(f"Area: {b.area.name}")
+    if b.service_address:
+        lines.append(f"Address: {b.service_address}")
+    if b.note:
+        lines.append(f"Note: {b.note}")
+    if for_therapist:
+        fee = b.fee_due
+        if fee:
+            lines.append(f"Your fee: Rp {fee:,}".replace(",", "."))
+        lines.append("Please confirm you can take it.")
+    else:
+        lines.append(f"Total: Rp {b.total_idr:,}".replace(",", "."))
+        lines.append(f"Payment: {b.payment_method}")
+        if site_url:
+            lines.append(f"{site_url}/admin/bookings")
+    return "\n".join(lines)
+
+
+def order_text(o, site_url="") -> str:
+    lines = [f"🛒 New order {o.public_code}",
+             f"Total: Rp {o.total_idr:,}".replace(",", "."),
+             f"{o.customer_name or '-'} · {o.customer_phone}",
+             f"Payment: {o.payment_method}"]
+    for i in o.items:
+        lines.append(f"  {i.qty} × {i.name}")
+    if o.address:
+        lines.append(f"Deliver to: {o.address}")
     if site_url:
         lines.append(f"{site_url}/admin/orders")
-    telegram_admin("\n".join(lines))
+    return "\n".join(lines)
 
 
 def notify_booking(booking, site_url=""):
-    lines = [f"💆 New booking {booking.public_code}",
-             f"{booking.treatment_name} — {booking.starts_at:%d %b %H:%M}",
-             f"{booking.customer_name or '-'} · {booking.customer_phone}"]
-    if site_url:
-        lines.append(f"{site_url}/admin/bookings")
-    telegram_admin("\n".join(lines))
+    notify_admin(booking_text(booking, site_url), purpose="new_booking")
+    # If the booking already has a therapist, tell them straight away.
+    if booking.therapist:
+        notify_therapist(booking, site_url)
+
+
+def notify_order(order, site_url=""):
+    notify_admin(order_text(order, site_url), purpose="new_order")
+
+
+def notify_therapist(booking, site_url=""):
+    """(ok, detail). False with a reason when there is no number or no
+    provider — the caller shows the one-tap link instead."""
+    th = booking.therapist
+    if not th:
+        return False, "no therapist assigned"
+    if not th.phone:
+        return False, f"{th.name} has no phone number saved"
+    if not wa_configured():
+        return False, "no WhatsApp provider configured"
+    return send_whatsapp(th.phone, booking_text(booking, site_url,
+                                                for_therapist=True),
+                         purpose="therapist_assigned", name=th.name)
+
+
+def therapist_link(booking, site_url=""):
+    """Prefilled wa.me link — works with no provider account at all."""
+    th = booking.therapist
+    if not th or not th.phone:
+        return None
+    return whatsapp_link(th.phone, booking_text(booking, site_url,
+                                                for_therapist=True))

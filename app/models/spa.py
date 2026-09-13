@@ -119,6 +119,8 @@ class Therapist(db.Model):
     __tablename__ = "therapists"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
+    # WhatsApp number in international form, digits only (628123456789).
+    phone = db.Column(db.String(30))
     role_en = db.Column(db.String(80), default="Therapist")
     role_idn = db.Column(db.String(80))
     languages = db.Column(db.String(120), default="English, Indonesian")

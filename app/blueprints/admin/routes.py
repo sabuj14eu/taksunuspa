@@ -5,11 +5,12 @@ Everything the owner touches day to day lives here: the spa menu, the product
 line, one discount screen that reaches both, orders, bookings, opening hours
 and the site settings that feed the public pages and their structured data.
 """
+import os
 from datetime import date, datetime, timedelta
 from functools import wraps
 
-from flask import (Blueprint, abort, flash, redirect, render_template, request,
-                   url_for)
+from flask import (Blueprint, abort, current_app, flash, redirect,
+                   render_template, request, url_for)
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
@@ -17,6 +18,7 @@ from ...extensions import db
 from ...models.discount import KINDS, SCOPES, Discount
 from ...models.finance import EXPENSE_CATEGORIES, PAY_METHODS, Expense, Payout
 from ...models.media import MediaImage, Review
+from ...models.messaging import MessageLog
 from ...models.shared import AuditLog
 from ...models.shop import (ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES,
                             DeliveryZone, Order, Product, ProductGroup)
@@ -28,7 +30,7 @@ from ...models.spa import (BOOKING_STATUSES, Booking, Highlight, HolidayHour,
 from ...models.user import User
 from ...money import to_int
 from ...services import (accounts_service, booking_service, media_service,
-                         seo_service, shop_service)
+                         notify_service, seo_service, shop_service)
 from ...services.booking_service import hhmm
 
 bp = Blueprint("admin", __name__)
@@ -429,6 +431,7 @@ def therapists():
         tid = _i(f, "id")
         th = _get_or_404(Therapist, tid) if tid else Therapist(name="")
         th.name = _s(f, "name") or th.name or "Therapist"
+        th.phone = _s(f, "phone")
         th.role_en = _s(f, "role_en") or "Therapist"
         th.role_idn = _s(f, "role_idn")
         th.languages = _s(f, "languages")
@@ -631,13 +634,34 @@ def order_detail(oid):
 def bookings():
     if request.method == "POST":
         b = _get_or_404(Booking, _i(request.form, "id"))
+        scope = _s(request.form, "scope") or "upcoming"
+
         status = _s(request.form, "status")
-        if status in BOOKING_STATUSES:
+        if status in BOOKING_STATUSES and status != b.status:
             b.status = status
             _log("status", "booking", f"{b.public_code} -> {status}")
             db.session.commit()
             flash(f"Booking {b.public_code}: {status}")
-        return redirect(url_for("admin.bookings"))
+
+        # Assigning a therapist is what tells them they have work, so the
+        # message goes out on the same action.
+        if "therapist_id" in request.form:
+            new_id = _i(request.form, "therapist_id") or None
+            if new_id != b.therapist_id:
+                b.therapist_id = new_id
+                _log("assign", "booking", f"{b.public_code} -> therapist {new_id}")
+                db.session.commit()
+                if new_id:
+                    ok, detail = notify_service.notify_therapist(
+                        b, current_app.config["SITE_URL"])
+                    if ok:
+                        flash(f"{b.therapist.name} messaged on WhatsApp.")
+                    else:
+                        flash(f"{b.therapist.name} assigned, but not messaged "
+                              f"({detail}). Use “Send on WhatsApp” below.")
+                else:
+                    flash(f"Booking {b.public_code}: therapist cleared")
+        return redirect(url_for("admin.bookings", scope=scope))
 
     scope = request.args.get("scope", "upcoming")
     q = Booking.query
@@ -646,8 +670,39 @@ def bookings():
         rows = q.order_by(Booking.starts_at).limit(200).all()
     else:
         rows = q.order_by(Booking.starts_at.desc()).limit(200).all()
-    return render_template("admin/bookings.html", active="bookings", rows=rows,
-                           scope=scope, statuses=BOOKING_STATUSES)
+    return render_template(
+        "admin/bookings.html", active="bookings", rows=rows, scope=scope,
+        statuses=BOOKING_STATUSES,
+        therapists=(Therapist.query.filter_by(is_active=True)
+                    .order_by(Therapist.sort_order, Therapist.id).all()),
+        wa_ready=notify_service.wa_configured(),
+        therapist_link=lambda b: notify_service.therapist_link(
+            b, current_app.config["SITE_URL"]))
+
+
+@bp.route("/bookings/<int:bid>/notify", methods=["POST"])
+def booking_notify(bid):
+    """Re-send the booking to its therapist, for when the automatic send
+    failed or the details changed."""
+    b = _get_or_404(Booking, bid)
+    ok, detail = notify_service.notify_therapist(
+        b, current_app.config["SITE_URL"])
+    flash(f"Sent to {b.therapist.name}." if ok
+          else f"Could not send automatically ({detail}).")
+    return redirect(url_for("admin.bookings",
+                            scope=request.form.get("scope", "upcoming")))
+
+
+@bp.route("/messages-sent")
+def messages_sent():
+    """Proof of what actually went out — the answer to “did they get it?”."""
+    return render_template(
+        "admin/messages_sent.html", active="messages_sent",
+        wa_ready=notify_service.wa_configured(),
+        provider=os.getenv("WA_PROVIDER", "none"),
+        rows=(MessageLog.query.order_by(MessageLog.created_at.desc())
+              .limit(100).all()),
+        failures=MessageLog.query.filter_by(ok=False).count())
 
 
 @bp.route("/bookings/new", methods=["GET", "POST"])

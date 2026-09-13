@@ -5,6 +5,16 @@
 <p><a class="btn btn-primary btn-sm" href="/admin/bookings/new">+ New booking</a>
   <span class="muted small">for one taken by phone or WhatsApp</span></p>
 
+{% if not wa_ready %}
+<div class="panel" style="border-left:3px solid var(--brass)">
+  <p style="margin:0"><strong>Automatic WhatsApp is not switched on.</strong>
+    Assigning a therapist will not message them by itself — use the
+    <strong>Send on WhatsApp</strong> link on the booking, which opens the chat
+    with the details already written. To have it send on its own, see
+    <a href="/admin/messages-sent">Messages sent</a>.</p>
+</div>
+{% endif %}
+
 <nav class="tabs">
   <a href="/admin/bookings?scope=upcoming" class="{{ 'on' if scope == 'upcoming' }}">Upcoming</a>
   <a href="/admin/bookings?scope=all" class="{{ 'on' if scope == 'all' }}">All</a>
@@ -12,19 +22,61 @@
 
 <div class="panel">
   <table class="table">
-    <thead><tr><th>Code</th><th>When</th><th>Treatment</th><th>Guest</th><th>Therapist</th><th>Total</th><th>Status</th></tr></thead>
+    <thead><tr>
+      <th>Code</th><th>When</th><th>Treatment</th><th>Guest</th>
+      <th>Therapist</th><th>Total</th><th>Status</th>
+    </tr></thead>
     <tbody>
     {% for b in rows %}
       <tr>
-        <td>{{ b.public_code }}</td>
-        <td>{{ b.starts_at.strftime('%a %d %b %H:%M') }}<br><span class="muted small">{{ b.ends_at.strftime('%H:%M') }}</span></td>
-        <td>{{ b.treatment_name }}{% if b.guests > 1 %} <span class="muted small">×{{ b.guests }}</span>{% endif %}</td>
-        <td>{{ b.customer_name or '—' }}<br><a class="muted small" href="tel:{{ b.customer_phone }}">{{ b.customer_phone }}</a></td>
-        <td>{{ b.therapist.name if b.therapist else '—' }}</td>
-        <td>{{ rp(b.total_idr) }}</td>
+        <td>{{ b.public_code }}
+          {% if b.created_via == 'admin' %}<br><span class="muted small">by phone</span>{% endif %}</td>
+        <td>{{ b.starts_at.strftime('%a %d %b %H:%M') }}<br>
+          <span class="muted small">{{ b.ends_at.strftime('%H:%M') }} · {{ b.duration_min }} min</span></td>
+        <td>{{ b.treatment_name }}{% if b.guests > 1 %} <span class="muted small">×{{ b.guests }}</span>{% endif %}
+          {% if b.area %}<br><span class="muted small">{{ b.area.name }}</span>{% endif %}</td>
+        <td>{{ b.customer_name or '—' }}<br>
+          <a class="muted small" href="tel:{{ b.customer_phone }}">{{ b.customer_phone }}</a>
+          {% if b.service_address %}<br><span class="muted small">{{ b.service_address|truncate(48) }}</span>{% endif %}</td>
+
+        <td>
+          {# Assigning is what tells the therapist they have work, so the
+             message goes out with this change. #}
+          <form method="post" class="inline">
+            <input type="hidden" name="id" value="{{ b.id }}">
+            <input type="hidden" name="scope" value="{{ scope }}">
+            <select name="therapist_id" onchange="this.form.submit()">
+              <option value="">— not assigned —</option>
+              {% for th in therapists %}
+                <option value="{{ th.id }}" {{ 'selected' if b.therapist_id == th.id }}>
+                  {{ th.name }}{% if not th.phone %} (no WhatsApp){% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </form>
+          {% if b.therapist %}
+            {% set link = therapist_link(b) %}
+            {% if link %}
+              <a class="small" href="{{ link }}" target="_blank" rel="noopener">Send on WhatsApp</a>
+              {% if wa_ready %}
+              <form method="post" action="/admin/bookings/{{ b.id }}/notify" class="inline">
+                <input type="hidden" name="scope" value="{{ scope }}">
+                <button class="link-btn small" type="submit">Re-send</button>
+              </form>
+              {% endif %}
+            {% else %}
+              <span class="muted small">no number saved —
+                <a href="/admin/therapists?edit={{ b.therapist.id }}">add one</a></span>
+            {% endif %}
+          {% endif %}
+        </td>
+
+        <td>{{ rp(b.total_idr) }}
+          {% if b.therapist %}<br><span class="muted small">fee {{ rp(b.fee_due) }}</span>{% endif %}</td>
         <td>
           <form method="post" class="inline">
             <input type="hidden" name="id" value="{{ b.id }}">
+            <input type="hidden" name="scope" value="{{ scope }}">
             <select name="status" onchange="this.form.submit()">
               {% for s in statuses %}<option value="{{ s }}" {{ 'selected' if b.status == s }}>{{ s }}</option>{% endfor %}
             </select>

@@ -1,0 +1,64 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Messages sent</h1>
+<p class="muted">Every alert the site tried to send, and whether it arrived.</p>
+
+<div class="panel">
+  <h2>Automatic WhatsApp</h2>
+  {% if wa_ready %}
+    <p><strong style="color:var(--primary)">On</strong> — using
+      <code>{{ provider }}</code>. New bookings message you, and assigning a
+      therapist messages them.</p>
+  {% else %}
+    <p><strong>Off.</strong> Nothing is sent on its own. The
+      <strong>Send on WhatsApp</strong> links still work — they open WhatsApp
+      with the message written, and you press send.</p>
+
+    <h3 style="font-family:var(--font-body);font-size:1rem">Turning it on</h3>
+    <p class="muted">WhatsApp does not let a website message a number without
+      an account with a provider. Two work here:</p>
+    <ul class="muted">
+      <li><strong>Fonnte</strong> or <strong>Wablas</strong> — Indonesian, a
+        few tens of thousands of rupiah a month, scan a QR code with the spa's
+        phone and it sends as your normal WhatsApp. Simplest for a spa.</li>
+      <li><strong>Meta WhatsApp Cloud API</strong> — free to start, but needs
+        business verification, and outside 24 hours of a customer messaging
+        you it only sends pre-approved templates.</li>
+    </ul>
+    <p class="muted">Once you have a token, add it to <code>.env</code> on the
+      server and restart:</p>
+    <pre class="cmd">WA_PROVIDER=fonnte
+WA_TOKEN=your-token-here</pre>
+    <p class="muted small">For Wablas also set <code>WA_API_URL</code> to your
+      Wablas domain. For Meta use <code>WA_PROVIDER=meta</code> with
+      <code>WA_TOKEN</code> and <code>WA_PHONE_ID</code>.</p>
+  {% endif %}
+  {% if failures %}
+    <p style="color:var(--destructive)"><strong>{{ failures }}</strong> message(s)
+      have failed. The reason is in the Detail column below.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Recent</h2>
+  <table class="table">
+    <thead><tr><th>When</th><th>Channel</th><th>About</th><th>To</th>
+      <th>Sent</th><th>Detail</th></tr></thead>
+    <tbody>
+    {% for m in rows %}
+      <tr>
+        <td class="muted small">{{ m.created_at.strftime('%d %b %H:%M') }}</td>
+        <td>{{ m.channel }}</td>
+        <td>{{ m.purpose }}</td>
+        <td>{{ m.recipient_name or '—' }}<br>
+          <span class="muted small">{{ m.recipient }}</span></td>
+        <td>{{ '✅' if m.ok else '❌' }}</td>
+        <td class="muted small">{{ m.detail or '' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="muted">Nothing sent yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

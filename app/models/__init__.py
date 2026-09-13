@@ -12,4 +12,5 @@ from .discount import Discount, SCOPES, KINDS                    # noqa: F401
 from .finance import (Expense, Payout, EXPENSE_CATEGORIES,       # noqa: F401
                       PAY_METHODS)
 from .media import MediaImage, Review                            # noqa: F401
+from .messaging import MessageLog                                # noqa: F401
 from .shared import Redirect, PageView, SeoPageMeta, AuditLog    # noqa: F401

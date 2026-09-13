@@ -11,6 +11,13 @@
   <form method="post" enctype="multipart/form-data" class="gridform">
     {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
     <label>Name *<input type="text" name="name" required maxlength="80" value="{{ edit.name if edit }}"></label>
+    <label>WhatsApp number
+      <input type="tel" name="phone" maxlength="30"
+             value="{{ edit.phone or '' if edit }}" placeholder="628123456789">
+    </label>
+    <p class="wide muted small">Used to send them the booking when you assign
+      one. International format, no “+” and no spaces — an Indonesian 0812…
+      number is written 62812…</p>
     <label>Role (EN)<input type="text" name="role_en" maxlength="80" value="{{ edit.role_en if edit else 'Therapist' }}" placeholder="Senior therapist"></label>
     <label>Role (ID)<input type="text" name="role_idn" maxlength="80" value="{{ edit.role_idn or '' if edit }}"></label>
     <label>Languages<input type="text" name="languages" maxlength="120" value="{{ edit.languages if edit else 'English, Indonesian' }}"></label>
@@ -41,12 +48,15 @@
 
 <div class="panel">
   <table class="table">
-    <thead><tr><th></th><th>Name</th><th>Role</th><th>On site</th><th>Bookable</th></tr></thead>
+    <thead><tr><th></th><th>Name</th><th>WhatsApp</th><th>Commission</th>
+      <th>Role</th><th>On site</th><th>Bookable</th></tr></thead>
     <tbody>
     {% for th in rows %}
       <tr>
         <td>{% if th.photo_url %}<img class="mini" src="{{ th.photo_url }}" alt="">{% endif %}</td>
         <td><a href="/admin/therapists?edit={{ th.id }}">{{ th.name }}</a></td>
+        <td class="muted small">{{ th.phone or '— none —' }}</td>
+        <td>{{ th.commission_pct or 0 }}%</td>
         <td>{{ th.role_en }}</td>
         <td>{{ '✅' if th.show_on_site else '—' }}</td>
         <td>{{ '✅' if th.is_active else '—' }}</td>
