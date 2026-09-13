@@ -15,11 +15,20 @@ from sqlalchemy import func
 from ..extensions import db
 from ..models.media import MediaImage, Review
 
-ALLOWED = {"jpg", "jpeg", "png", "webp", "gif"}
-MAX_BYTES = 8 * 1024 * 1024
+# .heic/.heif matter: that is what an iPhone produces by default, and a phone
+# is how most of these photos will arrive.
+ALLOWED = {"jpg", "jpeg", "png", "webp", "gif", "heic", "heif"}
+MAX_BYTES = 18 * 1024 * 1024      # stays under the usual nginx 20m
 MAX_EDGE = 1920
 THUMB_EDGE = 480
 WEBP_QUALITY = 82
+
+try:                              # optional: adds HEIC/HEIF to Pillow
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+    HEIF_OK = True
+except Exception:                 # noqa: BLE001 - absent or broken install
+    HEIF_OK = False
 
 
 def upload_dir():
@@ -53,23 +62,46 @@ def _compress(stream, base):
 
 def save_upload(file_storage, entity_type: str, entity_id: int, caption="",
                 alt_en="", alt_idn=""):
+    """(MediaImage, None) on success, (None, "why it failed") otherwise.
+
+    The reason is returned rather than swallowed: an upload that vanishes with
+    a cheerful "Saved" is worse than one that says the file was too big.
+    """
     name = (file_storage.filename or "").lower()
     ext = name.rsplit(".", 1)[-1] if "." in name else ""
+    if not ext:
+        return None, "That file has no extension, so we cannot tell what it is."
     if ext not in ALLOWED:
-        return None
+        return None, (f"“.{ext}” is not a supported image format. "
+                      f"Use JPG, PNG, WebP, GIF or HEIC.")
+    if ext in ("heic", "heif") and not HEIF_OK:
+        return None, ("HEIC support is not installed on the server. Convert "
+                      "the photo to JPG, or on iPhone set Settings → Camera → "
+                      "Formats → Most Compatible.")
+
     file_storage.stream.seek(0, os.SEEK_END)
-    if file_storage.stream.tell() > MAX_BYTES:
-        return None
+    size = file_storage.stream.tell()
     file_storage.stream.seek(0)
+    if size > MAX_BYTES:
+        return None, (f"That photo is {size // (1024 * 1024)} MB. The limit is "
+                      f"{MAX_BYTES // (1024 * 1024)} MB — please resize it.")
+    if size == 0:
+        return None, "That file is empty."
 
     base = secrets.token_hex(10)
     packed = _compress(file_storage.stream, base)
     if packed:
         url, thumb_url, width, height, size_kb = packed
+    elif ext in ("heic", "heif"):
+        # Storing the original would serve a file browsers cannot display.
+        return None, "That HEIC photo could not be read. Please convert it to JPG."
     else:
         fname = f"{base}.{ext}"
         file_storage.stream.seek(0)
-        file_storage.save(os.path.join(upload_dir(), fname))
+        try:
+            file_storage.save(os.path.join(upload_dir(), fname))
+        except OSError as exc:
+            return None, f"Could not write the file to disk: {exc}"
         url, thumb_url = f"/static/uploads/{fname}", None
         width = height = size_kb = None
 
@@ -81,7 +113,7 @@ def save_upload(file_storage, entity_type: str, entity_id: int, caption="",
                      caption=caption[:160], is_cover=first)
     db.session.add(img)
     db.session.commit()
-    return img
+    return img, None
 
 
 def delete_image(img: MediaImage):

@@ -116,6 +116,16 @@ def create_app():
         from flask import render_template
         return render_template("404.html"), 404
 
+    @app.errorhandler(413)
+    def _too_large(_e):
+        """Without this an oversized photo returns a bare browser error and
+        the person is left guessing what went wrong."""
+        from flask import flash, redirect
+        limit = app.config["MAX_CONTENT_LENGTH"] // (1024 * 1024)
+        flash(f"That file is too big — the limit is {limit} MB. "
+              f"Please resize the photo and try again.")
+        return redirect(request.referrer or "/admin/media"), 302
+
     return app
 
 

@@ -14,7 +14,9 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "true").lower() != "false"
 
-    MAX_CONTENT_LENGTH = 12 * 1024 * 1024
+    # Must stay at or below nginx's client_max_body_size, or the upload is
+    # rejected by the proxy before Flask can explain why.
+    MAX_CONTENT_LENGTH = 20 * 1024 * 1024
     UPLOAD_DIR = os.getenv("UPLOAD_DIR", "app/static/uploads")
 
     SITE_URL = os.getenv("SITE_URL", "https://taksunusaspa.com").rstrip("/")

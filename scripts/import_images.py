@@ -105,11 +105,13 @@ def already_imported():
 def store(stream_bytes: bytes, filename: str, source: str, entity_type: str,
           entity_id: int):
     fs = FileStorage(stream=io.BytesIO(stream_bytes), filename=filename)
-    img = media_service.save_upload(fs, entity_type, entity_id)
-    if img:
-        img.caption = f"imported:{source}"[:160]
-        img.is_cover = False        # nothing becomes a cover automatically
-        db.session.commit()
+    img, err = media_service.save_upload(fs, entity_type, entity_id)
+    if err:
+        print(f"  ! {filename}: {err}", file=sys.stderr)
+        return None
+    img.caption = f"imported:{source}"[:160]
+    img.is_cover = False            # nothing becomes a cover automatically
+    db.session.commit()
     return img
 
 

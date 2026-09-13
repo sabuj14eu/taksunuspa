@@ -181,9 +181,11 @@ def products():
 
         photo = request.files.get("photo")
         if photo and photo.filename:
-            img = media_service.save_upload(photo, "product", p.id,
-                                            alt_en=p.name_en)
-            if img and not p.image_url:
+            img, err = media_service.save_upload(photo, "product", p.id,
+                                                 alt_en=p.name_en)
+            if err:
+                flash(f"Photo not saved — {err}")
+            elif not p.image_url:
                 p.image_url = img.url
                 db.session.commit()
         flash(f"Saved: {p.name_en}")
@@ -282,9 +284,11 @@ def treatments():
 
         photo = request.files.get("photo")
         if photo and photo.filename:
-            img = media_service.save_upload(photo, "treatment", tr.id,
-                                            alt_en=tr.name_en)
-            if img and not tr.image_url:
+            img, err = media_service.save_upload(photo, "treatment", tr.id,
+                                                 alt_en=tr.name_en)
+            if err:
+                flash(f"Photo not saved — {err}")
+            elif not tr.image_url:
                 tr.image_url = img.url
                 db.session.commit()
         flash(f"Saved: {tr.name_en}")
@@ -403,9 +407,11 @@ def therapists():
 
         photo = request.files.get("photo")
         if photo and photo.filename:
-            img = media_service.save_upload(photo, "therapist", th.id,
-                                            alt_en=th.name)
-            if img:
+            img, err = media_service.save_upload(photo, "therapist", th.id,
+                                                 alt_en=th.name)
+            if err:
+                flash(f"Photo not saved — {err}")
+            else:
                 th.photo_url = img.url
         _log("save", "therapist", th.name)
         db.session.commit()
@@ -808,13 +814,22 @@ def media():
         # zero is valid here and only a missing type is rejected.
         entity_id = _i(request.form, "entity_id")
         files = request.files.getlist("photos")
-        saved = 0
+        saved, problems = 0, []
         for fs in files:
-            if fs and fs.filename and entity_type:
-                if media_service.save_upload(fs, entity_type, entity_id,
-                                             alt_en=_s(request.form, "alt_en")):
-                    saved += 1
-        flash(f"{saved} image(s) uploaded")
+            if not (fs and fs.filename and entity_type):
+                continue
+            _img, err = media_service.save_upload(
+                fs, entity_type, entity_id, alt_en=_s(request.form, "alt_en"))
+            if err:
+                problems.append(f"{fs.filename}: {err}")
+            else:
+                saved += 1
+        if saved:
+            flash(f"{saved} photo(s) uploaded")
+        for problem in problems:
+            flash(problem)
+        if not saved and not problems:
+            flash("No file was chosen.")
         return redirect(url_for("admin.media", entity_type=entity_type,
                                 entity_id=entity_id))
 
