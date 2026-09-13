@@ -207,14 +207,20 @@ REVIEWS = [
      "WhatsApp confirmation came instantly."),
 ]
 
+# slug, EN name, ID name, icon, sort, EN description, ID description
 PRODUCT_GROUPS = [
     ("honey", "Honey", "Madu", "🍯", 10,
-     "Raw honey from stingless bees and wild hives in Bali, bottled by small "
-     "producers. No added sugar, nothing heated."),
+     "Our own honey, made at home here in Bali — raw, from stingless bees and "
+     "wild hives. No added sugar, nothing heated, nothing bought in to resell.",
+     "Madu buatan kami sendiri, dibuat di rumah di Bali — mentah, dari lebah "
+     "kelulut dan sarang liar. Tanpa gula tambahan, tanpa pemanasan, bukan "
+     "barang jualan orang lain."),
     ("spa-products", "Spa Products", "Produk Spa", "🧴", 20,
-     "The oils, scrubs and balms we use in the treatment room."),
+     "The oils, scrubs and balms we use in the treatment room.",
+     "Minyak, lulur dan balsem yang kami gunakan dalam perawatan."),
     ("gift-sets", "Gift Sets", "Paket Hadiah", "🎁", 30,
-     "Honey and spa products boxed together, ready to give."),
+     "Honey and spa products boxed together, ready to give.",
+     "Madu dan produk spa dalam satu kotak, siap dijadikan hadiah."),
 ]
 
 # From the product labels: Sari Madu Sedana, produced by Yustika in Balangan.
@@ -378,10 +384,11 @@ def run():
                    lang="en", is_approved=True)
 
         groups = {}
-        for slug, en, idn, icon, order, desc in PRODUCT_GROUPS:
+        for slug, en, idn, icon, order, desc, desc_id in PRODUCT_GROUPS:
             groups[slug] = upsert(ProductGroup, {"slug": slug}, name_en=en,
                                   name_idn=idn, icon=icon, sort_order=order,
-                                  desc_en=desc, is_active=True)
+                                  desc_en=desc, desc_idn=desc_id,
+                                  is_active=True)
         db.session.flush()
 
         for i, row in enumerate(PRODUCTS):

@@ -540,6 +540,16 @@ a.area-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);
   border:1px solid var(--border);background:var(--card);
 }
 
+/* "we made this ourselves" on a product page — the reason to buy it here */
+.made-card{
+  margin-top:2rem;padding:1.25rem 1.5rem;
+  border:1px solid var(--border);border-left:3px solid var(--brass);
+  border-radius:.75rem;background:var(--card);
+}
+.made-card h3{font-size:1.0625rem;margin-bottom:.35rem}
+.made-card p{margin:0}
+.made-card p + p{margin-top:.35rem}
+
 /* ------------------------------------------------------------ how it works */
 .steps .step{position:relative;padding-top:.5rem}
 .step-no{
@@ -572,7 +582,12 @@ a.area-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);
 .cta-meta span{display:inline-flex;align-items:center;gap:.5rem}
 
 /* ---------------------------------------------------------------- detail */
-.detail{display:grid;grid-template-columns:1fr 1fr;gap:3rem;padding:2rem 0 4rem}
+/* align-items:start matters. Stretched columns make the placeholder's
+   height:100% resolve against a row whose own height depends on the text
+   beside it, and Chromium settles that circle by leaving the grid taller than
+   the box that holds it — the text then spills over the next section. */
+.detail{display:grid;grid-template-columns:1fr 1fr;gap:3rem;padding:2rem 0 4rem;
+  align-items:start}
 .detail-media img{border-radius:1rem;width:100%;object-fit:cover}
 .thumbs{display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap}
 .thumbs img{width:4.5rem;height:4.5rem;object-fit:cover;border-radius:.5rem}

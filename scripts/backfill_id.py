@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app  # noqa: E402
 from app.extensions import db  # noqa: E402
+from app.models.shop import ProductGroup  # noqa: E402
 from app.models.spa import Treatment, TreatmentCategory  # noqa: E402
 
 # Keyed by slug so a renamed treatment is skipped rather than mistranslated.
@@ -47,6 +48,17 @@ TREATMENT_DESC = {
         "titik tekan pada telapak kaki dan betis.",
 }
 
+PRODUCT_GROUP_DESC = {
+    "honey":
+        "Madu buatan kami sendiri, dibuat di rumah di Bali — mentah, dari "
+        "lebah kelulut dan sarang liar. Tanpa gula tambahan, tanpa pemanasan, "
+        "bukan barang jualan orang lain.",
+    "spa-products":
+        "Minyak, lulur dan balsem yang kami gunakan dalam perawatan.",
+    "gift-sets":
+        "Madu dan produk spa dalam satu kotak, siap dijadikan hadiah.",
+}
+
 
 def run(write: bool):
     app = create_app()
@@ -54,7 +66,8 @@ def run(write: bool):
         filled, skipped, unknown = [], [], []
 
         for model, table in [(TreatmentCategory, CATEGORY_DESC),
-                             (Treatment, TREATMENT_DESC)]:
+                             (Treatment, TREATMENT_DESC),
+                             (ProductGroup, PRODUCT_GROUP_DESC)]:
             for row in model.query.all():
                 if (row.desc_idn or "").strip():
                     continue                      # already written, leave it
@@ -74,7 +87,8 @@ def run(write: bool):
         # Anything still English-only after this needs a human.
         remaining = []
         for model, fields in [(Treatment, ["name", "desc"]),
-                              (TreatmentCategory, ["name", "desc"])]:
+                              (TreatmentCategory, ["name", "desc"]),
+                              (ProductGroup, ["name", "desc"])]:
             for row in model.query.all():
                 for f in fields:
                     if getattr(row, f + "_en", None) and \
@@ -93,7 +107,8 @@ def run(write: bool):
     if remaining:
         print(f"\nStill English-only: {remaining}")
     else:
-        print("\nEvery treatment and group has Indonesian text.")
+        print("\nEvery treatment, treatment group and product group has "
+              "Indonesian text.")
 
 
 if __name__ == "__main__":

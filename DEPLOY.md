@@ -119,9 +119,11 @@ docker compose exec app python -m scripts.backfill_id            # show
 docker compose exec app python -m scripts.backfill_id --write    # apply
 ```
 
-It only writes into a field that is empty, so anything you have typed in admin
-is left alone — running it twice changes nothing. It also prints anything it
-has no Indonesian text for, which you then translate in Admin → Treatments.
+It covers treatments, treatment groups and product groups. It only writes into
+a field that is empty, so anything you have typed in admin is left alone —
+running it twice changes nothing, and it is safe to run again after any future
+update in case new text has been added. It prints anything it has no
+Indonesian for, which you then translate in Admin → Treatments or → Products.
 
 Never run `scripts/seed.py` on the live site: unlike the backfill it overwrites
 existing rows, so it would replace your edited prices and descriptions with the

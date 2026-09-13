@@ -45,6 +45,9 @@ T = {
         "step_enjoy": "Enjoy, then pay",
         "step_enjoy_text": "Relax in your own space. Pay cash or by transfer "
                            "when the treatment is finished.",
+        "homemade": "Made at home in Bali",
+        "homemade_note": "We make this ourselves — not bought in to resell.",
+        "made_by": "Made by",
         "travel_included": "Travel included",
         "not_your_area": "Not on the list? Message us — we may still come.",
         "view_all_therapists": "View all therapists",
@@ -114,6 +117,9 @@ T = {
         "step_enjoy": "Nikmati, lalu bayar",
         "step_enjoy_text": "Santai di tempat Anda sendiri. Bayar tunai atau "
                            "transfer setelah perawatan selesai.",
+        "homemade": "Dibuat di rumah, di Bali",
+        "homemade_note": "Kami buat sendiri — bukan barang jualan orang lain.",
+        "made_by": "Dibuat oleh",
         "travel_included": "Transport termasuk",
         "not_your_area": "Area Anda tidak ada? Hubungi kami — mungkin kami "
                          "tetap bisa datang.",

@@ -56,10 +56,16 @@
 
     {% if loc(p, 'desc') %}<div class="prose">{{ loc(p, 'desc')|nl2br }}</div>{% endif %}
 
-    {% if p.producer or p.nib %}
-    <p class="muted small">
-      {% if p.producer %}{{ p.producer }}{% endif %}{% if p.nib %} · NIB {{ p.nib }}{% endif %}
-    </p>
+    {# Homemade is the reason to buy this rather than supermarket honey, so it
+       is said plainly here instead of hidden in grey text at the bottom. #}
+    {% if p.producer %}
+    <div class="made-card">
+      <h3>🍯 {{ t.homemade }}</h3>
+      <p class="muted small">{{ t.homemade_note }}</p>
+      <p class="muted small">{{ t.made_by }} {{ p.producer }}{% if p.nib %} · NIB {{ p.nib }}{% endif %}</p>
+    </div>
+    {% elif p.nib %}
+    <p class="muted small">NIB {{ p.nib }}</p>
     {% endif %}
   </div>
 </div>
