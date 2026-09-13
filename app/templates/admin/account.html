@@ -11,14 +11,11 @@
 </div>
 
 <div class="panel">
-  <h2>Users</h2>
-  <table class="table">
-    <thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Active</th></tr></thead>
-    <tbody>
-    {% for u in users %}
-      <tr><td>{{ u.name }}</td><td>{{ u.phone }}</td><td>{{ u.role }}</td><td>{{ '✅' if u.is_active_flag else '—' }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  <h2>You</h2>
+  <p>{{ current_user.name }} · {{ current_user.phone }}<br>
+    <span class="muted small">Role: {{ current_user.role }}</span></p>
+  {% if can('admin.users') %}
+    <a class="btn btn-outline btn-sm" href="/admin/users">Manage staff accounts</a>
+  {% endif %}
 </div>
 {% endblock %}

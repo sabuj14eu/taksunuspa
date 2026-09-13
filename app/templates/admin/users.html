@@ -1,0 +1,93 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Staff accounts</h1>
+<p class="muted">Everyone who can sign in. The phone number is the username.</p>
+
+<div class="panel">
+  <h2>What each role can do</h2>
+  <table class="table">
+    <tbody>
+      <tr><td><strong>Owner / manager</strong></td>
+        <td>Everything, including the money screens, staff accounts and site settings.</td></tr>
+      <tr><td><strong>Assistant</strong></td>
+        <td>Bookings, orders, treatments, products, photos and messages.
+          Cannot see accounts, expenses, discounts, staff accounts or settings.</td></tr>
+      <tr><td><strong>Therapist</strong></td>
+        <td>Their own schedule and nothing else — no guest list beyond their
+          own bookings, no prices for the business, no other therapist's work.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>{{ 'Edit account' if edit else 'Add someone' }}</h2>
+  <form method="post" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label>Name *<input type="text" name="name" required maxlength="80" value="{{ edit.name if edit }}"></label>
+    <label>Phone (this is the username) *
+      <input type="text" name="phone" required maxlength="20"
+             value="{{ edit.phone if edit }}" placeholder="628123456789"></label>
+
+    <label>Role *
+      <select name="role" onchange="document.getElementById('link-therapist').style.display = this.value === 'therapist' ? '' : 'none'">
+        {% for r in roles %}
+          <option value="{{ r }}" {{ 'selected' if edit and edit.role == r }}>{{ role_labels[r] }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>E-mail<input type="email" name="email" maxlength="120" value="{{ edit.email or '' if edit }}"></label>
+
+    <label class="wide" id="link-therapist"
+           style="{{ '' if edit and edit.role == 'therapist' else 'display:none' }}">
+      Which therapist is this?
+      <select name="therapist_id">
+        <option value="">— choose —</option>
+        {% for th in therapists %}
+          <option value="{{ th.id }}" {{ 'selected' if edit and edit.therapist_id == th.id }}>{{ th.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label class="wide">
+      {{ 'New password (leave blank to keep the current one)' if edit else 'Password *' }}
+      <input type="password" name="password" minlength="8"
+             {{ '' if edit else 'required' }} autocomplete="new-password">
+    </label>
+
+    <label class="check"><input type="checkbox" name="is_active"
+      {{ 'checked' if not edit or edit.is_active_flag }}> Can sign in</label>
+
+    <div class="wide">
+      <button class="btn btn-primary btn-sm" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-outline btn-sm" href="/admin/users">Cancel</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Accounts</h2>
+  <table class="table">
+    <thead><tr><th>Name</th><th>Phone</th><th>Role</th><th>Linked to</th>
+      <th>Can sign in</th><th></th></tr></thead>
+    <tbody>
+    {% for u in rows %}
+      <tr>
+        <td><a href="/admin/users?edit={{ u.id }}">{{ u.name }}</a></td>
+        <td class="muted small">{{ u.phone }}</td>
+        <td>{{ u.role }}</td>
+        <td class="muted small">{{ u.therapist.name if u.therapist else '—' }}</td>
+        <td>{{ '✅' if u.is_active_flag else '—' }}</td>
+        <td class="right">
+          <form method="post" action="/admin/users/{{ u.id }}/delete">
+            <button class="link-btn" type="submit">
+              {{ 'Switch off' if u.is_active_flag else 'Enable' }}</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted small">Accounts are switched off rather than deleted, so the
+    history of who changed what stays intact.</p>
+</div>
+{% endblock %}

@@ -1,18 +1,98 @@
 {% extends "admin/layout.html" %}
 {% block content %}
-<h1>Messages sent</h1>
+<h1>Alerts &amp; Telegram</h1>
 <p class="muted">Every alert the site tried to send, and whether it arrived.</p>
 
 <div class="panel">
-  <h2>Automatic WhatsApp</h2>
+  <h2>Telegram — free, unlimited</h2>
+  {% if tg_ready %}
+    <p><strong style="color:var(--primary)">On.</strong> Link each therapist
+      below and they get their bookings automatically, at no cost.</p>
+
+    <h3 style="font-family:var(--font-body);font-size:1rem">Connect a therapist</h3>
+    <p class="muted">Ask them to open Telegram, search for your bot, and send it
+      any message. They will appear here.</p>
+    {% if tg_error %}<p style="color:var(--destructive)">{{ tg_error }}</p>{% endif %}
+
+    {% if contacts %}
+      <table class="table">
+        <thead><tr><th>Who messaged the bot</th><th>Link to</th><th></th></tr></thead>
+        <tbody>
+        {% for c in contacts %}
+          <tr>
+            <form method="post" action="/admin/telegram-link">
+              <td>{{ c.name }}{% if c.username %} <span class="muted small">@{{ c.username }}</span>{% endif %}
+                <input type="hidden" name="chat_id" value="{{ c.chat_id }}"></td>
+              <td>
+                <select name="therapist_id" required>
+                  <option value="">— choose therapist —</option>
+                  {% for th in therapists %}
+                    <option value="{{ th.id }}">{{ th.name }}{% if th.telegram_chat_id %} (already linked){% endif %}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td class="right"><button class="btn btn-primary btn-sm" type="submit">Connect</button></td>
+            </form>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">Nobody has messaged the bot yet. Telegram only keeps
+        recent messages, so if someone messaged a while ago, ask them to send
+        another and refresh this page.</p>
+    {% endif %}
+
+    <h3 style="font-family:var(--font-body);font-size:1rem">Connected</h3>
+    <table class="table">
+      <tbody>
+      {% for th in therapists %}
+        <tr>
+          <td>{{ th.name }}</td>
+          <td>{% if th.telegram_chat_id %}<span style="color:var(--primary)">✅ connected</span>
+              {% else %}<span class="muted">not connected</span>{% endif %}</td>
+          <td class="right">
+            {% if th.telegram_chat_id %}
+            <form method="post" action="/admin/telegram-link">
+              <input type="hidden" name="therapist_id" value="{{ th.id }}">
+              <input type="hidden" name="chat_id" value="">
+              <button class="link-btn" type="submit">Disconnect</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p><strong>Off — and this is the free option.</strong> Telegram costs
+      nothing, has no message limits, and sends instantly. Therapists install
+      the free Telegram app.</p>
+    <ol class="muted">
+      <li>In Telegram, message <strong>@BotFather</strong> and send
+        <code>/newbot</code>. Give it a name, e.g. Taksu Nusa Spa.</li>
+      <li>It replies with a token that looks like
+        <code>1234567:AAE...</code>.</li>
+      <li>Put it in <code>.env</code> on the server and restart:</li>
+    </ol>
+    <pre class="cmd">TELEGRAM_BOT_TOKEN=your-token-here</pre>
+    <p class="muted">Then come back here, ask each therapist to send the bot a
+      message, and link them with one click. To get the alerts yourself as
+      well, message the bot and set <code>ADMIN_TELEGRAM_CHAT</code> to your
+      own id — it will be listed here once you have.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Automatic WhatsApp — paid</h2>
   {% if wa_ready %}
     <p><strong style="color:var(--primary)">On</strong> — using
       <code>{{ provider }}</code>. New bookings message you, and assigning a
       therapist messages them.</p>
   {% else %}
-    <p><strong>Off.</strong> Nothing is sent on its own. The
-      <strong>Send on WhatsApp</strong> links still work — they open WhatsApp
-      with the message written, and you press send.</p>
+    <p><strong>Off.</strong> The <strong>Send on WhatsApp</strong> links still
+      work — they open WhatsApp with the message written, and you press send.
+      If you want automatic messages without paying, use Telegram above.</p>
 
     <h3 style="font-family:var(--font-body);font-size:1rem">Turning it on</h3>
     <p class="muted">WhatsApp does not let a website message a number without

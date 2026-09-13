@@ -27,7 +27,7 @@ from ...models.site import (ContactMessage, FaqItem, MenuItem, Page,
 from ...models.spa import (BOOKING_STATUSES, Booking, Highlight, HolidayHour,
                            OpeningHour, ServiceArea, Therapist, Treatment,
                            TreatmentCategory, TreatmentOption)
-from ...models.user import User
+from ...models.user import ROLE_LABELS, ROLES, User
 from ...money import to_int
 from ...services import (accounts_service, booking_service, media_service,
                          notify_service, seo_service, shop_service)
@@ -62,17 +62,55 @@ SETTING_KEYS = [
 ]
 
 
+# Screens only the owner should see: money, staff accounts, site settings.
+OWNER_ONLY = {
+    "accounts", "accounts_pay", "expenses", "expense_delete",
+    "discounts", "discount_delete", "delivery",
+    "users", "user_delete", "settings", "messages_sent", "telegram_link",
+}
+# A therapist login reaches nothing but their own schedule.
+THERAPIST_ALLOWED = {"my_schedule", "account"}
+
+
+def _allowed(endpoint: str, user) -> bool:
+    name = (endpoint or "").split(".")[-1]
+    if user.role == "admin":
+        return True
+    if user.role == "therapist":
+        return name in THERAPIST_ALLOWED
+    if user.role == "assistant":
+        return name not in OWNER_ONLY
+    return False
+
+
 def admin_required(fn):
     @wraps(fn)
     @login_required
     def wrapper(*a, **kw):
-        if current_user.role not in ("admin", "staff"):
+        if not _allowed(request.endpoint, current_user):
+            # A therapist landing on /admin should get their schedule, not a
+            # wall — they have no reason to know the rest exists.
+            if current_user.role == "therapist":
+                return redirect(url_for("admin.my_schedule"))
             abort(403)
         return fn(*a, **kw)
     return wrapper
 
 
 bp.before_request(admin_required(lambda: None))
+
+
+@bp.app_context_processor
+def _admin_nav():
+    """Lets the sidebar hide what the signed-in person cannot open."""
+    def can(endpoint):
+        try:
+            if not current_user.is_authenticated:
+                return False
+        except Exception:
+            return False
+        return _allowed(endpoint, current_user)
+    return {"can": can}
 
 
 def _log(action, entity, detail=""):
@@ -696,10 +734,17 @@ def booking_notify(bid):
 @bp.route("/messages-sent")
 def messages_sent():
     """Proof of what actually went out — the answer to “did they get it?”."""
+    contacts, tg_error = ([], None)
+    if notify_service.telegram_configured():
+        contacts, tg_error = notify_service.telegram_contacts()
     return render_template(
         "admin/messages_sent.html", active="messages_sent",
         wa_ready=notify_service.wa_configured(),
         provider=os.getenv("WA_PROVIDER", "none"),
+        tg_ready=notify_service.telegram_configured(),
+        contacts=contacts, tg_error=tg_error,
+        therapists=(Therapist.query.filter_by(is_active=True)
+                    .order_by(Therapist.sort_order, Therapist.id).all()),
         rows=(MessageLog.query.order_by(MessageLog.created_at.desc())
               .limit(100).all()),
         failures=MessageLog.query.filter_by(ok=False).count())
@@ -1214,5 +1259,133 @@ def account():
             db.session.commit()
             flash("Password changed")
         return redirect(url_for("admin.account"))
-    return render_template("admin/account.html", active="account",
-                           users=User.query.order_by(User.id).all())
+    return render_template("admin/account.html", active="account")
+
+
+# ---------------------------------------------------------------- users
+
+@bp.route("/users", methods=["GET", "POST"])
+def users():
+    if request.method == "POST":
+        f = request.form
+        uid = _i(f, "id")
+        u = _get_or_404(User, uid) if uid else None
+        phone = _s(f, "phone")
+        role = _s(f, "role") if _s(f, "role") in ROLES else "assistant"
+        password = f.get("password", "")
+
+        if not uid:
+            if not phone:
+                flash("A phone number is needed — it is the username.")
+                return redirect(url_for("admin.users"))
+            if User.query.filter_by(phone=phone).first():
+                flash(f"{phone} already has an account.")
+                return redirect(url_for("admin.users"))
+            if len(password) < 8:
+                flash("Set a password of at least 8 characters.")
+                return redirect(url_for("admin.users"))
+            u = User(phone=phone, name=_s(f, "name") or "Staff", role=role)
+            u.set_password(password)
+            db.session.add(u)
+        else:
+            # Never let the last owner lock everyone out of the money screens.
+            if u.role == "admin" and role != "admin" and \
+                    User.query.filter_by(role="admin",
+                                         is_active_flag=True).count() <= 1:
+                flash("This is the only owner account — keep at least one.")
+                return redirect(url_for("admin.users"))
+            u.name = _s(f, "name") or u.name
+            if phone and phone != u.phone:
+                if User.query.filter_by(phone=phone).first():
+                    flash(f"{phone} is already taken.")
+                    return redirect(url_for("admin.users"))
+                u.phone = phone
+            u.role = role
+            if password:
+                if len(password) < 8:
+                    flash("Password must be at least 8 characters.")
+                    return redirect(url_for("admin.users", edit=u.id))
+                u.set_password(password)
+                flash(f"New password set for {u.name}.")
+
+        u.email = _s(f, "email") or None
+        u.therapist_id = _i(f, "therapist_id") or None
+        if u.role != "therapist":
+            u.therapist_id = None
+        u.is_active_flag = _b(f, "is_active")
+        _log("save", "user", f"{u.name} ({u.role})")
+        db.session.commit()
+        flash(f"Saved: {u.name}")
+        return redirect(url_for("admin.users"))
+
+    edit_id = request.args.get("edit", type=int)
+    return render_template(
+        "admin/users.html", active="users", roles=ROLES,
+        role_labels=ROLE_LABELS,
+        rows=User.query.order_by(User.role, User.id).all(),
+        edit=db.session.get(User, edit_id) if edit_id else None,
+        therapists=(Therapist.query.filter_by(is_active=True)
+                    .order_by(Therapist.sort_order, Therapist.id).all()))
+
+
+@bp.route("/users/<int:uid>/delete", methods=["POST"])
+def user_delete(uid):
+    u = _get_or_404(User, uid)
+    if u.id == current_user.id:
+        flash("You cannot switch off your own account.")
+    elif u.role == "admin" and User.query.filter_by(
+            role="admin", is_active_flag=True).count() <= 1:
+        flash("This is the only owner account — keep at least one.")
+    else:
+        u.is_active_flag = not u.is_active_flag
+        _log("toggle", "user", f"{u.name} active={u.is_active_flag}")
+        db.session.commit()
+        flash(f"{u.name} {'enabled' if u.is_active_flag else 'switched off'}")
+    return redirect(url_for("admin.users"))
+
+
+# ---------------------------------------------------------------- therapist
+
+@bp.route("/my-schedule")
+def my_schedule():
+    """What a therapist sees when they sign in: their own work, nothing else."""
+    th = current_user.therapist
+    if not th:
+        return render_template("admin/my_schedule.html", active="my_schedule",
+                               th=None, upcoming=[], past=[], owed=0)
+    now = datetime.now()
+    upcoming = (Booking.query.filter(Booking.therapist_id == th.id,
+                                     Booking.status.in_(["requested", "confirmed"]),
+                                     Booking.starts_at >= now)
+                .order_by(Booking.starts_at).limit(50).all())
+    past = (Booking.query.filter(Booking.therapist_id == th.id,
+                                 Booking.starts_at < now)
+            .order_by(Booking.starts_at.desc()).limit(20).all())
+    unpaid = [b for b in Booking.query.filter(
+        Booking.therapist_id == th.id, Booking.payout_id.is_(None),
+        Booking.status.in_(["confirmed", "completed"]),
+        Booking.ends_at <= now).all()]
+    return render_template("admin/my_schedule.html", active="my_schedule",
+                           th=th, upcoming=upcoming, past=past,
+                           owed=sum(b.fee_due for b in unpaid),
+                           owed_count=len(unpaid))
+
+
+# ---------------------------------------------------------------- telegram
+
+@bp.route("/telegram-link", methods=["POST"])
+def telegram_link():
+    """Attach a Telegram chat to a therapist, so the bot can message them."""
+    th = _get_or_404(Therapist, _i(request.form, "therapist_id"))
+    chat_id = _s(request.form, "chat_id")
+    th.telegram_chat_id = chat_id or None
+    db.session.commit()
+    if chat_id:
+        ok, detail = notify_service.send_telegram(
+            chat_id, f"✅ Connected. {th.name}, you will get your bookings here.",
+            purpose="telegram_link", name=th.name)
+        flash(f"{th.name} connected — test message sent." if ok
+              else f"Saved, but the test message failed: {detail}")
+    else:
+        flash(f"{th.name} disconnected from Telegram.")
+    return redirect(url_for("admin.messages_sent"))

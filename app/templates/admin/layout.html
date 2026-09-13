@@ -14,42 +14,57 @@
 
 <aside class="admin-side">
   <div class="admin-brand">🌺 Taksu Nusa Spa</div>
-  <a href="/admin/" class="{{ 'on' if active=='dash' }}">📊 Dashboard</a>
 
-  <div class="side-group">Shop</div>
-  <a href="/admin/products" class="{{ 'on' if active=='products' }}">🍯 Products</a>
-  <a href="/admin/product-groups" class="{{ 'on' if active=='groups' }}">🗂️ Product groups</a>
-  <a href="/admin/orders" class="{{ 'on' if active=='orders' }}">🛒 Orders</a>
-  <a href="/admin/delivery" class="{{ 'on' if active=='delivery' }}">🛵 Delivery zones</a>
+  {% if can('admin.my_schedule') and current_user.role == 'therapist' %}
+    <a href="/admin/my-schedule" class="{{ 'on' if active=='my_schedule' }}">📅 My schedule</a>
+    <a href="/admin/account" class="{{ 'on' if active=='account' }}">🔐 My account</a>
+    <a href="/" target="_blank">🌐 View website</a>
+    <a href="/logout">↩ Sign out</a>
+  {% else %}
+    <a href="/admin/" class="{{ 'on' if active=='dash' }}">📊 Dashboard</a>
 
-  <div class="side-group">Spa</div>
-  <a href="/admin/treatments" class="{{ 'on' if active=='treatments' }}">💆 Treatments</a>
-  <a href="/admin/treatment-categories" class="{{ 'on' if active=='spa_cats' }}">🗂️ Treatment groups</a>
-  <a href="/admin/bookings" class="{{ 'on' if active=='bookings' }}">📅 Bookings</a>
-  <a href="/admin/therapists" class="{{ 'on' if active=='therapists' }}">🧖 Therapists</a>
-  <a href="/admin/areas" class="{{ 'on' if active=='areas' }}">📍 Service areas</a>
-  <a href="/admin/schedule" class="{{ 'on' if active=='schedule' }}">🕒 Service hours</a>
+    <div class="side-group">Shop</div>
+    <a href="/admin/products" class="{{ 'on' if active=='products' }}">🍯 Products</a>
+    <a href="/admin/product-groups" class="{{ 'on' if active=='groups' }}">🗂️ Product groups</a>
+    <a href="/admin/orders" class="{{ 'on' if active=='orders' }}">🛒 Orders</a>
+    {% if can('admin.delivery') %}
+    <a href="/admin/delivery" class="{{ 'on' if active=='delivery' }}">🛵 Delivery zones</a>{% endif %}
 
-  <div class="side-group">Money</div>
-  <a href="/admin/accounts" class="{{ 'on' if active=='accounts' }}">📈 Accounts</a>
-  <a href="/admin/expenses" class="{{ 'on' if active=='expenses' }}">🧾 Expenses</a>
-  <a href="/admin/discounts" class="{{ 'on' if active=='discounts' }}">🏷️ Discounts</a>
+    <div class="side-group">Spa</div>
+    <a href="/admin/treatments" class="{{ 'on' if active=='treatments' }}">💆 Treatments</a>
+    <a href="/admin/treatment-categories" class="{{ 'on' if active=='spa_cats' }}">🗂️ Treatment groups</a>
+    <a href="/admin/bookings" class="{{ 'on' if active=='bookings' }}">📅 Bookings</a>
+    <a href="/admin/therapists" class="{{ 'on' if active=='therapists' }}">🧖 Therapists</a>
+    <a href="/admin/areas" class="{{ 'on' if active=='areas' }}">📍 Service areas</a>
+    <a href="/admin/schedule" class="{{ 'on' if active=='schedule' }}">🕒 Service hours</a>
 
-  <div class="side-group">Content</div>
-  <a href="/admin/media" class="{{ 'on' if active=='media' }}">🖼️ Photos</a>
-  <a href="/admin/highlights" class="{{ 'on' if active=='highlights' }}">✦ Why choose us</a>
-  <a href="/admin/pages" class="{{ 'on' if active=='pages' }}">📄 Pages</a>
-  <a href="/admin/menu" class="{{ 'on' if active=='menu' }}">🧭 Menu</a>
-  <a href="/admin/faq" class="{{ 'on' if active=='faq' }}">❓ FAQ</a>
-  <a href="/admin/reviews" class="{{ 'on' if active=='reviews' }}">⭐ Reviews</a>
-  <a href="/admin/messages" class="{{ 'on' if active=='messages' }}">📩 Messages</a>
-  <a href="/admin/messages-sent" class="{{ 'on' if active=='messages_sent' }}">📤 Messages sent</a>
+    {% if can('admin.accounts') %}
+    <div class="side-group">Money</div>
+    <a href="/admin/accounts" class="{{ 'on' if active=='accounts' }}">📈 Accounts</a>
+    <a href="/admin/expenses" class="{{ 'on' if active=='expenses' }}">🧾 Expenses</a>
+    <a href="/admin/discounts" class="{{ 'on' if active=='discounts' }}">🏷️ Discounts</a>
+    {% endif %}
 
-  <div class="side-group">System</div>
-  <a href="/admin/settings" class="{{ 'on' if active=='settings' }}">⚙️ Site settings</a>
-  <a href="/admin/account" class="{{ 'on' if active=='account' }}">🔐 My account</a>
-  <a href="/" target="_blank">🌐 View website</a>
-  <a href="/logout">↩ Sign out</a>
+    <div class="side-group">Content</div>
+    <a href="/admin/media" class="{{ 'on' if active=='media' }}">🖼️ Photos</a>
+    <a href="/admin/highlights" class="{{ 'on' if active=='highlights' }}">✦ Why choose us</a>
+    <a href="/admin/pages" class="{{ 'on' if active=='pages' }}">📄 Pages</a>
+    <a href="/admin/menu" class="{{ 'on' if active=='menu' }}">🧭 Menu</a>
+    <a href="/admin/faq" class="{{ 'on' if active=='faq' }}">❓ FAQ</a>
+    <a href="/admin/reviews" class="{{ 'on' if active=='reviews' }}">⭐ Reviews</a>
+    <a href="/admin/messages" class="{{ 'on' if active=='messages' }}">📩 Messages</a>
+
+    <div class="side-group">System</div>
+    {% if can('admin.messages_sent') %}
+    <a href="/admin/messages-sent" class="{{ 'on' if active=='messages_sent' }}">📤 Alerts &amp; Telegram</a>{% endif %}
+    {% if can('admin.users') %}
+    <a href="/admin/users" class="{{ 'on' if active=='users' }}">👥 Staff accounts</a>{% endif %}
+    {% if can('admin.settings') %}
+    <a href="/admin/settings" class="{{ 'on' if active=='settings' }}">⚙️ Site settings</a>{% endif %}
+    <a href="/admin/account" class="{{ 'on' if active=='account' }}">🔐 My account</a>
+    <a href="/" target="_blank">🌐 View website</a>
+    <a href="/logout">↩ Sign out</a>
+  {% endif %}
 </aside>
 
 <div class="admin-content">

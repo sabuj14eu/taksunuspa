@@ -121,12 +121,55 @@ def send_whatsapp(number, text, purpose="message", name=""):
     return ok, detail
 
 
+def telegram_configured() -> bool:
+    return bool(os.getenv("TELEGRAM_BOT_TOKEN"))
+
+
+def send_telegram(chat_id, text, purpose="message", name=""):
+    ok, detail = _send_telegram(str(chat_id or ""), text)
+    _log("telegram", purpose, chat_id, name, text, ok, detail)
+    return ok, detail
+
+
 def telegram_admin(text: str, purpose="message"):
     chat = os.getenv("ADMIN_TELEGRAM_CHAT", "")
     ok, detail = _send_telegram(chat, text)
     if chat:
         _log("telegram", purpose, chat, "admin", text, ok, detail)
     return ok, detail
+
+
+def telegram_contacts():
+    """Everyone who has messaged the bot recently, from getUpdates.
+
+    This is how a therapist gets connected without anyone hunting for a
+    numeric id: they send the bot any message, and their name and chat id
+    appear here to be linked.
+    """
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token:
+        return [], "No bot token set"
+    try:
+        r = requests.get(f"https://api.telegram.org/bot{token}/getUpdates",
+                         timeout=TIMEOUT)
+        if r.status_code != 200:
+            return [], f"{r.status_code} {r.text[:150]}"
+        seen, out = set(), []
+        for upd in r.json().get("result", []):
+            msg = upd.get("message") or upd.get("edited_message") or {}
+            chat = msg.get("chat") or {}
+            cid = chat.get("id")
+            if not cid or cid in seen:
+                continue
+            seen.add(cid)
+            name = " ".join(x for x in [chat.get("first_name"),
+                                        chat.get("last_name")] if x) \
+                or chat.get("username") or str(cid)
+            out.append({"chat_id": str(cid), "name": name,
+                        "username": chat.get("username") or ""})
+        return out, None
+    except requests.RequestException as exc:
+        return [], str(exc)[:200]
 
 
 def notify_admin(text: str, purpose="message"):
@@ -201,18 +244,34 @@ def notify_order(order, site_url=""):
 
 
 def notify_therapist(booking, site_url=""):
-    """(ok, detail). False with a reason when there is no number or no
-    provider — the caller shows the one-tap link instead."""
+    """(ok, detail). Tries WhatsApp, then Telegram, which is free.
+
+    False with a reason when neither is available — the caller then shows the
+    one-tap wa.me link instead of failing silently.
+    """
     th = booking.therapist
     if not th:
         return False, "no therapist assigned"
-    if not th.phone:
-        return False, f"{th.name} has no phone number saved"
-    if not wa_configured():
-        return False, "no WhatsApp provider configured"
-    return send_whatsapp(th.phone, booking_text(booking, site_url,
-                                                for_therapist=True),
-                         purpose="therapist_assigned", name=th.name)
+    text = booking_text(booking, site_url, for_therapist=True)
+
+    if th.phone and wa_configured():
+        ok, detail = send_whatsapp(th.phone, text,
+                                   purpose="therapist_assigned", name=th.name)
+        if ok:
+            return True, detail
+        # Fall through: a paid gateway that is down should not stop the free
+        # channel from getting the message there.
+
+    if th.telegram_chat_id and telegram_configured():
+        return send_telegram(th.telegram_chat_id, text,
+                             purpose="therapist_assigned", name=th.name)
+
+    if not th.phone and not th.telegram_chat_id:
+        return False, f"{th.name} has no WhatsApp number or Telegram saved"
+    if th.phone and not wa_configured():
+        return False, ("no WhatsApp provider configured — connect Telegram for "
+                       "free automatic messages")
+    return False, "could not deliver on any channel"
 
 
 def therapist_link(booking, site_url=""):
