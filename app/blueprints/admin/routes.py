@@ -204,6 +204,35 @@ def products():
             "product", [p.id for p in Product.query.all()]))
 
 
+@bp.route("/products/<int:pid>/duplicate", methods=["POST"])
+def product_duplicate(pid):
+    """Copy a product so a new size or variant only needs a name, a price and
+    a photo, instead of retyping two languages of description.
+
+    The copy starts hidden: a half-finished duplicate should never appear in
+    the shop, and photos are deliberately not copied — they are the thing you
+    are most likely to be changing.
+    """
+    src = _get_or_404(Product, pid)
+    copy = Product(
+        name_en=f"{src.name_en} (copy)", name_idn=src.name_idn,
+        group_id=src.group_id, short_en=src.short_en, short_idn=src.short_idn,
+        desc_en=src.desc_en, desc_idn=src.desc_idn,
+        size_label=src.size_label, sku=None,
+        price_idr=src.price_idr, weight_g=src.weight_g,
+        stock=0, track_stock=src.track_stock,
+        producer=src.producer, nib=src.nib,
+        seo_title=None, seo_desc=src.seo_desc,
+        sort_order=src.sort_order, is_featured=False, is_active=False)
+    copy.slug = seo_service.unique_slug(Product, copy.name_en)
+    db.session.add(copy)
+    _log("duplicate", "product", f"{src.name_en} -> {copy.name_en}")
+    db.session.commit()
+    flash(f"Copied “{src.name_en}”. Change the name, price and photo, then "
+          f"tick “Visible on the website”.")
+    return redirect(url_for("admin.products", edit=copy.id))
+
+
 @bp.route("/products/<int:pid>/delete", methods=["POST"])
 def product_delete(pid):
     p = _get_or_404(Product, pid)

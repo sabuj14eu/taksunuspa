@@ -55,6 +55,14 @@
         <a class="btn btn-ghost" href="/product/{{ edit.slug }}" target="_blank">View</a>{% endif %}
     </div>
   </form>
+
+  {% if edit %}
+  {# Its own form: a nested one would submit the editor instead. #}
+  <form method="post" action="/admin/products/{{ edit.id }}/duplicate" style="margin-top:1rem">
+    <button class="btn btn-outline btn-sm" type="submit">Make a copy of this product</button>
+    <span class="muted small">Copies everything except the photos, and starts hidden.</span>
+  </form>
+  {% endif %}
 </div>
 
 {% if edit %}
@@ -78,9 +86,14 @@
         <td>{{ p.stock if p.track_stock else '∞' }}</td>
         <td>{{ '✅' if p.is_active else '—' }}</td>
         <td class="right">
-          <form method="post" action="/admin/products/{{ p.id }}/delete" onsubmit="return confirm('Archive {{ p.name_en }}?')">
-            <button class="link-btn" type="submit">Archive</button>
-          </form>
+          <div class="row-actions">
+            <form method="post" action="/admin/products/{{ p.id }}/duplicate">
+              <button class="link-btn" type="submit">Copy</button>
+            </form>
+            <form method="post" action="/admin/products/{{ p.id }}/delete" onsubmit="return confirm('Archive {{ p.name_en }}?')">
+              <button class="link-btn" type="submit">Archive</button>
+            </form>
+          </div>
         </td>
       </tr>
     {% else %}
