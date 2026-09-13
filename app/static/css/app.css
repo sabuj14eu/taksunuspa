@@ -325,9 +325,11 @@ main{min-height:60vh}
    the 80rem content width (1232px inside the gutters, 2rem gaps): any larger
    and a fifth card would squeeze in and break the four-up design. They also
    make the rows step down on narrower screens without separate breakpoints. */
-.grid-2{grid-template-columns:repeat(auto-fit,minmax(30rem,1fr))}
-.grid-3{grid-template-columns:repeat(auto-fit,minmax(23rem,1fr))}
-.grid-4{grid-template-columns:repeat(auto-fit,minmax(17.5rem,1fr))}
+/* min(..., 100%) matters: a bare minmax(30rem,1fr) keeps a 480px track even
+   on a 390px phone, which pushed the whole home page sideways. */
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(min(30rem,100%),1fr))}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(min(23rem,100%),1fr))}
+.grid-4{grid-template-columns:repeat(auto-fit,minmax(min(17.5rem,100%),1fr))}
 
 .card{
   background:var(--card);border:1px solid var(--border);
@@ -511,6 +513,11 @@ a.area-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);
   font-size:.875rem;font-weight:500;color:var(--foreground);
 }
 .area-fee.free{color:var(--primary)}
+/* In a page head there is no card around it, so it needs its own outline. */
+.page-head .area-fee{
+  margin-top:0;padding:.4rem 1rem;border-radius:999px;
+  border:1px solid var(--border);background:var(--card);
+}
 
 /* ------------------------------------------------------------ how it works */
 .steps .step{position:relative;padding-top:.5rem}
@@ -716,6 +723,14 @@ textarea{resize:vertical}
   }
   .tabbar .tab-cta{position:relative;padding-top:1.9rem}
   .tabbar .tab-cta .ico{width:1.5rem;height:1.5rem}
+
+  /* Two across on a phone instead of one full-width card each. Four
+     treatments used to mean four screens of scrolling. */
+  .grid-4{grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+  .grid-4 .card-body{padding:.9rem 1rem 1.25rem}
+  .grid-4 .card-body h3{font-size:1.05rem}
+  .grid-4 .area-card{padding:1.25rem}
+  .grid-4 .area-card h3{font-size:1.15rem}
 
   /* Room for the bar, so nothing at the bottom of a page is unreachable. */
   body{padding-bottom:calc(4rem + env(safe-area-inset-bottom,0px))}

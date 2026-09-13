@@ -14,7 +14,7 @@
 <section class="section" style="padding-top:2.5rem">
   <div class="wrap">
     {% if rows %}
-    <div class="grid-3">
+    <div class="grid grid-4">
       {% for a in rows %}
       <a class="area-card" href="/areas/{{ a.slug }}">
         <span class="area-card-icon">{{ icon('map-pin') }}</span>
@@ -35,7 +35,9 @@
   </div>
 </section>
 
-{% include "_how_it_works.html" %}
+{# Plain here — the CTA band below is already sand, and two sand bands in a
+   row read as one enormous empty block. #}
+{% with hiw_tone = '' %}{% include "_how_it_works.html" %}{% endwith %}
 
 <section class="section section-sand">
   <div class="wrap section-head center">

@@ -1,12 +1,12 @@
 {# Three steps, because a travelling spa is unfamiliar: guests want to know
    what actually happens between pressing "book" and lying on the table. #}
-<section class="section section-sand" id="how-it-works">
+<section class="section {{ hiw_tone | default('section-sand') }}" id="how-it-works">
   <div class="wrap">
     <div class="section-head center">
       <span class="eyebrow center-rules">{{ t.we_come_to_you }}</span>
       <h2>{{ t.how_it_works }}</h2>
     </div>
-    <div class="grid-3 steps">
+    <div class="grid grid-3 steps">
       <div class="step">
         <span class="step-no">1</span>
         <h3>{{ t.step_book }}</h3>

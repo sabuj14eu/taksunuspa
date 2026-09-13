@@ -30,7 +30,9 @@
     <div class="section-head center">
       <h2>{{ t.spa_menu }} — {{ a.name }}</h2>
     </div>
-    <div class="grid-3">
+    {# grid-4, not grid-3: cover_url serves the 480px thumbnail, and at
+       three-across those cards are wide enough to stretch it soft. #}
+    <div class="grid grid-4">
       {% for tr in treatments %}
         {{ treatment_card(tr, price_of, cover_url('treatment', tr.id), rp, t, loc) }}
       {% endfor %}
