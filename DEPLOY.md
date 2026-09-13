@@ -103,6 +103,24 @@ docker compose logs --tail=40 app
 `scripts/migrate.py` creates any new tables and adds any new columns. It never
 drops anything, so it is safe to run on every deploy.
 
+### One-off: fill in the missing Indonesian text
+
+The treatment and treatment-group descriptions were seeded in English only, so
+an Indonesian visitor read English there. Run this **once** after deploying:
+
+```bash
+docker compose exec app python -m scripts.backfill_id            # show
+docker compose exec app python -m scripts.backfill_id --write    # apply
+```
+
+It only writes into a field that is empty, so anything you have typed in admin
+is left alone — running it twice changes nothing. It also prints anything it
+has no Indonesian text for, which you then translate in Admin → Treatments.
+
+Never run `scripts/seed.py` on the live site: unlike the backfill it overwrites
+existing rows, so it would replace your edited prices and descriptions with the
+starting ones. Seeding is for a brand-new database only.
+
 As a one-liner:
 
 ```bash

@@ -117,36 +117,50 @@ SETTINGS = {
 # Daily 09:00 – 23:00.
 HOURS = {wd: (9 * 60, 23 * 60) for wd in range(7)}
 
+# slug, EN name, ID name, icon, sort, EN description, ID description
 TREATMENT_CATEGORIES = [
     ("massage", "Massage", "Pijat", "💆", 10,
      "Traditional Balinese hands, warm oil, unhurried pressure — in your own "
-     "room."),
+     "room.",
+     "Sentuhan tradisional Bali, minyak hangat, tekanan tanpa terburu-buru — "
+     "di kamar Anda sendiri."),
     ("body-treatment", "Body Rituals", "Ritual Tubuh", "🌿", 20,
-     "Scrubs, masks and flower baths made from island ingredients."),
+     "Scrubs, masks and flower baths made from island ingredients.",
+     "Lulur, masker dan mandi bunga dari bahan-bahan alami Bali."),
     ("packages", "Packages", "Paket", "🎁", 30,
-     "Longer combinations for couples and half-day escapes."),
+     "Longer combinations for couples and half-day escapes.",
+     "Kombinasi lebih panjang untuk pasangan dan liburan setengah hari."),
 ]
 
-# name, category, EN name, ID name, per_person, description,
-# [(minutes, price), ...]
+# slug, category, EN name, ID name, per_person, EN description,
+# ID description, [(minutes, price), ...]
 TREATMENTS = [
     ("balinese-massage", "massage", "Balinese Massage", "Pijat Bali", False,
      "Traditional full-body massage with aromatic oils to restore flow and "
      "calm. Long strokes, palm pressure and warm coconut oil, working the "
      "whole body from feet to shoulders.",
+     "Pijat seluruh tubuh tradisional dengan minyak aromatik untuk "
+     "melancarkan aliran energi dan menenangkan. Usapan panjang, tekanan "
+     "telapak tangan dan minyak kelapa hangat, dari telapak kaki hingga bahu.",
      [(60, 300000), (90, 400000), (120, 550000)]),
     ("deep-tissue-massage", "massage", "Deep Tissue Massage",
      "Pijat Deep Tissue", False,
      "Strong, focused pressure for muscle recovery and deep release. The one "
      "to book after surfing, training or a long flight.",
+     "Tekanan kuat dan terarah untuk pemulihan otot dan pelepasan mendalam. "
+     "Pilihan tepat setelah berselancar, berlatih atau penerbangan panjang.",
      [(60, 350000), (90, 450000)]),
     ("couple-massage", "massage", "Couple Massage", "Pijat Pasangan", True,
      "Two therapists, side by side, in your own room. Price is per person for "
      "a shared ritual.",
+     "Dua terapis, berdampingan, di kamar Anda sendiri. Harga per orang untuk "
+     "ritual berdua.",
      [(60, 300000), (90, 400000)]),
     ("foot-massage", "massage", "Foot Massage", "Pijat Kaki", False,
      "Reflexology for tired feet using warming herbal oils. Pressure-point "
      "work on the feet and lower legs.",
+     "Refleksi untuk kaki yang lelah dengan minyak herbal hangat. Pijat titik "
+     "tekan pada telapak kaki dan betis.",
      [(60, 250000)]),
 ]
 
@@ -324,17 +338,17 @@ def run():
                    close_min=close_min, is_closed=False)
 
         cats = {}
-        for slug, en, idn, icon, order, desc in TREATMENT_CATEGORIES:
+        for slug, en, idn, icon, order, desc, desc_id in TREATMENT_CATEGORIES:
             cats[slug] = upsert(TreatmentCategory, {"slug": slug}, name_en=en,
                                 name_idn=idn, icon=icon, sort_order=order,
-                                desc_en=desc, is_active=True)
+                                desc_en=desc, desc_idn=desc_id, is_active=True)
         db.session.flush()
 
         for i, row in enumerate(TREATMENTS):
-            slug, cat, en, idn, per_person, desc, tiers = row
+            slug, cat, en, idn, per_person, desc, desc_id, tiers = row
             tr = upsert(Treatment, {"slug": slug}, name_en=en, name_idn=idn,
                         category_id=cats[cat].id, desc_en=desc,
-                        per_person=per_person,
+                        desc_idn=desc_id, per_person=per_person,
                         duration_min=tiers[0][0], price_idr=tiers[0][1],
                         sort_order=i * 10, is_featured=True, is_active=True)
             db.session.flush()
