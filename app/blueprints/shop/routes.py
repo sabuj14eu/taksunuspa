@@ -186,6 +186,14 @@ def checkout():
             flash(t()["phone"])
             return redirect(url_for("shop.checkout"))
 
+        method = f.get("payment_method", "cod")
+        address = f.get("address", "").strip()
+        # Everything except collection at the spa is delivered, and a courier
+        # cannot work from a blank address.
+        if method != "cash" and not address:
+            flash(t()["address_required"])
+            return redirect(url_for("shop.checkout"))
+
         order, err = shop_service.place_order(
             name=f.get("name", ""), phone=phone, email=f.get("email", ""),
             address=f.get("address", ""), city=f.get("city", ""),

@@ -41,12 +41,15 @@
       <div class="cart-tools">
         <label>{{ t.discount }}<input type="text" name="code" value="{{ code or '' }}" placeholder="CODE"></label>
         {% if zones %}
+        {# Auto-submits: picking an area and seeing the fee unchanged until you
+           find a button is the sort of thing that loses an order. #}
         <label>{{ t.delivery }}
-          <select name="zone_id">
-            <option value="">—</option>
+          <select name="zone_id" onchange="this.form.submit()">
+            <option value="">{{ t.pick_area }}</option>
             {% for z in zones %}
               <option value="{{ z.id }}" {{ 'selected' if zone_id == z.id }}>
-                {{ loc(z, 'name') }} — {{ rp(z.fee_idr) }}
+                {{ loc(z, 'name') }} — {% if z.fee_idr %}{{ rp(z.fee_idr) }}{% else %}{{ t.free_travel }}{% endif %}
+                {%- if z.free_over_idr %} ({{ t.from }} {{ rp(z.free_over_idr) }}: {{ t.free_travel }}){% endif %}
               </option>
             {% endfor %}
           </select>

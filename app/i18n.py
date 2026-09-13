@@ -57,6 +57,9 @@ T = {
         "message_sent": "Thank you — your message has been sent.",
         "order_whatsapp": "Order via WhatsApp",
         "book_whatsapp": "Book via WhatsApp",
+        "address_required": "Please give a delivery address, or choose "
+                            "\u201cCash on collection\u201d if you are picking "
+                            "the order up.",
         "delivery_note": "We deliver across Bali. Pay cash on delivery, "
                          "bank transfer or online.",
         "read_more": "Read more", "back": "Back",
@@ -108,12 +111,46 @@ T = {
         "message_sent": "Terima kasih — pesan Anda sudah terkirim.",
         "order_whatsapp": "Pesan lewat WhatsApp",
         "book_whatsapp": "Pesan lewat WhatsApp",
+        "address_required": "Mohon isi alamat pengiriman, atau pilih "
+                            "\u201cAmbil sendiri\u201d bila Anda mengambil "
+                            "pesanan.",
         "delivery_note": "Kami kirim ke seluruh Bali. Bayar tunai saat "
                          "pengiriman, transfer bank atau online.",
         "read_more": "Selengkapnya", "back": "Kembali",
         "search": "Cari", "no_results": "Tidak ada hasil.",
     },
 }
+
+
+class Strings:
+    """Attribute access for UI strings.
+
+    A plain dict cannot back `{{ t.update }}` in a template: Jinja resolves
+    attributes before keys, so it would hand back `dict.update` — the method —
+    and render "<built-in method update of dict object ...>" on the page. This
+    wrapper has no methods to collide with, so every key is reachable by name.
+    """
+    __slots__ = ("_d",)
+
+    def __init__(self, data: dict):
+        object.__setattr__(self, "_d", data)
+
+    def __getattr__(self, name):
+        try:
+            return self._d[name]
+        except KeyError:
+            # Jinja renders an undefined as an empty string, which is a better
+            # page than a stack trace or a stray key name in front of a guest.
+            raise AttributeError(name) from None
+
+    def __getitem__(self, name):
+        return self._d[name]
+
+    def __contains__(self, name):
+        return name in self._d
+
+    def get(self, name, default=""):
+        return self._d.get(name, default)
 
 
 def lang() -> str:
@@ -123,8 +160,8 @@ def lang() -> str:
     return Config.DEFAULT_LANG if Config.DEFAULT_LANG in Config.LANGUAGES else "en"
 
 
-def t() -> dict:
-    return T.get(lang(), T["en"])
+def t() -> Strings:
+    return Strings(T.get(lang(), T["en"]))
 
 
 def loc(obj, field: str) -> str:
