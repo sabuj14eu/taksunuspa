@@ -365,24 +365,49 @@ a.card:hover .card-img img{transform:scale(1.05)}
 .treatment-media .img-ph{display:grid;place-items:center;width:100%;height:100%;
   font-size:2.25rem;opacity:.35}
 .treatment-body{min-width:0}
+
+/* Home page: the rows sit in a narrow column beside the section photo, so the
+   thumbnail is small and tucked into the corner rather than leading the row. */
+.treatment-row.has-thumb{display:grid;grid-template-columns:1fr 5.5rem;
+  gap:1.25rem;align-items:start}
+.treatment-thumb{display:block;aspect-ratio:1/1;border-radius:.75rem;
+  overflow:hidden;background:var(--secondary)}
+.treatment-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.treatment-row:hover .treatment-thumb img{transform:scale(1.05)}
+.treatment-thumb .img-ph{display:grid;place-items:center;width:100%;height:100%;
+  font-size:1.6rem;opacity:.35}
+.treatment-row.has-thumb .treatment-body h3{margin-bottom:.35rem}
+.treatment-row.has-thumb .treatment-body p{margin:0 0 1rem;font-size:.875rem;
+  line-height:1.6;color:var(--muted-foreground)}
 .treatment-row-head{display:flex;gap:1rem;justify-content:space-between;
   align-items:flex-start;flex-wrap:wrap}
 .treatment-row-head h3{font-family:var(--font-display);font-size:1.5rem;margin:0}
 .treatment-row-head p{margin:.5rem 0 0;max-width:24rem;font-size:.875rem;
   line-height:1.6;color:var(--muted-foreground)}
+/* Grid, not flex: a discounted chip carries both the old and new price and
+   grows wide enough that two would miss fitting by a few pixels and drop to
+   one per line. Sharing the row keeps them side by side and equal width. */
+/* Flex with a basis rather than fixed grid tracks: the chips grow to share
+   whatever width the card has and wrap only when they would fall below the
+   basis. Grid tracks had to be tuned per container and kept landing a couple
+   of pixels the wrong side of fitting two per row. The max-width stops a
+   treatment with a single duration stretching one chip across the card. */
 .duration-chips{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.5rem}
 .duration-chip{
+  flex:1 1 8.5rem;max-width:14rem;
   background:var(--secondary);border-radius:.75rem;
-  padding:.75rem 1rem;text-align:center;border:1px solid transparent;
+  padding:.75rem .9rem;text-align:center;border:1px solid transparent;
 }
 .duration-chip .mins{font-size:.7rem;text-transform:uppercase;letter-spacing:.15em;
   color:var(--muted-foreground)}
-.duration-chip .amounts{display:flex;align-items:baseline;gap:.5rem;margin-top:.25rem;
-  justify-content:center}
-.duration-chip .was{font-size:.875rem;color:var(--muted-foreground);
-  text-decoration:line-through}
-.duration-chip .now{font-family:var(--font-display);font-size:1.125rem;font-weight:600;
-  color:var(--foreground)}
+.duration-chip .amounts{display:flex;align-items:baseline;gap:.4rem;margin-top:.25rem;
+  justify-content:center;flex-wrap:wrap}
+/* nowrap keeps "Rp 300.000" together: without it the chip breaks after "Rp"
+   and the amount lands on the next line. */
+.duration-chip .was{font-size:.8rem;color:var(--muted-foreground);
+  text-decoration:line-through;white-space:nowrap}
+.duration-chip .now{font-family:var(--font-display);font-size:1.05rem;font-weight:600;
+  color:var(--foreground);white-space:nowrap}
 a.duration-chip:hover{border-color:var(--primary);color:inherit}
 
 /* ---------------------------------------------------------------- price */
@@ -748,6 +773,10 @@ body.admin{background:var(--sand)}
   :root{--gutter:1rem}
   .treatment-row.has-media{grid-template-columns:1fr}
   .treatment-media{aspect-ratio:16/9}
+  /* A smaller thumbnail on a phone: at 4.5rem it left too little room and the
+     durations dropped to one per line, making the block four rows tall. */
+  .treatment-row.has-thumb{grid-template-columns:1fr 3.25rem;gap:.75rem}
+  .duration-chip{flex-basis:7rem;padding:.7rem .6rem}
   .trustbar-grid{grid-template-columns:repeat(2,1fr)}
   .trust-item:nth-child(3){border-left:0}
   .gridform,.bookfields{grid-template-columns:1fr}

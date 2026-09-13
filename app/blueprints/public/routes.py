@@ -114,6 +114,8 @@ def home():
         treatments=treatments, products=products,
         product_covers=media_service.covers_for("product",
                                                 [p.id for p in products]),
+        treatment_covers=media_service.covers_for(
+            "treatment", [x.id for x in treatments]),
         highlights=(Highlight.query.filter_by(is_visible=True)
                     .order_by(Highlight.sort_order, Highlight.id).all()),
         therapists=(Therapist.query.filter_by(is_active=True, show_on_site=True)

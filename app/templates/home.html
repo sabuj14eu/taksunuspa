@@ -72,17 +72,25 @@
 
     <div class="grid" style="gap:1.5rem">
       {% for tr in treatments %}
-      <article class="treatment-row">
-        <div class="treatment-row-head">
-          <div>
-            <h3>{{ loc(tr, 'name') }}</h3>
-            <p>{{ loc(tr, 'desc')|truncate(120) }}</p>
-          </div>
+      {% set cover = treatment_covers.get(tr.id) or tr.image_url %}
+      <article class="treatment-row has-thumb">
+        <div class="treatment-body">
+          <h3>{{ loc(tr, 'name') }}</h3>
+          <p>{{ loc(tr, 'desc')|truncate(120) }}</p>
           <a class="btn btn-soft" href="/treatment/{{ tr.slug }}">
             {{ t.book }} {{ icon('arrow-right') }}
           </a>
+          {{ duration_chips(tr, price_of, rp, t, loc) }}
         </div>
-        {{ duration_chips(tr, price_of, rp, t, loc) }}
+        <a class="treatment-thumb" href="/treatment/{{ tr.slug }}"
+           aria-label="{{ loc(tr, 'name') }}">
+          {% if cover %}
+            <img src="{{ cover }}" alt="{{ loc(tr, 'name') }}" loading="lazy"
+                 width="176" height="176">
+          {% else %}
+            <span class="img-ph">{{ tr.category.icon if tr.category else '💆' }}</span>
+          {% endif %}
+        </a>
       </article>
       {% endfor %}
     </div>
