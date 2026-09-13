@@ -772,8 +772,11 @@ def faq():
 @bp.route("/settings", methods=["GET", "POST"])
 def settings():
     if request.method == "POST":
+        # Only touch keys the form actually submitted. A partial POST should
+        # never blank the rest of the site's copy.
         for key in SETTING_KEYS:
-            SiteSetting.put(key, request.form.get(key, ""))
+            if key in request.form:
+                SiteSetting.put(key, request.form.get(key, ""))
         _log("save", "settings", "site settings")
         db.session.commit()
         flash("Settings saved")

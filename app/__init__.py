@@ -3,6 +3,7 @@
 from datetime import date
 
 from flask import Flask, redirect, request, session
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import Config
 from .extensions import db, login_manager
@@ -13,6 +14,11 @@ from .money import rp
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # nginx terminates TLS and proxies over plain HTTP, so without this Flask
+    # thinks every request is http:// and same-site redirect checks fail.
+    # A no-op when the X-Forwarded-* headers are absent, as in local dev.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     db.init_app(app)
     login_manager.init_app(app)
