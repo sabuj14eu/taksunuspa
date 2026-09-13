@@ -23,8 +23,16 @@ nano .env
 #    SECRET_KEY      -> paste the output of: openssl rand -hex 32
 #    DB_PASSWORD     -> a strong password (used by both db and app)
 #    SITE_URL        -> https://taksunusaspa.com
-#    WHATSAPP_NUMBER -> 6282339566156
+#    APP_PORT        -> 5200, or any free port if that one is taken
+#    WHATSAPP_NUMBER -> the spa's WhatsApp, digits only
 #    TELEGRAM_BOT_TOKEN / ADMIN_TELEGRAM_CHAT -> optional order alerts
+
+# 2b. Check the port is free BEFORE starting. On a server that already runs
+#     other services, a clash shows up as "Bind for 127.0.0.1:5200 failed:
+#     port is already allocated".
+sudo ss -lntp | grep ":$(grep '^APP_PORT=' .env | cut -d= -f2)" \
+  && echo "PORT IN USE — pick another APP_PORT in .env" \
+  || echo "port is free"
 
 # 3. Build and start
 docker compose up -d --build
@@ -34,7 +42,15 @@ docker compose exec app python -m scripts.seed
 #    This prints the admin phone and a generated password — copy them now.
 
 # 5. Check it is answering
-curl -I http://127.0.0.1:5200/
+curl -I "http://127.0.0.1:$(grep '^APP_PORT=' .env | cut -d= -f2)/"
+```
+
+**If the port is already allocated**, nothing is broken — pick another and
+restart. Nothing else needs to change except the nginx `proxy_pass` below:
+
+```bash
+sed -i 's|^APP_PORT=.*|APP_PORT=5310|' .env
+docker compose up -d
 ```
 
 ### nginx + HTTPS
@@ -51,6 +67,7 @@ server {
     client_max_body_size 12M;   # photo uploads
 
     location / {
+        # must match APP_PORT in .env
         proxy_pass http://127.0.0.1:5200;
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;

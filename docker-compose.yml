@@ -24,8 +24,11 @@ services:
       db:
         condition: service_healthy
     # Bound to localhost only: nginx terminates TLS and proxies to this port.
+    # APP_PORT is the host side and is set in .env, so a machine already using
+    # 5200 for something else only needs that one line changed. The container
+    # side stays 5200 whatever the host port is.
     ports:
-      - "127.0.0.1:5200:5200"
+      - "127.0.0.1:${APP_PORT:-5200}:5200"
     volumes:
       - uploads:/app/app/static/uploads
 
