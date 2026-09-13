@@ -1,4 +1,5 @@
 {% extends "admin/layout.html" %}
+{% from "admin/_photos.html" import photo_manager %}
 {% block content %}
 <h1>Treatments</h1>
 
@@ -46,6 +47,10 @@
     </div>
   </form>
 </div>
+
+{% if edit %}
+{{ photo_manager("treatment", edit.id, edit_images, "Photos for this treatment") }}
+{% endif %}
 
 {% if edit %}
 <div class="panel">

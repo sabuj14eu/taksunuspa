@@ -192,11 +192,14 @@ def products():
         return redirect(url_for("admin.products", edit=p.id))
 
     edit_id = request.args.get("edit", type=int)
+    edit_row = db.session.get(Product, edit_id) if edit_id else None
     return render_template(
         "admin/products.html", active="products",
         rows=Product.query.order_by(Product.sort_order, Product.id).all(),
         groups=ProductGroup.query.order_by(ProductGroup.sort_order).all(),
-        edit=db.session.get(Product, edit_id) if edit_id else None,
+        edit=edit_row,
+        edit_images=(media_service.gallery("product", edit_row.id)
+                     if edit_row else []),
         covers=media_service.covers_for(
             "product", [p.id for p in Product.query.all()]))
 
@@ -295,11 +298,14 @@ def treatments():
         return redirect(url_for("admin.treatments", edit=tr.id))
 
     edit_id = request.args.get("edit", type=int)
+    edit_row = db.session.get(Treatment, edit_id) if edit_id else None
     return render_template(
         "admin/treatments.html", active="treatments",
         rows=Treatment.query.order_by(Treatment.sort_order, Treatment.id).all(),
         cats=TreatmentCategory.query.order_by(TreatmentCategory.sort_order).all(),
-        edit=db.session.get(Treatment, edit_id) if edit_id else None,
+        edit=edit_row,
+        edit_images=(media_service.gallery("treatment", edit_row.id)
+                     if edit_row else []),
         covers=media_service.covers_for(
             "treatment", [x.id for x in Treatment.query.all()]))
 
@@ -419,10 +425,13 @@ def therapists():
         return redirect(url_for("admin.therapists"))
 
     edit_id = request.args.get("edit", type=int)
+    edit_row = db.session.get(Therapist, edit_id) if edit_id else None
     return render_template(
         "admin/therapists.html", active="therapists",
         rows=Therapist.query.order_by(Therapist.sort_order, Therapist.id).all(),
-        edit=db.session.get(Therapist, edit_id) if edit_id else None)
+        edit=edit_row,
+        edit_images=(media_service.gallery("therapist", edit_row.id)
+                     if edit_row else []))
 
 
 # ---------------------------------------------------------------- highlights

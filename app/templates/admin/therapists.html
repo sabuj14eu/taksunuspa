@@ -1,4 +1,5 @@
 {% extends "admin/layout.html" %}
+{% from "admin/_photos.html" import photo_manager %}
 {% block content %}
 <h1>Therapists</h1>
 <p class="muted">Each active therapist can take one guest at a time, with a
@@ -26,6 +27,10 @@
     </div>
   </form>
 </div>
+
+{% if edit %}
+{{ photo_manager("therapist", edit.id, edit_images, "Photos for this therapist") }}
+{% endif %}
 
 <div class="panel">
   <table class="table">

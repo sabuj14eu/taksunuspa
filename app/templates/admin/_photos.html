@@ -1,0 +1,35 @@
+{# Current photos for the item being edited, so the edit screen shows what is
+   live instead of only offering a blank file field. Rendered outside the main
+   edit form: each action is its own POST, and forms cannot nest. #}
+{% macro photo_manager(entity_type, entity_id, images, label='Photos') %}
+<div class="panel">
+  <h2>{{ label }}</h2>
+  {% if images %}
+    <div class="media-grid">
+      {% for img in images %}
+      <figure class="media-item">
+        <img src="{{ img.thumb_url or img.url }}" alt="{{ img.alt_en or '' }}" loading="lazy">
+        <figcaption class="muted small">
+          {% if img.is_cover %}<strong>main photo</strong>{% else %}extra{% endif %}
+          {%- if img.size_kb %} · {{ img.size_kb }} KB{% endif %}
+        </figcaption>
+        <div class="media-actions">
+          {% if not img.is_cover %}
+          <form method="post" action="/admin/media/{{ img.id }}/cover">
+            <button class="link-btn" type="submit">Use as main</button>
+          </form>
+          {% endif %}
+          <form method="post" action="/admin/media/{{ img.id }}/delete"
+                onsubmit="return confirm('Delete this photo?')">
+            <button class="link-btn" type="submit">Delete</button>
+          </form>
+        </div>
+      </figure>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No photo yet. Use the Photo field above, or
+      <a href="/admin/media?entity_type={{ entity_type }}&entity_id={{ entity_id }}">upload several here</a>.</p>
+  {% endif %}
+</div>
+{% endmacro %}
