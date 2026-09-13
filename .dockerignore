@@ -1,0 +1,23 @@
+# Keep secrets out of image layers: .env is created next to the Dockerfile on
+# the server, and `COPY . .` would otherwise bake it into the image.
+.env
+*.env
+!.env.example
+
+.git
+.gitignore
+.venv
+venv/
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite3
+instance/
+node_modules/
+docs/
+*.md
+!README.md
+
+# Uploads live in a Docker volume, not in the image.
+app/static/uploads/*
+!app/static/uploads/.gitkeep
