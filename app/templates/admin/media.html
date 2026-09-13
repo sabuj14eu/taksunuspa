@@ -20,10 +20,34 @@
 {% block content %}
 <h1>Photos</h1>
 <p class="muted">Uploads are converted to WebP with a thumbnail, so big phone
-  photos do not slow the site down.</p>
+  photos do not slow the site down. JPG, PNG, WebP and iPhone HEIC all work,
+  up to 18&nbsp;MB.</p>
 
 <div class="panel">
-  <h2>Upload</h2>
+  <h2>The main website photos</h2>
+  <p class="muted">Pick a file and press Upload. It goes live straight away.</p>
+  <div class="photo-slots">
+    {% for key, title, hint, current in slots %}
+    <form method="post" enctype="multipart/form-data" class="slot-card">
+      <div class="slot-preview">
+        {% if current %}<img src="{{ current }}" alt="{{ title }}">
+        {% else %}<span class="slot-empty">No photo yet</span>{% endif %}
+      </div>
+      <h4>{{ title }}</h4>
+      <p class="muted small">{{ hint }}</p>
+      <input type="hidden" name="entity_type" value="{{ key }}">
+      <input type="hidden" name="entity_id" value="0">
+      <input type="file" name="photos" accept="image/*" {{ 'multiple' if key == 'gallery' }}>
+      <button class="btn btn-primary btn-sm" type="submit">
+        {{ 'Add photo' if key == 'gallery' else ('Replace photo' if current else 'Upload photo') }}
+      </button>
+    </form>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Upload to a product, treatment or therapist</h2>
   <form method="post" enctype="multipart/form-data" class="gridform">
     <label>Attach to
       <select name="entity_type">

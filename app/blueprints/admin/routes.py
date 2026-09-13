@@ -818,12 +818,17 @@ def media():
         for fs in files:
             if not (fs and fs.filename and entity_type):
                 continue
-            _img, err = media_service.save_upload(
+            img, err = media_service.save_upload(
                 fs, entity_type, entity_id, alt_en=_s(request.form, "alt_en"))
             if err:
                 problems.append(f"{fs.filename}: {err}")
-            else:
-                saved += 1
+                continue
+            saved += 1
+            # Single-photo slots read their cover, so a fresh upload has to
+            # become it — otherwise "Replace photo" would leave the old one on
+            # the site and look like nothing happened.
+            if entity_type in ("hero", "treatment_hero"):
+                media_service.set_cover(img)
         if saved:
             flash(f"{saved} photo(s) uploaded")
         for problem in problems:
@@ -846,8 +851,22 @@ def media():
     counts = dict(db.session.query(MediaImage.entity_type,
                                    func.count(MediaImage.id))
                   .group_by(MediaImage.entity_type).all())
+    # The three site-wide slots get their own panel at the top with a preview,
+    # because "the big picture on the home page" should not be a dropdown
+    # option you have to know to look for.
+    slots = [
+        ("hero", "Home page hero",
+         "The large photo behind “Bali Premium Home Spa.”",
+         media_service.cover_url("hero", 0)),
+        ("gallery", "Home page gallery",
+         "The row of photos, and the Gallery page.",
+         media_service.cover_url("gallery", 0)),
+        ("treatment_hero", "Treatments section photo",
+         "Sits beside the treatment list on the home page.",
+         media_service.cover_url("treatment_hero", 0)),
+    ]
     return render_template(
-        "admin/media.html", active="media", rows=rows, show=show,
+        "admin/media.html", active="media", rows=rows, show=show, slots=slots,
         entity_type=entity_type, entity_id=entity_id, counts=counts,
         products=Product.query.order_by(Product.sort_order).all(),
         treatments=Treatment.query.order_by(Treatment.sort_order).all(),
