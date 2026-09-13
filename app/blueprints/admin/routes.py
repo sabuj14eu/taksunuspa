@@ -28,7 +28,7 @@ from ...models.spa import (BOOKING_STATUSES, Booking, Highlight, HolidayHour,
                            OpeningHour, ServiceArea, Therapist, Treatment,
                            TreatmentCategory, TreatmentOption)
 from ...models.user import ROLE_LABELS, ROLES, User
-from ...money import to_int
+from ...money import parses_as_amount, to_int
 from ...services import (accounts_service, booking_service, media_service,
                          notify_service, seo_service, shop_service)
 from ...services.booking_service import hhmm
@@ -136,6 +136,16 @@ def _i(form, key, default=0):
         return default
 
 
+def _price(form, key="price_idr"):
+    """A price, plus a warning when the text held no number at all. Storing
+    that as 0 without a word would put the item on the shop for free."""
+    raw = _s(form, key)
+    if raw and not parses_as_amount(raw):
+        flash(f"“{raw}” is not a number, so the price was left at 0. "
+              f"Type digits only, for example 160000.")
+    return to_int(raw)
+
+
 def _day(form, key):
     raw = _s(form, key)
     try:
@@ -202,7 +212,7 @@ def products():
         p.desc_idn = _s(f, "desc_idn")
         p.size_label = _s(f, "size_label")
         p.sku = _s(f, "sku")
-        p.price_idr = to_int(_s(f, "price_idr"))
+        p.price_idr = _price(f)
         p.stock = _i(f, "stock")
         p.track_stock = _b(f, "track_stock")
         p.weight_g = _i(f, "weight_g")
@@ -340,7 +350,7 @@ def treatments():
         tr.desc_en = _s(f, "desc_en")
         tr.desc_idn = _s(f, "desc_idn")
         tr.duration_min = _i(f, "duration_min", 60) or 60
-        tr.price_idr = to_int(_s(f, "price_idr"))
+        tr.price_idr = _price(f)
         tr.per_person = _b(f, "per_person")
         tr.seo_title = _s(f, "seo_title")
         tr.seo_desc = _s(f, "seo_desc")
@@ -410,7 +420,7 @@ def treatment_durations(tid):
     if o.treatment_id != tr.id:
         abort(400)
     o.duration_min = _i(f, "duration_min", 60) or 60
-    o.price_idr = to_int(_s(f, "price_idr"))
+    o.price_idr = _price(f)
     o.sort_order = _i(f, "sort_order")
     o.is_active = _b(f, "is_active")
     if not oid:
