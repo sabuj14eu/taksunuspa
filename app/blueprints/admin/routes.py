@@ -820,12 +820,20 @@ def media():
 
     entity_type = request.args.get("entity_type", "product")
     entity_id = request.args.get("entity_id", type=int)
-    rows = (media_service.gallery(entity_type, entity_id)
-            if entity_id is not None and entity_type
-            else MediaImage.query.order_by(MediaImage.id.desc()).limit(60).all())
+    show = request.args.get("show", "")
+    if show == "all":
+        rows = MediaImage.query.order_by(MediaImage.id.desc()).limit(200).all()
+    elif entity_id is not None and entity_type:
+        rows = media_service.gallery(entity_type, entity_id)
+    else:
+        rows = MediaImage.query.order_by(MediaImage.id.desc()).limit(60).all()
+
+    counts = dict(db.session.query(MediaImage.entity_type,
+                                   func.count(MediaImage.id))
+                  .group_by(MediaImage.entity_type).all())
     return render_template(
-        "admin/media.html", active="media", rows=rows,
-        entity_type=entity_type, entity_id=entity_id,
+        "admin/media.html", active="media", rows=rows, show=show,
+        entity_type=entity_type, entity_id=entity_id, counts=counts,
         products=Product.query.order_by(Product.sort_order).all(),
         treatments=Treatment.query.order_by(Treatment.sort_order).all(),
         therapists=Therapist.query.order_by(Therapist.sort_order).all())
@@ -838,6 +846,47 @@ def media_delete(mid):
     media_service.delete_image(img)
     return redirect(url_for("admin.media", entity_type=entity_type,
                             entity_id=entity_id))
+
+
+@bp.route("/media/<int:mid>/move", methods=["POST"])
+def media_move(mid):
+    """Re-file a photo — the step that turns an imported image into the hero,
+    a gallery shot, or a product's picture."""
+    img = _get_or_404(MediaImage, mid)
+    # The picker submits one value, "type|id", so there is nothing to keep in
+    # sync between two fields.
+    slot = _s(request.form, "slot")
+    target, _, raw_id = slot.partition("|")
+    if not target:
+        abort(400)
+    img.entity_type = target[:24]
+    img.entity_id = int(raw_id) if raw_id.isdigit() else 0
+    img.is_cover = False
+    db.session.flush()
+
+    # A single-photo slot should just work once something is moved into it,
+    # so the first arrival becomes the cover and updates the item's own field.
+    siblings = MediaImage.query.filter_by(entity_type=img.entity_type,
+                                          entity_id=img.entity_id).all()
+    if len(siblings) == 1 or _b(request.form, "make_cover"):
+        for s in siblings:
+            s.is_cover = False
+        img.is_cover = True
+        model = {"product": Product, "treatment": Treatment,
+                 "therapist": Therapist}.get(img.entity_type)
+        if model:
+            row = db.session.get(model, img.entity_id)
+            if row:
+                if img.entity_type == "therapist":
+                    row.photo_url = img.url
+                else:
+                    row.image_url = img.url
+
+    _log("move", "media", f"#{img.id} -> {img.entity_type}/{img.entity_id}")
+    db.session.commit()
+    flash("Photo moved")
+    return redirect(url_for("admin.media", entity_type=img.entity_type,
+                            entity_id=img.entity_id))
 
 
 @bp.route("/media/<int:mid>/cover", methods=["POST"])

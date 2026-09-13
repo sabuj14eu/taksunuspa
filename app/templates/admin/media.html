@@ -1,7 +1,26 @@
 {% extends "admin/layout.html" %}
+{% macro slot_options(selected_type, selected_id, products, treatments, therapists) %}
+  <option value="hero|0" {{ 'selected' if selected_type == 'hero' }}>Home page hero</option>
+  <option value="gallery|0" {{ 'selected' if selected_type == 'gallery' }}>Home page gallery</option>
+  <option value="treatment_hero|0" {{ 'selected' if selected_type == 'treatment_hero' }}>Treatments section image</option>
+  <option value="imported|0" {{ 'selected' if selected_type == 'imported' }}>Imported (unassigned)</option>
+  <optgroup label="Products">
+    {% for p in products %}<option value="product|{{ p.id }}"
+      {{ 'selected' if selected_type == 'product' and selected_id == p.id }}>{{ p.name_en }}</option>{% endfor %}
+  </optgroup>
+  <optgroup label="Treatments">
+    {% for tr in treatments %}<option value="treatment|{{ tr.id }}"
+      {{ 'selected' if selected_type == 'treatment' and selected_id == tr.id }}>{{ tr.name_en }}</option>{% endfor %}
+  </optgroup>
+  <optgroup label="Therapists">
+    {% for th in therapists %}<option value="therapist|{{ th.id }}"
+      {{ 'selected' if selected_type == 'therapist' and selected_id == th.id }}>{{ th.name }}</option>{% endfor %}
+  </optgroup>
+{% endmacro %}
 {% block content %}
 <h1>Photos</h1>
-<p class="muted">Uploads are converted to WebP with a thumbnail, so big phone photos do not slow the site down.</p>
+<p class="muted">Uploads are converted to WebP with a thumbnail, so big phone
+  photos do not slow the site down.</p>
 
 <div class="panel">
   <h2>Upload</h2>
@@ -30,35 +49,61 @@
         </optgroup>
       </select>
     </label>
-    <p class="wide muted small">
-      Site-wide collections use “— site-wide —”. The hero is the big photo
-      behind the home page headline; the gallery is the three-up row.
-    </p>
     <label class="wide">ALT text (English, helps image search)<input type="text" name="alt_en" maxlength="200"></label>
     <label class="wide">Files<input type="file" name="photos" accept="image/*" multiple></label>
-    <div class="wide"><button class="btn btn-primary" type="submit">Upload</button></div>
+    <div class="wide"><button class="btn btn-primary btn-sm" type="submit">Upload</button></div>
   </form>
 </div>
 
 <div class="panel">
   <h2>Library</h2>
+  <nav class="tabs">
+    <a href="/admin/media?show=all" class="{{ 'on' if show == 'all' }}">
+      Everything{% if counts %} ({{ counts.values()|sum }}){% endif %}</a>
+    {% for kind, label in [('imported','Imported'), ('hero','Hero'),
+                           ('gallery','Gallery'), ('treatment_hero','Treatments image')] %}
+      {% if counts.get(kind) %}
+      <a href="/admin/media?entity_type={{ kind }}&entity_id=0"
+         class="{{ 'on' if show != 'all' and entity_type == kind }}">{{ label }} ({{ counts[kind] }})</a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+
+  {% if rows %}
+  <p class="muted small">Use <strong>Move to</strong> to put a photo where you
+    want it. The first photo moved into an empty slot becomes its cover
+    automatically, so the hero fills as soon as you move one there.</p>
+
   <div class="media-grid">
     {% for img in rows %}
       <figure class="media-item">
         <img src="{{ img.thumb_url or img.url }}" alt="{{ img.alt_en or '' }}" loading="lazy">
         <figcaption class="muted small">
-          {{ img.entity_type }} #{{ img.entity_id }}{% if img.is_cover %} · cover{% endif %}
-          {% if img.size_kb %} · {{ img.size_kb }} KB{% endif %}
-          <br><code class="tiny">{{ img.url }}</code>
+          {{ img.entity_type }}{% if img.entity_id %} #{{ img.entity_id }}{% endif %}
+          {%- if img.is_cover %} · <strong>cover</strong>{% endif %}
+          {%- if img.size_kb %} · {{ img.size_kb }} KB{% endif %}
+          {%- if img.width %} · {{ img.width }}×{{ img.height }}{% endif %}
         </figcaption>
+
+        <form method="post" action="/admin/media/{{ img.id }}/move" class="media-move">
+          <select name="slot">
+            {{ slot_options(img.entity_type, img.entity_id, products, treatments, therapists) }}
+          </select>
+          <button class="btn btn-primary btn-sm" type="submit">Move to</button>
+        </form>
+
         <div class="media-actions">
           <form method="post" action="/admin/media/{{ img.id }}/cover"><button class="link-btn" type="submit">Make cover</button></form>
           <form method="post" action="/admin/media/{{ img.id }}/delete" onsubmit="return confirm('Delete this photo?')"><button class="link-btn" type="submit">Delete</button></form>
         </div>
       </figure>
-    {% else %}
-      <p class="muted">No photos yet.</p>
     {% endfor %}
   </div>
+  {% else %}
+    <p class="muted">No photos yet. Upload some above, or pull them off the old
+      site in one go from the server:</p>
+    <pre class="cmd">docker compose exec -T app python -m scripts.import_images \
+  --from-url http://host.docker.internal:5200</pre>
+  {% endif %}
 </div>
 {% endblock %}

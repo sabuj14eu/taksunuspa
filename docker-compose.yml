@@ -23,6 +23,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # Lets scripts.import_images reach a site running on the host, such as the
+    # previous version of this site on its own port.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     # Bound to localhost only: nginx terminates TLS and proxies to this port.
     # APP_PORT is the host side and is set in .env, so a machine already using
     # 5200 for something else only needs that one line changed. The container
