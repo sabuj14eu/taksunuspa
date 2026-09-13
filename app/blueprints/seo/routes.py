@@ -34,6 +34,7 @@ def sitemap():
         _url(f"{base}/treatments", "weekly", "0.9", today),
         _url(f"{base}/products", "daily", "0.9", today),
         _url(f"{base}/therapists", "weekly", "0.6"),
+        _url(f"{base}/gallery", "weekly", "0.5"),
         _url(f"{base}/contact", "monthly", "0.5"),
     ]
     for c in (TreatmentCategory.query.filter_by(is_active=True)

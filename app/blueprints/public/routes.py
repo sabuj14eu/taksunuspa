@@ -146,6 +146,23 @@ def therapists():
             [(t()["home"], base + "/"), (t()["therapists"], None)]))
 
 
+@bp.route("/gallery")
+def gallery():
+    """A real page, not an anchor. The home page only renders its gallery band
+    when photos exist, so a "#gallery" link led nowhere on an empty site."""
+    site = SiteSetting.all_dict()
+    base = current_app.config["SITE_URL"]
+    rows = (MediaImage.query.filter_by(entity_type="gallery")
+            .order_by(MediaImage.sort_order, MediaImage.id).all())
+    title, desc = seo_service.meta_for(
+        "gallery", lang(), brand=site.get("company_name", "Taksu Nusa Spa"),
+        city=site.get("city", "Bali"))
+    return render_template(
+        "gallery.html", meta_title=title, meta_desc=desc, rows=rows,
+        jsonld_crumbs=seo_service.jsonld_breadcrumbs(
+            [(t()["home"], base + "/"), (t()["gallery"], None)]))
+
+
 @bp.route("/p/<slug>")
 def page(slug):
     p = Page.query.filter_by(slug=slug, is_visible=True).first()

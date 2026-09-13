@@ -48,7 +48,7 @@
       <a href="/treatments" class="{{ 'on' if current_path.startswith('/treatment') }}">{{ t.treatments }}</a>
       <a href="/#experience">{{ t.experience }}</a>
       <a href="/therapists" class="{{ 'on' if current_path == '/therapists' }}">{{ t.therapists }}</a>
-      <a href="/#gallery">{{ t.gallery }}</a>
+      <a href="/gallery" class="{{ 'on' if current_path == '/gallery' }}">{{ t.gallery }}</a>
       <a href="/products" class="{{ 'on' if current_path.startswith('/product') }}">{{ t.products }}</a>
       <a href="/#areas">{{ t.areas }}</a>
       {% for it in nav_items %}<a href="{{ it.url }}">{{ loc(it, 'label') }}</a>{% endfor %}
@@ -80,7 +80,7 @@
     <a href="/treatments">{{ t.treatments }}</a>
     <a href="/#experience">{{ t.experience }}</a>
     <a href="/therapists">{{ t.therapists }}</a>
-    <a href="/#gallery">{{ t.gallery }}</a>
+    <a href="/gallery" class="{{ 'on' if current_path == '/gallery' }}">{{ t.gallery }}</a>
     <a href="/products">{{ t.products }}</a>
     <a href="/#areas">{{ t.areas }}</a>
     <a href="/contact">{{ t.contact }}</a>
@@ -118,6 +118,7 @@
         <h4>{{ t.explore }}</h4>
         <a class="foot-link" href="/treatments">{{ t.treatments }}</a>
         <a class="foot-link" href="/therapists">{{ t.therapists }}</a>
+        <a class="foot-link" href="/gallery">{{ t.gallery }}</a>
         <a class="foot-link" href="/products">{{ t.products }}</a>
         <a class="foot-link" href="/#areas">{{ t.areas }}</a>
         <a class="foot-link" href="/contact">{{ t.contact }}</a>

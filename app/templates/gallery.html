@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block content %}
+
+<section class="page-head">
+  <div class="wrap">
+    <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ t.gallery }}</span></nav>
+    <span class="eyebrow">{{ site.get('gallery_eyebrow_en','A glimpse of bliss') }}</span>
+    <h2 style="font-size:clamp(2.25rem,5vw,3.5rem)">{{ t.gallery }}</h2>
+    <p class="lead">{{ site.get('gallery_intro_idn' if lang == 'id' else 'gallery_intro_en', '') }}</p>
+  </div>
+</section>
+
+<section class="section" style="padding-top:2.5rem">
+  <div class="wrap">
+    {% if rows %}
+    <div class="gallery-grid">
+      {% for img in rows %}
+      <figure>
+        <img src="{{ img.url }}" loading="lazy" width="800" height="1000"
+             alt="{{ img.alt_en or (site.get('company_name','') ~ ' — ' ~ t.gallery) }}">
+      </figure>
+      {% endfor %}
+    </div>
+    {% else %}
+      <p class="muted">{{ t.no_results }}</p>
+      <p><a class="btn btn-primary" href="/treatments">{{ t.book }} {{ icon('arrow-right') }}</a></p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section section-sand">
+  <div class="wrap section-head center">
+    <h2>{{ site.get('cta_title_idn' if lang == 'id' else 'cta_title_en', '') }}</h2>
+    <p>{{ site.get('cta_text_idn' if lang == 'id' else 'cta_text_en', '') }}</p>
+    <p style="margin-top:1.5rem">
+      <a class="btn btn-primary" href="/treatments">{{ t.book_relaxation }}</a>
+      <a class="btn btn-outline" href="{{ wa() }}" target="_blank" rel="noopener">
+        {{ icon('phone') }} WhatsApp</a>
+    </p>
+  </div>
+</section>
+
+{% endblock %}

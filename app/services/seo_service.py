@@ -68,6 +68,7 @@ def meta_for(kind: str, lang="en", **kw):
             "product": f"{name} {price} — Kirim ke Seluruh {city} | {brand}",
             "contact": f"Kontak & Area Layanan — {brand}, {city}",
             "therapists": f"Terapis Kami — Pijat ke Vila & Hotel {city} | {brand}",
+            "gallery": f"Galeri — Home Spa Bali di {city} | {brand}",
         }
         default_desc = {
             "product": f"{name} asli, tanpa gula tambahan. Pesan online, "
@@ -87,6 +88,7 @@ def meta_for(kind: str, lang="en", **kw):
             "product": f"{name} {price} — Delivered Across {city} | {brand}",
             "contact": f"Contact & Service Areas — {brand}, {city}",
             "therapists": f"Our Therapists — Villa & Hotel Massage {city} | {brand}",
+            "gallery": f"Gallery — Balinese Home Spa in {city} | {brand}",
         }
         default_desc = {
             "product": f"{name} — 100% natural, no added sugar. Order online, "
