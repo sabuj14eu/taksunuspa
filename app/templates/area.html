@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% from "_macros.html" import treatment_card %}
+{% block content %}
+
+<section class="page-head">
+  <div class="wrap">
+    <nav class="crumbs"><a href="/">{{ t.home }}</a> ›
+      <a href="/areas">{{ t.service_areas }}</a> › <span>{{ a.name }}</span></nav>
+    <span class="eyebrow">{{ t.we_come_to_you }}</span>
+    <h2 style="font-size:clamp(2.25rem,5vw,3.5rem)">{{ t.massage_in }} {{ a.name }}</h2>
+    <p class="lead">{{ loc(a, 'note') or t.area_intro }}</p>
+    <p>
+      <span class="area-fee {{ 'free' if not a.travel_fee_idr }}">
+        {% if a.travel_fee_idr %}{{ t.travel_fee }} {{ rp(a.travel_fee_idr) }}
+        {% else %}{{ t.free_travel }}{% endif %}
+      </span>
+    </p>
+    <p style="margin-top:1.5rem">
+      <a class="btn btn-primary" href="/treatments">{{ t.book_now }}</a>
+      <a class="btn btn-outline" href="{{ wa() }}" target="_blank" rel="noopener">
+        {{ icon('phone') }} WhatsApp</a>
+    </p>
+  </div>
+</section>
+
+{% if treatments %}
+<section class="section" style="padding-top:2.5rem">
+  <div class="wrap">
+    <div class="section-head center">
+      <h2>{{ t.spa_menu }} — {{ a.name }}</h2>
+    </div>
+    <div class="grid-3">
+      {% for tr in treatments %}
+        {{ treatment_card(tr, price_of, cover_url('treatment', tr.id), rp, t, loc) }}
+      {% endfor %}
+    </div>
+    <p class="center" style="margin-top:2rem">
+      <a class="btn btn-outline" href="/treatments">{{ t.spa_menu }} {{ icon('arrow-right') }}</a>
+    </p>
+  </div>
+</section>
+{% endif %}
+
+{% include "_how_it_works.html" %}
+
+{% if others %}
+<section class="section">
+  <div class="wrap">
+    <div class="section-head center">
+      <h2>{{ t.areas_we_cover }}</h2>
+    </div>
+    <div class="area-pills">
+      {% for o in others %}
+      <a class="area-pill light" href="/areas/{{ o.slug }}">{{ icon('map-pin') }}{{ o.name }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}

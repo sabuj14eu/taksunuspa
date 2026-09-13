@@ -488,6 +488,39 @@ a.duration-chip:hover{border-color:var(--primary);color:inherit}
 .area-pill:hover{background:oklch(0.98 0.005 95 / .12);color:var(--ivory)}
 .area-pill svg{width:.9rem;height:.9rem;color:var(--brass)}
 
+/* The pills above sit on the forest band; on a light page they need the
+   ordinary border and ink instead. */
+.area-pill.light{border-color:var(--border);background:var(--card);
+  color:var(--foreground)}
+.area-pill.light:hover{background:var(--secondary);color:var(--foreground)}
+
+.area-card{
+  display:flex;flex-direction:column;gap:.35rem;
+  border:1px solid var(--border);background:var(--card);
+  border-radius:1rem;padding:1.75rem;color:inherit;
+  transition:box-shadow .25s,transform .25s;
+}
+a.area-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);
+  color:inherit}
+.area-card-icon{display:grid;place-items:center;width:2.75rem;height:2.75rem;
+  border-radius:999px;background:var(--secondary);margin-bottom:.5rem}
+.area-card-icon .ico{width:1.25rem;height:1.25rem;color:var(--primary)}
+.area-card h3{margin:0;font-size:1.375rem}
+.area-fee{
+  display:inline-block;margin-top:auto;padding-top:.75rem;
+  font-size:.875rem;font-weight:500;color:var(--foreground);
+}
+.area-fee.free{color:var(--primary)}
+
+/* ------------------------------------------------------------ how it works */
+.steps .step{position:relative;padding-top:.5rem}
+.step-no{
+  display:grid;place-items:center;width:2.75rem;height:2.75rem;
+  border-radius:999px;background:var(--primary);color:var(--ivory);
+  font-family:var(--font-display);font-size:1.25rem;margin-bottom:1rem;
+}
+.steps .step h3{font-size:1.375rem}
+
 /* ---------------------------------------------------------------- reviews */
 .review{border:1px solid var(--border);background:var(--card);
   border-radius:1rem;padding:2rem}

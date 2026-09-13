@@ -98,6 +98,9 @@
 </section>
 {% endif %}
 
+{# ------------------------------------------------------------ how it works #}
+{% include "_how_it_works.html" %}
+
 {# -------------------------------------------------------- why choose us #}
 {% if highlights %}
 <section class="section section-primary" id="experience">
@@ -215,9 +218,12 @@
     </div>
     <div class="area-pills">
       {% for a in areas %}
-      <a class="area-pill" href="/treatments">{{ icon('map-pin') }}{{ a.name }}</a>
+      <a class="area-pill" href="/areas/{{ a.slug }}">{{ icon('map-pin') }}{{ a.name }}</a>
       {% endfor %}
     </div>
+    <p class="center" style="margin-top:2rem">
+      <a class="btn btn-on-dark" href="/areas">{{ t.service_areas }}</a>
+    </p>
   </div>
 </section>
 {% endif %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block content %}
+
+<section class="page-head">
+  <div class="wrap">
+    <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ t.service_areas }}</span></nav>
+    <span class="eyebrow">{{ t.we_come_to_you }}</span>
+    <h2 style="font-size:clamp(2.25rem,5vw,3.5rem)">{{ t.areas_we_cover }}</h2>
+    <p class="lead">{{ site.get('areas_note_idn' if lang == 'id' else 'areas_note_en', '') or t.area_intro }}</p>
+  </div>
+</section>
+
+<section class="section" style="padding-top:2.5rem">
+  <div class="wrap">
+    {% if rows %}
+    <div class="grid-3">
+      {% for a in rows %}
+      <a class="area-card" href="/areas/{{ a.slug }}">
+        <span class="area-card-icon">{{ icon('map-pin') }}</span>
+        <h3>{{ a.name }}</h3>
+        <p class="muted small">{{ loc(a, 'note') or '' }}</p>
+        <span class="area-fee {{ 'free' if not a.travel_fee_idr }}">
+          {% if a.travel_fee_idr %}{{ t.travel_fee }} {{ rp(a.travel_fee_idr) }}
+          {% else %}{{ t.free_travel }}{% endif %}
+        </span>
+      </a>
+      {% endfor %}
+    </div>
+    <p class="muted" style="margin-top:2rem">{{ t.not_your_area }}
+      <a href="{{ wa() }}" target="_blank" rel="noopener">WhatsApp</a></p>
+    {% else %}
+      <p class="muted">{{ t.no_results }}</p>
+    {% endif %}
+  </div>
+</section>
+
+{% include "_how_it_works.html" %}
+
+<section class="section section-sand">
+  <div class="wrap section-head center">
+    <h2>{{ site.get('cta_title_idn' if lang == 'id' else 'cta_title_en', '') }}</h2>
+    <p>{{ site.get('cta_text_idn' if lang == 'id' else 'cta_text_en', '') }}</p>
+    <p style="margin-top:1.5rem">
+      <a class="btn btn-primary" href="/treatments">{{ t.book_relaxation }}</a>
+      <a class="btn btn-outline" href="{{ wa() }}" target="_blank" rel="noopener">
+        {{ icon('phone') }} WhatsApp</a>
+    </p>
+  </div>
+</section>
+
+{% endblock %}

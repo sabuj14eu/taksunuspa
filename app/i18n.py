@@ -31,6 +31,22 @@ T = {
         "per_person": "per person", "guests": "Guests",
         "we_come_to_you": "We come to you",
         "areas_we_cover": "Areas we cover",
+        "service_areas": "Service areas",
+        "massage_in": "Massage in",
+        "area_intro": "Our therapists travel to your villa, hotel or home. "
+                      "Pick your area to see the travel fee and book.",
+        "how_it_works": "How it works",
+        "step_book": "Book online",
+        "step_book_text": "Choose your treatment, day and time. "
+                          "It takes a minute — no deposit.",
+        "step_arrive": "Your therapist arrives",
+        "step_arrive_text": "We bring the table, fresh towels, oils and music "
+                            "to your door, on time.",
+        "step_enjoy": "Enjoy, then pay",
+        "step_enjoy_text": "Relax in your own space. Pay cash or by transfer "
+                           "when the treatment is finished.",
+        "travel_included": "Travel included",
+        "not_your_area": "Not on the list? Message us — we may still come.",
         "view_all_therapists": "View all therapists",
         "available_today": "Available today",
         "duration": "Duration", "min": "min", "price": "Price", "from": "from",
@@ -84,6 +100,23 @@ T = {
         "per_person": "per orang", "guests": "Tamu",
         "we_come_to_you": "Kami datang ke tempat Anda",
         "areas_we_cover": "Area yang kami layani",
+        "service_areas": "Area layanan",
+        "massage_in": "Pijat panggilan di",
+        "area_intro": "Terapis kami datang ke vila, hotel atau rumah Anda. "
+                      "Pilih area Anda untuk melihat biaya transport dan memesan.",
+        "how_it_works": "Cara pesan",
+        "step_book": "Pesan online",
+        "step_book_text": "Pilih perawatan, hari dan jam. "
+                          "Hanya butuh satu menit — tanpa uang muka.",
+        "step_arrive": "Terapis datang",
+        "step_arrive_text": "Kami bawa meja, handuk bersih, minyak dan musik "
+                            "ke tempat Anda, tepat waktu.",
+        "step_enjoy": "Nikmati, lalu bayar",
+        "step_enjoy_text": "Santai di tempat Anda sendiri. Bayar tunai atau "
+                           "transfer setelah perawatan selesai.",
+        "travel_included": "Transport termasuk",
+        "not_your_area": "Area Anda tidak ada? Hubungi kami — mungkin kami "
+                         "tetap bisa datang.",
         "view_all_therapists": "Lihat semua terapis",
         "available_today": "Tersedia hari ini",
         "duration": "Durasi", "min": "menit", "price": "Harga", "from": "mulai",

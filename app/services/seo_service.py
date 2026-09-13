@@ -69,6 +69,9 @@ def meta_for(kind: str, lang="en", **kw):
             "contact": f"Kontak & Area Layanan — {brand}, {city}",
             "therapists": f"Terapis Kami — Pijat ke Vila & Hotel {city} | {brand}",
             "gallery": f"Galeri — Home Spa Bali di {city} | {brand}",
+            "areas": f"Area Layanan — Pijat Panggilan ke Vila & Hotel di "
+                     f"{city} | {brand}",
+            "area": f"Pijat Panggilan {name} — Terapis ke Vila & Hotel | {brand}",
         }
         default_desc = {
             "product": f"{name} asli, tanpa gula tambahan. Pesan online, "
@@ -77,6 +80,10 @@ def meta_for(kind: str, lang="en", **kw):
                          f"Anda di {city}. Booking online, harga jelas.",
             "therapists": f"Terapis bersertifikat {brand} — datang ke vila, "
                           f"hotel atau rumah Anda di {city}.",
+            "areas": f"Semua area di {city} yang kami layani, lengkap dengan "
+                     f"biaya transport. Terapis datang ke tempat Anda.",
+            "area": f"Pijat panggilan di {name}: terapis bersertifikat datang "
+                    f"ke vila, hotel atau rumah Anda. Booking online.",
         }
     else:
         titles = {
@@ -89,6 +96,9 @@ def meta_for(kind: str, lang="en", **kw):
             "contact": f"Contact & Service Areas — {brand}, {city}",
             "therapists": f"Our Therapists — Villa & Hotel Massage {city} | {brand}",
             "gallery": f"Gallery — Balinese Home Spa in {city} | {brand}",
+            "areas": f"Service Areas — Villa & Hotel Massage Across {city} "
+                     f"| {brand}",
+            "area": f"Massage in {name} — Villa & Hotel Home Spa | {brand}",
         }
         default_desc = {
             "product": f"{name} — 100% natural, no added sugar. Order online, "
@@ -97,6 +107,10 @@ def meta_for(kind: str, lang="en", **kw):
                          f"hotel or home in {city}. Online booking, clear pricing.",
             "therapists": f"Certified {brand} therapists who come to your "
                           f"villa, hotel or home anywhere in {city}.",
+            "areas": f"Every area of {city} we travel to, with the travel fee "
+                     f"for each. Our therapists come to you.",
+            "area": f"Book a massage in {name} — a certified therapist comes "
+                    f"to your villa, hotel or home. Online booking, clear prices.",
         }
 
     title = titles.get(kind) or (f"{name} | {brand}" if name else brand)

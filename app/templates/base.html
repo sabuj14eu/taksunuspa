@@ -50,7 +50,7 @@
       <a href="/therapists" class="{{ 'on' if current_path == '/therapists' }}">{{ t.therapists }}</a>
       <a href="/gallery" class="{{ 'on' if current_path == '/gallery' }}">{{ t.gallery }}</a>
       <a href="/products" class="{{ 'on' if current_path.startswith('/product') }}">{{ t.products }}</a>
-      <a href="/#areas">{{ t.areas }}</a>
+      <a href="/areas" class="{{ 'on' if current_path.startswith('/areas') }}">{{ t.areas }}</a>
       {% for it in nav_items %}<a href="{{ it.url }}">{{ loc(it, 'label') }}</a>{% endfor %}
     </nav>
 
@@ -84,7 +84,7 @@
     <a class="nav-link {{ 'on' if current_path == '/therapists' }}" href="/therapists">{{ t.therapists }}</a>
     <a class="nav-link {{ 'on' if current_path == '/gallery' }}" href="/gallery">{{ t.gallery }}</a>
     <a class="nav-link {{ 'on' if current_path.startswith('/product') }}" href="/products">{{ t.products }}</a>
-    <a class="nav-link" href="/#areas">{{ t.areas }}</a>
+    <a class="nav-link {{ 'on' if current_path.startswith('/areas') }}" href="/areas">{{ t.areas }}</a>
     <a class="nav-link {{ 'on' if current_path == '/contact' }}" href="/contact">{{ t.contact }}</a>
     {% for it in nav_items %}<a class="nav-link" href="{{ it.url }}">{{ loc(it, 'label') }}</a>{% endfor %}
 
@@ -125,7 +125,7 @@
         <a class="foot-link" href="/therapists">{{ t.therapists }}</a>
         <a class="foot-link" href="/gallery">{{ t.gallery }}</a>
         <a class="foot-link" href="/products">{{ t.products }}</a>
-        <a class="foot-link" href="/#areas">{{ t.areas }}</a>
+        <a class="foot-link" href="/areas">{{ t.areas }}</a>
         <a class="foot-link" href="/contact">{{ t.contact }}</a>
       </div>
 

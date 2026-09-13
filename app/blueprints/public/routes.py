@@ -165,6 +165,54 @@ def gallery():
             [(t()["home"], base + "/"), (t()["gallery"], None)]))
 
 
+@bp.route("/areas")
+def areas():
+    """A real page behind the "Areas" menu item. It used to be a "/#areas"
+    anchor, so typing the address gave a 404 and the link only worked from the
+    home page — and for a spa that travels, "do you come to my area?" is the
+    question guests ask first."""
+    site = SiteSetting.all_dict()
+    base = current_app.config["SITE_URL"]
+    rows = (ServiceArea.query.filter_by(is_active=True)
+            .order_by(ServiceArea.sort_order, ServiceArea.name).all())
+    title, desc = seo_service.meta_for(
+        "areas", lang(), brand=site.get("company_name", "Taksu Nusa Spa"),
+        city=site.get("city", "Bali"))
+    return render_template(
+        "areas.html", meta_title=title, meta_desc=desc, rows=rows,
+        jsonld_crumbs=seo_service.jsonld_breadcrumbs(
+            [(t()["home"], base + "/"), (t()["service_areas"], None)]))
+
+
+@bp.route("/areas/<slug>")
+def area(slug):
+    """One page per area — "massage in Seminyak" is how guests search, and a
+    page that names the area and its travel fee is the honest way to answer."""
+    a = ServiceArea.query.filter_by(slug=slug, is_active=True).first()
+    if not a:
+        abort(404)
+    site = SiteSetting.all_dict()
+    base = current_app.config["SITE_URL"]
+    brand = site.get("company_name", "Taksu Nusa Spa")
+    treatments = (Treatment.query.filter_by(is_active=True)
+                  .order_by(Treatment.sort_order, Treatment.id).limit(6).all())
+    others = [x for x in ServiceArea.query.filter_by(is_active=True)
+              .order_by(ServiceArea.sort_order, ServiceArea.name).all()
+              if x.id != a.id]
+    title, desc = seo_service.meta_for(
+        "area", lang(), name=a.name, brand=brand, city=site.get("city", "Bali"))
+    return render_template(
+        "area.html", meta_title=title, meta_desc=desc, a=a,
+        treatments=treatments, others=others,
+        jsonld=seo_service.jsonld_spa(
+            name=f"{brand} — {a.name}", url=f"{base}/areas/{a.slug}",
+            city=site.get("city", "Bali"), phone=site.get("whatsapp"),
+            extra={"areaServed": [{"@type": "Place", "name": a.name}]}),
+        jsonld_crumbs=seo_service.jsonld_breadcrumbs(
+            [(t()["home"], base + "/"),
+             (t()["service_areas"], base + "/areas"), (a.name, None)]))
+
+
 @bp.route("/p/<slug>")
 def page(slug):
     p = Page.query.filter_by(slug=slug, is_visible=True).first()

@@ -11,7 +11,7 @@ from flask import Blueprint, Response, current_app
 
 from ...models.shop import Product, ProductGroup
 from ...models.site import Page
-from ...models.spa import Treatment, TreatmentCategory
+from ...models.spa import ServiceArea, Treatment, TreatmentCategory
 
 bp = Blueprint("seo", __name__)
 
@@ -33,10 +33,16 @@ def sitemap():
         _url(f"{base}/", "daily", "1.0", today),
         _url(f"{base}/treatments", "weekly", "0.9", today),
         _url(f"{base}/products", "daily", "0.9", today),
+        _url(f"{base}/areas", "weekly", "0.8"),
         _url(f"{base}/therapists", "weekly", "0.6"),
         _url(f"{base}/gallery", "weekly", "0.5"),
         _url(f"{base}/contact", "monthly", "0.5"),
     ]
+    # "Massage in Seminyak" is the search that brings a travelling spa its
+    # work, so every area gets its own indexable URL.
+    for a in (ServiceArea.query.filter_by(is_active=True)
+              .order_by(ServiceArea.sort_order).all()):
+        out.append(_url(f"{base}/areas/{a.slug}", "weekly", "0.7"))
     for c in (TreatmentCategory.query.filter_by(is_active=True)
               .order_by(TreatmentCategory.sort_order).all()):
         out.append(_url(f"{base}/treatments/{c.slug}", "weekly", "0.8"))
