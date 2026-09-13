@@ -106,9 +106,15 @@ drops anything, so it is safe to run on every deploy.
 ### One-off: fill in the missing Indonesian text
 
 The treatment and treatment-group descriptions were seeded in English only, so
-an Indonesian visitor read English there. Run this **once** after deploying:
+an Indonesian visitor read English there. Run this **once** after deploying.
+
+The app code is baked into the image, not mounted from disk, so `git pull`
+alone does not put a new script inside the container — rebuild first, or
+`exec` fails with `No module named scripts.backfill_id`:
 
 ```bash
+git pull origin claude/taksunu-spa-website-updates-g6b4xn
+docker compose up -d --build                                     # required
 docker compose exec app python -m scripts.backfill_id            # show
 docker compose exec app python -m scripts.backfill_id --write    # apply
 ```
@@ -232,10 +238,33 @@ sudo journalctl -u taksunuspa -n 40 --no-pager
 |---|---|
 | 502 from nginx | `docker compose ps` / `systemctl status taksunuspa` — is the app up? |
 | App will not start | `SECRET_KEY` missing from `.env`. The app refuses to start without it, deliberately. |
-| Login always fails | Re-run `scripts.seed`; it prints a fresh password if no admin exists. |
+| `No module named scripts.…` | The image is older than your files. `docker compose up -d --build`, then run the command again. |
+| Login always fails | Set a new password directly — see below. Do **not** re-run `scripts.seed` on the live site; it overwrites treatments, prices and descriptions with the starting ones. |
 | Uploads fail | `client_max_body_size 12M;` missing from the nginx block. |
 | Prices look wrong | Admin → Discounts. An active site-wide discount applies to everything. |
 | Sitemap missing a page | The item is inactive, or its group is. |
+
+### Locked out of admin
+
+Set a new password on the owner account without touching any content:
+
+```bash
+docker compose exec app python -c "
+from app import create_app
+from app.extensions import db
+from app.models.user import User
+app = create_app()
+with app.app_context():
+    u = User.query.filter_by(role='admin').order_by(User.id).first()
+    u.set_password('choose-a-new-one-at-least-8-chars')
+    u.is_active_flag = True
+    db.session.commit()
+    print('password reset for', u.phone)
+"
+```
+
+Change the password in Admin → My account straight afterwards, so the one
+typed on the command line does not stay in your shell history.
 
 After any deploy, the quick check:
 
