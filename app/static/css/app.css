@@ -295,12 +295,24 @@ a.card:hover .card-img img{transform:scale(1.05)}
 .img-ph{display:grid;place-items:center;height:100%;font-size:2.5rem;opacity:.35}
 .img-ph.big{aspect-ratio:4/3;font-size:4rem;border-radius:1rem;background:var(--secondary)}
 
-/* treatment rows on the home page: name, blurb, and a chip per duration */
+/* treatment rows: name, blurb, and a chip per duration */
 .treatment-row{
   border:1px solid var(--border);background:var(--card);
   border-radius:1rem;padding:1.5rem;transition:box-shadow .25s;
 }
 .treatment-row:hover{box-shadow:var(--shadow)}
+
+/* On the menu page each row carries its own photo; the placeholder keeps the
+   rows aligned before any photos have been uploaded. */
+.treatment-row.has-media{display:grid;grid-template-columns:10rem 1fr;gap:1.25rem;
+  align-items:start}
+.treatment-media{display:block;aspect-ratio:1/1;border-radius:.75rem;
+  overflow:hidden;background:var(--secondary)}
+.treatment-media img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.treatment-row:hover .treatment-media img{transform:scale(1.04)}
+.treatment-media .img-ph{display:grid;place-items:center;width:100%;height:100%;
+  font-size:2.25rem;opacity:.35}
+.treatment-body{min-width:0}
 .treatment-row-head{display:flex;gap:1rem;justify-content:space-between;
   align-items:flex-start;flex-wrap:wrap}
 .treatment-row-head h3{font-family:var(--font-display);font-size:1.5rem;margin:0}
@@ -638,6 +650,8 @@ body.admin{background:var(--sand)}
 }
 @media (max-width:720px){
   :root{--gutter:1rem}
+  .treatment-row.has-media{grid-template-columns:1fr}
+  .treatment-media{aspect-ratio:16/9}
   .trustbar-grid{grid-template-columns:repeat(2,1fr)}
   .trust-item:nth-child(3){border-left:0}
   .grid-4,.grid-3,.grid-2{grid-template-columns:1fr}
