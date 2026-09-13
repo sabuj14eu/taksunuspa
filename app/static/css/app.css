@@ -192,13 +192,53 @@ main{min-height:60vh}
   align-items:center;justify-content:center;
   border:1px solid var(--border);border-radius:50%;
   background:transparent;cursor:pointer;color:var(--foreground);
+  transition:background-color .2s,color .2s;
 }
-.mobile-nav{display:none;border-top:1px solid var(--border);background:var(--ivory);
-  padding:1.5rem var(--gutter)}
-.mobile-nav.open{display:block}
-.mobile-nav a{display:block;padding:.5rem 0;font-size:.875rem;font-weight:500;
-  text-transform:uppercase;letter-spacing:.15em;color:oklch(0.26 0.03 160 / .8)}
-.mobile-nav .btn{margin-top:.75rem}
+/* Open state flips to a cross on the brand green, so it is obvious the button
+   closes the panel it just opened. */
+.menu-toggle.is-open{background:var(--forest);color:var(--ivory);
+  border-color:var(--forest)}
+.menu-toggle .ico-close{display:none}
+.menu-toggle.is-open .ico-menu{display:none}
+.menu-toggle.is-open .ico-close{display:inline-flex}
+/* The phone menu is the whole navigation on a phone, so it gets the brand's
+   deep green rather than the pale header colour — it reads as a deliberate
+   panel instead of the page continuing. */
+.mobile-nav{display:none;background:var(--forest);color:var(--ivory);
+  padding:.5rem var(--gutter) 1.5rem}
+.mobile-nav.open{display:block;animation:menu-in .18s ease-out}
+@keyframes menu-in{from{opacity:0;transform:translateY(-.5rem)}to{opacity:1;transform:none}}
+
+.mobile-nav .nav-link{
+  display:flex;align-items:center;justify-content:space-between;
+  min-height:3rem;padding:.6rem 0;            /* comfortable thumb target */
+  font-size:.875rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.15em;
+  color:var(--ivory);
+  border-bottom:1px solid oklch(0.98 0.005 95 / .12);
+}
+.mobile-nav .nav-link::after{content:"›";color:var(--brass);font-size:1.25rem;
+  line-height:1;opacity:.7}
+.mobile-nav .nav-link:hover,.mobile-nav .nav-link.on{color:var(--brass)}
+.mobile-nav .nav-link.on::after{opacity:1}
+
+/* Without this the .mobile-nav link colour would beat .btn-primary on
+   specificity and paint the Book now label dark green on dark green. */
+.mobile-nav .btn{margin-top:.75rem;border-bottom:0;min-height:0}
+.mobile-nav .btn-primary{background:var(--brass);color:var(--forest)}
+.mobile-nav .btn-primary:hover{background:oklch(0.78 0.13 80);color:var(--forest)}
+.mobile-nav .btn-outline{background:transparent;color:var(--ivory);
+  border-color:oklch(0.98 0.005 95 / .35)}
+.mobile-nav .btn-outline:hover{background:oklch(0.98 0.005 95 / .1);color:var(--ivory)}
+
+.mobile-nav .lang-row{display:flex;gap:.6rem;margin-top:1.25rem}
+.mobile-nav .lang-row a{
+  flex:1;text-align:center;border-radius:999px;padding:.6rem 1rem;
+  border:1px solid oklch(0.98 0.005 95 / .25);color:var(--ivory);
+  font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;
+}
+.mobile-nav .lang-row a.on{background:var(--ivory);color:var(--forest);
+  border-color:var(--ivory)}
 
 /* ---------------------------------------------------------------- hero */
 .hero{position:relative;display:flex;align-items:center;overflow:hidden;

@@ -70,28 +70,33 @@
               aria-expanded="false" aria-controls="mobile-nav"
               onclick="var n=document.getElementById('mobile-nav');
                        var o=n.classList.toggle('open');
-                       this.setAttribute('aria-expanded',o)">
-        {{ icon('menu') }}
+                       this.setAttribute('aria-expanded',o);
+                       this.classList.toggle('is-open',o)">
+        <span class="ico-menu">{{ icon('menu') }}</span>
+        <span class="ico-close">{{ icon('close') }}</span>
       </button>
     </div>
   </div>
 
-  <div class="mobile-nav" id="mobile-nav">
-    <a href="/treatments">{{ t.treatments }}</a>
-    <a href="/#experience">{{ t.experience }}</a>
-    <a href="/therapists">{{ t.therapists }}</a>
-    <a href="/gallery" class="{{ 'on' if current_path == '/gallery' }}">{{ t.gallery }}</a>
-    <a href="/products">{{ t.products }}</a>
-    <a href="/#areas">{{ t.areas }}</a>
-    <a href="/contact">{{ t.contact }}</a>
-    {% for it in nav_items %}<a href="{{ it.url }}">{{ loc(it, 'label') }}</a>{% endfor %}
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Menu">
+    <a class="nav-link {{ 'on' if current_path.startswith('/treatment') }}" href="/treatments">{{ t.treatments }}</a>
+    <a class="nav-link" href="/#experience">{{ t.experience }}</a>
+    <a class="nav-link {{ 'on' if current_path == '/therapists' }}" href="/therapists">{{ t.therapists }}</a>
+    <a class="nav-link {{ 'on' if current_path == '/gallery' }}" href="/gallery">{{ t.gallery }}</a>
+    <a class="nav-link {{ 'on' if current_path.startswith('/product') }}" href="/products">{{ t.products }}</a>
+    <a class="nav-link" href="/#areas">{{ t.areas }}</a>
+    <a class="nav-link {{ 'on' if current_path == '/contact' }}" href="/contact">{{ t.contact }}</a>
+    {% for it in nav_items %}<a class="nav-link" href="{{ it.url }}">{{ loc(it, 'label') }}</a>{% endfor %}
+
+    <a class="btn btn-primary btn-block" href="/treatments">{{ t.book_now }}</a>
     <a class="btn btn-outline btn-block" href="{{ wa() }}" target="_blank" rel="noopener">
       {{ icon('phone') }} WhatsApp</a>
-    <a class="btn btn-primary btn-block" href="/treatments">{{ t.book_now }}</a>
-    <p class="small muted" style="margin-top:1rem">
-      <a href="/lang/en">English</a> · <a href="/lang/id">Bahasa Indonesia</a>
-    </p>
-  </div>
+
+    <div class="lang-row">
+      <a href="/lang/en" class="{{ 'on' if lang == 'en' }}">English</a>
+      <a href="/lang/id" class="{{ 'on' if lang == 'id' }}">Bahasa Indonesia</a>
+    </div>
+  </nav>
 </header>
 
 <main>
