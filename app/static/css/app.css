@@ -277,9 +277,17 @@ main{min-height:60vh}
 
 /* ---------------------------------------------------------------- cards */
 .grid{display:grid;gap:2rem}
-.grid-2{grid-template-columns:repeat(2,1fr)}
-.grid-3{grid-template-columns:repeat(3,1fr)}
-.grid-4{grid-template-columns:repeat(4,1fr)}
+/* auto-fit rather than a fixed count, so three products fill the row evenly
+   instead of leaving a fourth column empty — and a fourth product slots in
+   with no layout change.
+
+   The minimums are chosen so the widest row is exactly 2, 3 or 4 across at
+   the 80rem content width (1232px inside the gutters, 2rem gaps): any larger
+   and a fifth card would squeeze in and break the four-up design. They also
+   make the rows step down on narrower screens without separate breakpoints. */
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(30rem,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(23rem,1fr))}
+.grid-4{grid-template-columns:repeat(auto-fit,minmax(17.5rem,1fr))}
 
 .card{
   background:var(--card);border:1px solid var(--border);
@@ -290,8 +298,12 @@ a.card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);color:inheri
 .card-img{position:relative;aspect-ratio:1/1;background:var(--secondary);overflow:hidden}
 .card-img img{width:100%;height:100%;object-fit:cover;transition:transform .7s}
 a.card:hover .card-img img{transform:scale(1.05)}
-.card-body{padding:1.25rem 1.5rem 1.75rem}
+/* Column layout with the price pushed to the bottom, so prices sit on one
+   line across a row even when a product name wraps onto two. */
+.card{display:flex;flex-direction:column}
+.card-body{padding:1.25rem 1.5rem 1.75rem;display:flex;flex-direction:column;flex:1}
 .card-body h3{font-size:1.25rem;margin-bottom:.25rem}
+.card-body .price{margin-top:auto;padding-top:.75rem}
 .img-ph{display:grid;place-items:center;height:100%;font-size:2.5rem;opacity:.35}
 .img-ph.big{aspect-ratio:4/3;font-size:4rem;border-radius:1rem;background:var(--secondary)}
 
@@ -634,8 +646,6 @@ body.admin{background:var(--sand)}
 
 /* ---------------------------------------------------------------- responsive */
 @media (max-width:1024px){
-  .grid-4{grid-template-columns:repeat(2,1fr)}
-  .grid-3{grid-template-columns:repeat(2,1fr)}
   .section-split,.detail,.checkout,.cart-foot,.foot-grid,
   .therapist-card,.gallery-grid{grid-template-columns:1fr}
   .therapist-card .photo{aspect-ratio:16/10}
@@ -655,7 +665,6 @@ body.admin{background:var(--sand)}
   .treatment-media{aspect-ratio:16/9}
   .trustbar-grid{grid-template-columns:repeat(2,1fr)}
   .trust-item:nth-child(3){border-left:0}
-  .grid-4,.grid-3,.grid-2{grid-template-columns:1fr}
   .gridform,.bookfields{grid-template-columns:1fr}
   .hero-inner{padding:3.5rem var(--gutter)}
   .hero{min-height:auto}
