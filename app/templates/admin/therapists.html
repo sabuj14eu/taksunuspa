@@ -14,6 +14,13 @@
     <label>Role (EN)<input type="text" name="role_en" maxlength="80" value="{{ edit.role_en if edit else 'Therapist' }}" placeholder="Senior therapist"></label>
     <label>Role (ID)<input type="text" name="role_idn" maxlength="80" value="{{ edit.role_idn or '' if edit }}"></label>
     <label>Languages<input type="text" name="languages" maxlength="120" value="{{ edit.languages if edit else 'English, Indonesian' }}"></label>
+    <label>Commission (% of the treatment)
+      <input type="number" name="commission_pct" min="0" max="100"
+             value="{{ edit.commission_pct if edit else 0 }}">
+    </label>
+    <p class="wide muted small">The therapist's share of each treatment, used
+      on the Accounts page to work out what they are owed. The travel fee is
+      not commissioned — it covers the journey.</p>
     <label class="wide">Short bio (EN)<textarea name="bio_en" rows="3">{{ edit.bio_en or '' if edit }}</textarea></label>
     <label class="wide">Short bio (ID)<textarea name="bio_idn" rows="3">{{ edit.bio_idn or '' if edit }}</textarea></label>
     <label>Photo<input type="file" name="photo" accept="image/*"></label>

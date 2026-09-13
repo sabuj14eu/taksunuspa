@@ -1,0 +1,75 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Expenses</h1>
+<p class="muted">Everything the spa spends that is not therapist commission —
+  oils and towels, transport, rent, stock. This month so far:
+  <strong>{{ rp(month_total) }}</strong>.</p>
+
+<div class="panel">
+  <h2>{{ 'Edit expense' if edit else 'Add expense' }}</h2>
+  <form method="post" class="gridform">
+    {% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label>Date *<input type="date" name="day" required
+      value="{{ edit.day.isoformat() if edit else today.isoformat() }}"></label>
+    <label>Amount (IDR) *<input type="text" name="amount_idr" required
+      value="{{ edit.amount_idr if edit else '' }}" placeholder="150000"></label>
+
+    <label>Category
+      <select name="category">
+        {% for c in categories %}
+          <option value="{{ c }}" {{ 'selected' if edit and edit.category == c }}>{{ c|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Paid by
+      <select name="method">
+        {% for m in methods %}
+          <option value="{{ m }}" {{ 'selected' if edit and edit.method == m }}>{{ m|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label class="wide">What was it for
+      <input type="text" name="description" maxlength="200"
+             value="{{ edit.description or '' if edit }}"
+             placeholder="Coconut oil, 5 litres"></label>
+    <label class="wide">Paid to
+      <input type="text" name="paid_to" maxlength="120"
+             value="{{ edit.paid_to or '' if edit }}" placeholder="Supplier name"></label>
+
+    <div class="wide">
+      <button class="btn btn-primary btn-sm" type="submit">Save</button>
+      {% if edit %}<a class="btn btn-outline btn-sm" href="/admin/expenses">Cancel</a>{% endif %}
+      <a class="btn btn-outline btn-sm" href="/admin/accounts">Back to accounts</a>
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Recorded</h2>
+  <table class="table">
+    <thead><tr><th>Date</th><th>Category</th><th>What</th><th>Paid to</th>
+      <th>By</th><th class="right">Amount</th><th></th></tr></thead>
+    <tbody>
+    {% for e in rows %}
+      <tr>
+        <td class="muted small">{{ e.day.strftime('%d %b %Y') }}</td>
+        <td>{{ e.category }}</td>
+        <td><a href="/admin/expenses?edit={{ e.id }}">{{ e.description or '—' }}</a></td>
+        <td class="muted small">{{ e.paid_to or '—' }}</td>
+        <td class="muted small">{{ e.method }}</td>
+        <td class="right">{{ rp(e.amount_idr) }}</td>
+        <td class="right">
+          <form method="post" action="/admin/expenses/{{ e.id }}/delete"
+                onsubmit="return confirm('Delete this expense?')">
+            <button class="link-btn" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7" class="muted">Nothing recorded yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -9,5 +9,7 @@ from .shop import (ProductGroup, Product, Order, OrderItem,      # noqa: F401
                    OrderEvent, DeliveryZone, ORDER_STATUSES,
                    ORDER_OPEN, PAYMENT_METHODS, PAYMENT_STATUSES)
 from .discount import Discount, SCOPES, KINDS                    # noqa: F401
+from .finance import (Expense, Payout, EXPENSE_CATEGORIES,       # noqa: F401
+                      PAY_METHODS)
 from .media import MediaImage, Review                            # noqa: F401
 from .shared import Redirect, PageView, SeoPageMeta, AuditLog    # noqa: F401

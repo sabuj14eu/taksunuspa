@@ -101,21 +101,33 @@ def slots_for(treatment, day: date, therapist_id=None, option=None,
 
 def book(treatment, day: date, time_min: int, *, name, phone, option=None,
          email="", note="", guests=1, therapist_id=None, area_id=None,
-         service_address="", lang="en", via="web", payment_method="cash"):
-    """(booking, error_key). error_key is an i18n key, not a message."""
-    minutes = duration_of(treatment, option)
-    win = hours_for_day(day)
-    if not win or time_min < win[0] or time_min + minutes > win[1]:
-        return None, "slot_gone"
+         service_address="", lang="en", via="web", payment_method="cash",
+         force=False):
+    """(booking, error_key). error_key is an i18n key, not a message.
 
+    `force` is for staff taking a booking by phone: it skips the opening
+    hours, lead time and double-booking checks, because the person on the
+    phone may be arranging something the calendar cannot know about. It is
+    never set from the public form.
+    """
+    minutes = duration_of(treatment, option)
     starts = datetime.combine(day, datetime.min.time()) + timedelta(minutes=time_min)
     ends = starts + timedelta(minutes=minutes)
-    if starts < datetime.now():
-        return None, "slot_gone"
 
-    picked = _free_therapist(starts, ends, therapist_id)
-    if not picked:
-        return None, "slot_gone"
+    if force:
+        picked = (db.session.get(Therapist, therapist_id) if therapist_id
+                  else "venue")
+        if picked is None:
+            return None, "slot_gone"
+    else:
+        win = hours_for_day(day)
+        if not win or time_min < win[0] or time_min + minutes > win[1]:
+            return None, "slot_gone"
+        if starts < datetime.now():
+            return None, "slot_gone"
+        picked = _free_therapist(starts, ends, therapist_id)
+        if not picked:
+            return None, "slot_gone"
 
     # Priced through the same engine the menu used, so the guest is charged
     # the discount they were shown.

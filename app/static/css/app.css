@@ -732,6 +732,16 @@ body.admin{background:var(--sand)}
 .pill-sale{background:oklch(0.55 0.18 25 / .12);color:var(--destructive);font-weight:700}
 .mini{width:2.4rem;height:2.4rem;object-fit:cover;border-radius:.4rem}
 .row-actions{display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap}
+.payout-row{display:grid;grid-template-columns:1fr auto auto;gap:1rem;
+  align-items:center;padding:.9rem 0;border-bottom:1px solid var(--border)}
+.payout-row:last-child{border-bottom:0}
+.payout-row form{display:flex;gap:.5rem;align-items:center}
+.payout-row select{margin-top:0;width:auto;padding:.4rem .5rem;font-size:.8rem}
+.payout-amount{font-family:var(--font-display);font-size:1.25rem;font-weight:600;
+  color:var(--primary);white-space:nowrap}
+@media (max-width:720px){
+  .payout-row{grid-template-columns:1fr;gap:.5rem}
+}
 .photo-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem}
 .slot-card{border:1px solid var(--border);border-radius:.75rem;padding:1rem;
   background:var(--background)}

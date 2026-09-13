@@ -2,6 +2,9 @@
 {% block content %}
 <h1>Bookings</h1>
 
+<p><a class="btn btn-primary btn-sm" href="/admin/bookings/new">+ New booking</a>
+  <span class="muted small">for one taken by phone or WhatsApp</span></p>
+
 <nav class="tabs">
   <a href="/admin/bookings?scope=upcoming" class="{{ 'on' if scope == 'upcoming' }}">Upcoming</a>
   <a href="/admin/bookings?scope=all" class="{{ 'on' if scope == 'all' }}">All</a>

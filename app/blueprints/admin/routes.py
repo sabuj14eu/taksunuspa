@@ -15,6 +15,7 @@ from sqlalchemy import func
 
 from ...extensions import db
 from ...models.discount import KINDS, SCOPES, Discount
+from ...models.finance import EXPENSE_CATEGORIES, PAY_METHODS, Expense, Payout
 from ...models.media import MediaImage, Review
 from ...models.shared import AuditLog
 from ...models.shop import (ORDER_STATUSES, PAYMENT_METHODS, PAYMENT_STATUSES,
@@ -26,7 +27,8 @@ from ...models.spa import (BOOKING_STATUSES, Booking, Highlight, HolidayHour,
                            TreatmentCategory, TreatmentOption)
 from ...models.user import User
 from ...money import to_int
-from ...services import media_service, seo_service, shop_service
+from ...services import (accounts_service, booking_service, media_service,
+                         seo_service, shop_service)
 from ...services.booking_service import hhmm
 
 bp = Blueprint("admin", __name__)
@@ -430,6 +432,7 @@ def therapists():
         th.role_en = _s(f, "role_en") or "Therapist"
         th.role_idn = _s(f, "role_idn")
         th.languages = _s(f, "languages")
+        th.commission_pct = max(0, min(100, _i(f, "commission_pct")))
         th.bio_en = _s(f, "bio_en")
         th.bio_idn = _s(f, "bio_idn")
         th.is_available_today = _b(f, "is_available_today")
@@ -647,6 +650,70 @@ def bookings():
                            scope=scope, statuses=BOOKING_STATUSES)
 
 
+@bp.route("/bookings/new", methods=["GET", "POST"])
+def booking_new():
+    """Take a booking that came in by phone or WhatsApp.
+
+    Staff can book a time the public form would refuse — a slot already taken,
+    or one in the past when writing up a treatment after the fact — because
+    the person on the phone knows something the calendar does not.
+    """
+    treatments = (Treatment.query.filter_by(is_active=True)
+                  .order_by(Treatment.sort_order, Treatment.id).all())
+    therapists = (Therapist.query.filter_by(is_active=True)
+                  .order_by(Therapist.sort_order, Therapist.id).all())
+    areas = (ServiceArea.query.filter_by(is_active=True)
+             .order_by(ServiceArea.sort_order).all())
+
+    if request.method == "POST":
+        f = request.form
+        tr = db.session.get(Treatment, _i(f, "treatment_id"))
+        phone = _s(f, "phone")
+        if not tr or not phone:
+            flash("Choose a treatment and enter a phone number.")
+            return redirect(url_for("admin.booking_new"))
+
+        day = _day(f, "day")
+        time_min = _hm(f.get("time"))
+        if not day or time_min is None:
+            flash("Enter a date and a time.")
+            return redirect(url_for("admin.booking_new"))
+
+        option = None
+        if _i(f, "option_id"):
+            option = db.session.get(TreatmentOption, _i(f, "option_id"))
+            if option and option.treatment_id != tr.id:
+                option = None
+
+        b, err = booking_service.book(
+            tr, day, time_min, option=option, name=_s(f, "name"), phone=phone,
+            email=_s(f, "email"), note=_s(f, "note"),
+            guests=_i(f, "guests", 1) or 1,
+            therapist_id=_i(f, "therapist_id") or None,
+            area_id=_i(f, "area_id") or None,
+            service_address=_s(f, "service_address"),
+            payment_method=_s(f, "payment_method") or "cash",
+            via="admin", force=_b(f, "force"))
+        if err:
+            flash("That time is not free. Tick “Book anyway” to take it "
+                  "regardless." if err == "slot_gone" else err)
+            return redirect(url_for("admin.booking_new"))
+
+        if _s(f, "status") in BOOKING_STATUSES:
+            b.status = _s(f, "status")
+        if _b(f, "mark_paid"):
+            b.payment_status = "paid"
+        _log("create", "booking", f"{b.public_code} by admin")
+        db.session.commit()
+        flash(f"Booking {b.public_code} created for {b.starts_at:%d %b %H:%M}.")
+        return redirect(url_for("admin.bookings"))
+
+    return render_template("admin/booking_new.html", active="bookings",
+                           treatments=treatments, therapists=therapists,
+                           areas=areas, statuses=BOOKING_STATUSES,
+                           today=date.today())
+
+
 # ---------------------------------------------------------------- schedule
 
 @bp.route("/schedule", methods=["GET", "POST"])
@@ -720,6 +787,91 @@ def delivery():
         "admin/delivery.html", active="delivery",
         rows=DeliveryZone.query.order_by(DeliveryZone.sort_order).all(),
         edit=db.session.get(DeliveryZone, edit_id) if edit_id else None)
+
+
+# ---------------------------------------------------------------- accounts
+
+@bp.route("/accounts")
+def accounts():
+    """This week's takings, what the therapists are owed, what was spent."""
+    period = request.args.get("period", "month")
+    start = _day(request.args, "start")
+    end = _day(request.args, "end")
+    if start and end and start <= end:
+        label = f"{start:%d %b} – {end:%d %b %Y}"
+    else:
+        start, end, label = accounts_service.period_bounds(period)
+
+    return render_template(
+        "admin/accounts.html", active="accounts",
+        s=accounts_service.summary(start, end), label=label, period=period,
+        unpaid=accounts_service.unpaid_by_therapist(),
+        recent_expenses=(Expense.query.filter(Expense.day >= start,
+                                              Expense.day <= end)
+                         .order_by(Expense.day.desc(), Expense.id.desc())
+                         .limit(15).all()),
+        recent_payouts=(Payout.query.order_by(Payout.paid_on.desc(),
+                                              Payout.id.desc())
+                        .limit(10).all()),
+        today=date.today())
+
+
+@bp.route("/accounts/pay/<int:tid>", methods=["POST"])
+def accounts_pay(tid):
+    th = _get_or_404(Therapist, tid)
+    payout = accounts_service.pay_therapist(
+        th, _day(request.form, "paid_on") or date.today(),
+        method=_s(request.form, "method") or "cash",
+        note=_s(request.form, "note"))
+    if not payout:
+        flash(f"Nothing owed to {th.name} right now.")
+    else:
+        _log("payout", "therapist", f"{th.name}: {payout.amount_idr}")
+        db.session.commit()
+        flash(f"Paid {th.name} — {payout.bookings_count} treatment(s).")
+    return redirect(url_for("admin.accounts"))
+
+
+@bp.route("/expenses", methods=["GET", "POST"])
+def expenses():
+    if request.method == "POST":
+        f = request.form
+        eid = _i(f, "id")
+        e = _get_or_404(Expense, eid) if eid else Expense(day=date.today())
+        e.day = _day(f, "day") or date.today()
+        e.category = (_s(f, "category") if _s(f, "category") in EXPENSE_CATEGORIES
+                      else "other")
+        e.description = _s(f, "description")
+        e.paid_to = _s(f, "paid_to")
+        e.amount_idr = to_int(_s(f, "amount_idr"))
+        e.method = _s(f, "method") if _s(f, "method") in PAY_METHODS else "cash"
+        if not eid:
+            db.session.add(e)
+        _log("save", "expense", f"{e.category} {e.amount_idr}")
+        db.session.commit()
+        flash("Expense saved")
+        return redirect(url_for("admin.expenses"))
+
+    month_start = date.today().replace(day=1)
+    edit_id = request.args.get("edit", type=int)
+    return render_template(
+        "admin/expenses.html", active="expenses",
+        categories=EXPENSE_CATEGORIES, methods=PAY_METHODS,
+        rows=(Expense.query.order_by(Expense.day.desc(), Expense.id.desc())
+              .limit(200).all()),
+        edit=db.session.get(Expense, edit_id) if edit_id else None,
+        month_total=accounts_service.expenses_total(month_start, date.today()),
+        today=date.today())
+
+
+@bp.route("/expenses/<int:eid>/delete", methods=["POST"])
+def expense_delete(eid):
+    e = _get_or_404(Expense, eid)
+    db.session.delete(e)
+    _log("delete", "expense", str(e.amount_idr))
+    db.session.commit()
+    flash("Expense deleted")
+    return redirect(url_for("admin.expenses"))
 
 
 # ---------------------------------------------------------------- content

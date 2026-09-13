@@ -1,0 +1,138 @@
+{% extends "admin/layout.html" %}
+{% block content %}
+<h1>Accounts</h1>
+
+<nav class="tabs">
+  {% for key, name in [('today','Today'), ('week','This week'), ('last_week','Last week'),
+                       ('month','This month'), ('last_month','Last month'), ('year','This year')] %}
+    <a href="/admin/accounts?period={{ key }}" class="{{ 'on' if period == key }}">{{ name }}</a>
+  {% endfor %}
+</nav>
+
+<form method="get" class="panel" style="padding:1rem 1.5rem">
+  <div class="cart-tools">
+    <label style="margin-bottom:0">From<input type="date" name="start" value="{{ s.start.isoformat() }}"></label>
+    <label style="margin-bottom:0">To<input type="date" name="end" value="{{ s.end.isoformat() }}"></label>
+    <button class="btn btn-outline btn-sm" type="submit">Show</button>
+  </div>
+</form>
+
+<h2 style="font-family:var(--font-display)">{{ label }}</h2>
+
+<div class="stat-row">
+  <div class="stat">
+    <span class="stat-n">{{ rp(s.income) }}</span>
+    <span class="stat-l">Money in</span>
+  </div>
+  <div class="stat">
+    <span class="stat-n">{{ rp(s.costs) }}</span>
+    <span class="stat-l">Money out</span>
+  </div>
+  <div class="stat">
+    <span class="stat-n" style="color:{{ 'var(--primary)' if s.net >= 0 else 'var(--destructive)' }}">{{ rp(s.net) }}</span>
+    <span class="stat-l">Profit</span>
+  </div>
+  <div class="stat">
+    <span class="stat-n">{{ s.bookings }} · {{ s.orders }}</span>
+    <span class="stat-l">Treatments · orders</span>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Where it came from, where it went</h2>
+  <table class="table">
+    <tbody>
+      <tr><td>Treatments ({{ s.bookings }})</td><td class="right">{{ rp(s.treatment_income) }}</td></tr>
+      <tr><td>Product orders ({{ s.orders }})</td><td class="right">{{ rp(s.product_income) }}</td></tr>
+      <tr><td><strong>Money in</strong></td><td class="right"><strong>{{ rp(s.income) }}</strong></td></tr>
+      <tr><td colspan="2" style="height:.5rem;border:0"></td></tr>
+      <tr><td>Therapist commission</td><td class="right">−{{ rp(s.therapist_cost) }}</td></tr>
+      {% for cat, amount in s.by_category %}
+      <tr><td class="muted">{{ cat|capitalize }}</td><td class="right muted">−{{ rp(amount) }}</td></tr>
+      {% endfor %}
+      <tr><td><strong>Money out</strong></td><td class="right"><strong>−{{ rp(s.costs) }}</strong></td></tr>
+      <tr class="grand"><td>Profit</td><td class="right">{{ rp(s.net) }}</td></tr>
+    </tbody>
+  </table>
+  <p class="muted small">Treatments count on the day they happen; cancelled
+    bookings and orders never count. Commission is counted when the treatment
+    happens, whether or not it has been paid out yet.</p>
+</div>
+
+<div class="panel">
+  <h2>Owed to therapists</h2>
+  <p class="muted">Treatments already given and not yet paid out. Future
+    bookings are not included.</p>
+  {% if unpaid %}
+    {% for row in unpaid %}
+    <div class="payout-row">
+      <div>
+        <strong>{{ row.therapist.name }}</strong>
+        <span class="muted small"> · {{ row.bookings|length }} treatment(s)
+          {%- if row.therapist.commission_pct %} · {{ row.therapist.commission_pct }}%{% endif %}</span>
+        <div class="muted small">
+          {% for b in row.bookings[:6] %}{{ b.starts_at.strftime('%d %b') }} {{ b.treatment_name }} ({{ rp(b.fee_due) }}){% if not loop.last %} · {% endif %}{% endfor %}
+          {%- if row.bookings|length > 6 %} · +{{ row.bookings|length - 6 }} more{% endif %}
+        </div>
+      </div>
+      <div class="payout-amount">{{ rp(row.amount) }}</div>
+      <form method="post" action="/admin/accounts/pay/{{ row.therapist.id }}"
+            onsubmit="return confirm('Record a payment of {{ rp(row.amount) }} to {{ row.therapist.name }}?')">
+        <input type="hidden" name="paid_on" value="{{ today.isoformat() }}">
+        <select name="method">
+          <option value="cash">Cash</option>
+          <option value="transfer">Transfer</option>
+        </select>
+        <button class="btn btn-primary btn-sm" type="submit">Mark paid</button>
+      </form>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="muted">Nothing owed. Either everyone is paid up, or no therapist
+      has a commission rate set yet
+      (<a href="/admin/therapists">set one here</a>).</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Expenses in this period</h2>
+  <table class="table">
+    <thead><tr><th>Date</th><th>Category</th><th>What</th><th>Paid to</th><th class="right">Amount</th></tr></thead>
+    <tbody>
+    {% for e in recent_expenses %}
+      <tr>
+        <td class="muted small">{{ e.day.strftime('%d %b') }}</td>
+        <td>{{ e.category }}</td>
+        <td>{{ e.description or '—' }}</td>
+        <td class="muted small">{{ e.paid_to or '—' }}</td>
+        <td class="right">{{ rp(e.amount_idr) }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">Nothing recorded.
+        <a href="/admin/expenses">Add an expense</a>.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <a class="btn btn-outline btn-sm" href="/admin/expenses">Manage expenses</a>
+</div>
+
+{% if recent_payouts %}
+<div class="panel">
+  <h2>Recent payments to therapists</h2>
+  <table class="table">
+    <thead><tr><th>Date</th><th>Therapist</th><th>Treatments</th><th>Method</th><th class="right">Amount</th></tr></thead>
+    <tbody>
+    {% for p in recent_payouts %}
+      <tr>
+        <td class="muted small">{{ p.paid_on.strftime('%d %b %Y') }}</td>
+        <td>{{ p.therapist.name if p.therapist else '—' }}</td>
+        <td>{{ p.bookings_count }}</td>
+        <td class="muted small">{{ p.method }}</td>
+        <td class="right">{{ rp(p.amount_idr) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

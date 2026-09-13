@@ -125,6 +125,9 @@ class Therapist(db.Model):
     bio_en = db.Column(db.Text, default="")
     bio_idn = db.Column(db.Text, default="")
     photo_url = db.Column(db.String(400))
+    # Share of each treatment the therapist keeps. The usual arrangement here
+    # is a split of the treatment price rather than a wage.
+    commission_pct = db.Column(db.Integer, default=0)
     is_available_today = db.Column(db.Boolean, default=True)
     show_on_site = db.Column(db.Boolean, default=True)
     sort_order = db.Column(db.Integer, default=0)
@@ -217,7 +220,26 @@ class Booking(db.Model):
     created_via = db.Column(db.String(12), default="web")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # What the therapist earns from this booking, and the payout that settled
+    # it. Null fee means "work it out from the therapist's current rate" —
+    # so a rate set after a booking was taken still applies to it.
+    therapist_fee_idr = db.Column(db.Integer)
+    payout_id = db.Column(db.Integer, db.ForeignKey("payouts.id"))
+
     treatment = db.relationship("Treatment")
     option = db.relationship("TreatmentOption")
     therapist = db.relationship("Therapist")
     area = db.relationship("ServiceArea")
+    payout = db.relationship("Payout", backref="bookings")
+
+    @property
+    def fee_due(self) -> int:
+        """The therapist's share, snapshotted once paid."""
+        if self.therapist_fee_idr is not None:
+            return self.therapist_fee_idr
+        if not self.therapist:
+            return 0
+        pct = self.therapist.commission_pct or 0
+        # The travel fee reimburses the trip, so commission is on the treatment.
+        base = max(0, (self.total_idr or 0) - (self.travel_fee_idr or 0))
+        return base * pct // 100
