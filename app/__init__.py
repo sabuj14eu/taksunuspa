@@ -78,9 +78,13 @@ def create_app():
             footer_pages = (Page.query.filter_by(is_visible=True,
                                                  show_in_menu=True)
                             .order_by(Page.sort_order, Page.id).all())
-            product_groups = (ProductGroup.query.filter_by(is_active=True)
+            # Same rule as the treatment groups: an empty one is not
+            # offered until it holds a product.
+            product_groups = [g for g in
+                              ProductGroup.query.filter_by(is_active=True)
                               .order_by(ProductGroup.sort_order,
-                                        ProductGroup.id).all())
+                                        ProductGroup.id).all()
+                              if any(pr.is_active for pr in g.products)]
             # A group with nothing in it renders a page saying "Nothing
             # found", which a guest reads as a broken site. Body Rituals and
             # Packages are listed again the moment a treatment is added to
@@ -109,6 +113,7 @@ def create_app():
             "site": cfg, "nav_items": nav, "footer_pages": footer_pages,
             "product_groups": product_groups, "spa_cats": spa_cats,
             "areas_line": areas_line, "has_gallery": has_gallery,
+            "how_it_works": _how_it_works_steps(),
             "banner_discount": banner,
             "t": t(), "lang": lang(), "loc": loc, "rp": rp,
             "cover_url": media_service.cover_url,
@@ -127,6 +132,28 @@ def create_app():
         from markupsafe import Markup, escape
         return Markup("<br>".join(escape(text or "").split("\n")))
 
+    @app.template_filter("richtext")
+    def _richtext(text):
+        """Page bodies, with headings. A line beginning "## " becomes a
+        subheading and blank lines separate paragraphs, so a long page like
+        About Us reads as sections instead of one wall of text. Everything is
+        escaped first, so admin copy can never inject markup."""
+        from markupsafe import Markup, escape
+        out = []
+        for block in (text or "").replace("\r\n", "\n").split("\n\n"):
+            block = block.strip()
+            if not block:
+                continue
+            if block.startswith("## "):
+                head, _, rest = block.partition("\n")
+                out.append(f"<h3>{escape(head[3:].strip())}</h3>")
+                block = rest.strip()
+                if not block:
+                    continue
+            body = "<br>".join(escape(line) for line in block.split("\n"))
+            out.append(f"<p>{body}</p>")
+        return Markup("".join(out))
+
     @app.errorhandler(404)
     def _404(_e):
         from flask import render_template
@@ -143,6 +170,12 @@ def create_app():
         return redirect(request.referrer or "/admin/media"), 302
 
     return app
+
+
+def _how_it_works_steps():
+    """The three steps, available to every page that shows the band."""
+    from .blueprints.public.routes import HOW_IT_WORKS
+    return HOW_IT_WORKS.get(lang(), HOW_IT_WORKS["en"])
 
 
 def _cart_count():

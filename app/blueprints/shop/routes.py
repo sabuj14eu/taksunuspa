@@ -21,8 +21,13 @@ CODE_KEY = "discount_code"
 
 
 def _groups():
-    return (ProductGroup.query.filter_by(is_active=True)
-            .order_by(ProductGroup.sort_order, ProductGroup.id).all())
+    """Only groups that hold something. An empty one rendered a page reading
+    "Nothing found", which a guest reads as a broken shop — the same fault
+    Body Rituals and Packages had. Each returns by itself once a product is
+    added to it."""
+    return [g for g in ProductGroup.query.filter_by(is_active=True)
+            .order_by(ProductGroup.sort_order, ProductGroup.id).all()
+            if any(p.is_active for p in g.products)]
 
 
 def _code():
@@ -36,8 +41,7 @@ def index(group_slug=None):
     groups = _groups()
     group = None
     if group_slug:
-        group = ProductGroup.query.filter_by(slug=group_slug,
-                                             is_active=True).first()
+        group = next((g for g in groups if g.slug == group_slug), None)
         if not group:
             abort(404)
 

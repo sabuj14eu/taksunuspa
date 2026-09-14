@@ -6,15 +6,16 @@
   <div class="wrap">
     <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ t.service_areas }}</span></nav>
     <span class="eyebrow">{{ t.we_come_to_you }}</span>
-    <h2 style="font-size:clamp(2.25rem,5vw,3.5rem)">{{ t.areas_we_cover }}</h2>
-    <p class="lead">{{ site.get('areas_note_idn' if lang == 'id' else 'areas_note_en', '') or t.area_intro }}</p>
+    <h2 style="font-size:clamp(2.25rem,5vw,3.5rem)">{{ t.areas_page_title }}</h2>
+    <p class="lead">{{ t.areas_page_lead }}</p>
   </div>
 </section>
 
 <section class="section" style="padding-top:2.5rem">
   <div class="wrap">
     {% if rows %}
-    <div class="grid grid-4">
+    <div class="section-head"><h2>{{ t.our_service_areas }}</h2></div>
+    <div class="grid grid-4" style="margin-top:2rem">
       {% for a in rows %}
       <a class="area-card" href="/areas/{{ a.slug }}">
         <span class="area-card-icon">{{ icon('map-pin') }}</span>
@@ -27,10 +28,12 @@
       </a>
       {% endfor %}
     </div>
-    <p class="muted" style="margin-top:2rem">{{ t.not_your_area }}
+    <p class="muted" style="margin-top:2rem"><strong>{{ t.no_travel_fee }}</strong></p>
+    <p class="muted">{{ t.outside_areas }}
       <a href="{{ wa() }}" target="_blank" rel="noopener">WhatsApp</a></p>
     {% else %}
-      <p class="muted">{{ t.no_results }}</p>
+      <p class="muted">{{ t.outside_areas }}
+        <a href="{{ wa() }}" target="_blank" rel="noopener">WhatsApp</a></p>
     {% endif %}
   </div>
 </section>
@@ -41,12 +44,12 @@
 
 <section class="section section-sand">
   <div class="wrap section-head center">
-    <h2>{{ site.get('cta_title_idn' if lang == 'id' else 'cta_title_en', '') }}</h2>
+    <h2>{{ t.book_your_treatment }}</h2>
     <p>{{ site.get('cta_text_idn' if lang == 'id' else 'cta_text_en', '') }}</p>
     <p style="margin-top:1.5rem">
-      <a class="btn btn-primary" href="/treatments">{{ t.book_relaxation }}</a>
+      <a class="btn btn-primary" href="/treatments">{{ t.book_your_treatment }}</a>
       <a class="btn btn-outline" href="{{ wa() }}" target="_blank" rel="noopener">
-        {{ icon('phone') }} WhatsApp</a>
+        {{ icon('phone') }} {{ t.whatsapp_us }}</a>
     </p>
   </div>
 </section>

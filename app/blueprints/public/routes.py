@@ -38,6 +38,25 @@ TRUST_ITEMS = {
            ("card", "Tunai, transfer atau online")],
 }
 
+HOW_IT_WORKS = {
+    "en": [("Book Your Treatment",
+            "Choose your treatment, preferred date and time."),
+           ("Your Therapist Arrives",
+            "We bring the massage table, fresh towels, oils and everything "
+            "needed for your treatment."),
+           ("Relax & Enjoy",
+            "Enjoy your treatment in the comfort and privacy of your own "
+            "space. Payment can be made after the treatment.")],
+    "id": [("Pesan Perawatan Anda",
+            "Pilih perawatan, tanggal dan jam yang Anda inginkan."),
+           ("Terapis Anda Datang",
+            "Kami membawa meja pijat, handuk bersih, minyak dan semua yang "
+            "diperlukan untuk perawatan Anda."),
+           ("Santai & Nikmati",
+            "Nikmati perawatan dengan nyaman dan privat di tempat Anda "
+            "sendiri. Pembayaran dapat dilakukan setelah perawatan.")],
+}
+
 
 def opening_rows():
     """[(day name, "09:00 – 23:00" or None)] for the footer and contact page."""

@@ -13,13 +13,13 @@
     <p>
       <span class="area-fee {{ 'free' if not a.travel_fee_idr }}">
         {% if a.travel_fee_idr %}{{ t.travel_fee }} {{ rp(a.travel_fee_idr) }}
-        {% else %}{{ t.free_travel }}{% endif %}
+        {% else %}{{ t.no_travel_fee_area }}{% endif %}
       </span>
     </p>
     <p style="margin-top:1.5rem">
-      <a class="btn btn-primary" href="/treatments">{{ t.book_now }}</a>
+      <a class="btn btn-primary" href="/treatments">{{ t.book_your_treatment }}</a>
       <a class="btn btn-outline" href="{{ wa() }}" target="_blank" rel="noopener">
-        {{ icon('phone') }} WhatsApp</a>
+        {{ icon('phone') }} {{ t.whatsapp_us }}</a>
     </p>
   </div>
 </section>
@@ -50,13 +50,17 @@
 <section class="section">
   <div class="wrap">
     <div class="section-head center">
-      <h2>{{ t.areas_we_cover }}</h2>
+      <h2>{{ t.our_service_areas }}</h2>
     </div>
     <div class="area-pills">
       {% for o in others %}
       <a class="area-pill light" href="/areas/{{ o.slug }}">{{ icon('map-pin') }}{{ o.name }}</a>
       {% endfor %}
     </div>
+    {# The owner asked for this on every area page: a guest staying just
+       outside should be told to ask rather than assume we cannot come. #}
+    <p class="center muted" style="margin-top:2rem">{{ t.outside_areas }}
+      <a href="{{ wa() }}" target="_blank" rel="noopener">WhatsApp</a></p>
   </div>
 </section>
 {% endif %}

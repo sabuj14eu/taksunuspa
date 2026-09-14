@@ -36,8 +36,20 @@ T = {
         "areas_we_cover": "Areas we cover",
         "service_areas": "Service areas",
         "massage_in": "Massage in",
-        "area_intro": "Our therapists travel to your villa, hotel or home. "
-                      "Pick your area to see the travel fee and book.",
+        "area_intro": "Our therapists come directly to your hotel, villa, "
+                      "guesthouse or home.",
+        "areas_page_title": "Home Spa Service in Selected Areas of Bali",
+        "areas_page_lead": "Enjoy a professional massage without leaving "
+                           "your hotel, villa, guesthouse or home. Our "
+                           "therapists travel directly to you and bring "
+                           "everything needed for your treatment.",
+        "our_service_areas": "Our Service Areas",
+        "outside_areas": "Staying outside our standard service areas? "
+                         "Contact us on WhatsApp and we will check "
+                         "availability.",
+        "no_travel_fee_area": "No travel fee within our service area.",
+        "book_your_treatment": "Book Your Treatment",
+        "whatsapp_us": "WhatsApp Us",
         "how_it_works": "How it works",
         "step_book": "Book online",
         "step_book_text": "Choose your treatment, day and time. "
@@ -116,8 +128,20 @@ T = {
         "areas_we_cover": "Area yang kami layani",
         "service_areas": "Area layanan",
         "massage_in": "Pijat panggilan di",
-        "area_intro": "Terapis kami datang ke vila, hotel atau rumah Anda. "
-                      "Pilih area Anda untuk melihat biaya transport dan memesan.",
+        "area_intro": "Terapis kami datang langsung ke hotel, vila, "
+                      "guesthouse atau rumah Anda.",
+        "areas_page_title": "Layanan Home Spa di Area Pilihan Bali",
+        "areas_page_lead": "Nikmati pijat profesional tanpa meninggalkan "
+                           "hotel, vila, guesthouse atau rumah Anda. "
+                           "Terapis kami datang langsung dan membawa "
+                           "semua yang diperlukan.",
+        "our_service_areas": "Area Layanan Kami",
+        "outside_areas": "Menginap di luar area layanan standar kami? "
+                         "Hubungi kami di WhatsApp dan kami akan cek "
+                         "ketersediaan.",
+        "no_travel_fee_area": "Tanpa biaya transport di area layanan kami.",
+        "book_your_treatment": "Pesan Perawatan Anda",
+        "whatsapp_us": "Hubungi WhatsApp",
         "how_it_works": "Cara pesan",
         "step_book": "Pesan online",
         "step_book_text": "Pilih perawatan, hari dan jam. "

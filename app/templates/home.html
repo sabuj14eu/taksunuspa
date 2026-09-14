@@ -60,7 +60,7 @@
        whole way down, and the travel card below fills the rest with the
        question guests actually ask next: do you come to me? #}
     <div class="split-sticky">
-      <span class="eyebrow">{{ site.get('treatments_eyebrow_en','Traditional & therapeutic') }}</span>
+      <span class="eyebrow">{{ site.get('treatments_eyebrow_en','Traditional Techniques &amp; Personalised Care') }}</span>
       <h2>{{ t.spa_menu }}</h2>
       <p class="lead">{{ site.get('treatments_intro_idn' if lang == 'id' else 'treatments_intro_en', '') }}</p>
       {% if treatment_hero %}
@@ -76,10 +76,11 @@
       {% if areas %}
       <div class="travel-card">
         <h3>{{ icon('map-pin') }} {{ t.we_come_to_you }}</h3>
-        {# Only promise free travel when every area really is free. #}
-        <p class="muted small">
-          {% if areas|selectattr('travel_fee_idr')|list|length == 0 %}{{ t.free_travel }} — {% endif %}
-          {{ areas|map(attribute='name')|join(' · ') }}</p>
+        {# Only make the promise when every area really is fee-free. #}
+        {% if areas|selectattr('travel_fee_idr')|list|length == 0 %}
+        <p class="muted small"><strong>{{ t.no_travel_fee }}</strong></p>
+        {% endif %}
+        <p class="muted small">{{ areas|map(attribute='name')|join(' · ') }}</p>
         <div class="travel-links">
           {% for a in areas[:6] %}
           <a href="/areas/{{ a.slug }}">{{ a.name }}</a>
@@ -126,8 +127,8 @@
 <section class="section section-primary" id="experience">
   <div class="wrap">
     <div class="section-head center">
-      <span class="eyebrow center-rules on-dark">{{ site.get('experience_eyebrow_en','The difference') }}</span>
-      <h2>{{ site.get('experience_title_idn' if lang == 'id' else 'experience_title_en', 'Why guests choose us') }}</h2>
+      <span class="eyebrow center-rules on-dark">{{ site.get('experience_eyebrow_en','Why choose us') }}</span>
+      <h2>{{ site.get('experience_title_idn' if lang == 'id' else 'experience_title_en', 'Why Choose Us') }}</h2>
     </div>
     <div class="grid grid-3" style="margin-top:4rem">
       {% for h in highlights %}
@@ -149,7 +150,7 @@
     <div class="section-topbar">
       <div>
         <span class="eyebrow">{{ site.get('therapists_eyebrow_en','Meet Our Therapists') }}</span>
-        <h2>{{ site.get('therapists_title_idn' if lang == 'id' else 'therapists_title_en', 'Meet our therapists') }}</h2>
+        <h2>{{ site.get('therapists_title_idn' if lang == 'id' else 'therapists_title_en', 'Meet Our Therapists') }}</h2>
       </div>
       <a class="text-link" href="/therapists">{{ t.view_all_therapists }} {{ icon('arrow-right') }}</a>
     </div>
@@ -250,10 +251,10 @@
 
 {# ----------------------------------------------------------------- reviews #}
 {% if reviews %}
-<section class="section">
+<section class="section" id="reviews">
   <div class="wrap">
     <div class="section-head center">
-      <span class="eyebrow center-rules">{{ site.get('reviews_eyebrow_en','From stress to bliss') }}</span>
+      <span class="eyebrow center-rules">{{ site.get('reviews_eyebrow_en','What guests say') }}</span>
       <h2>{{ site.get('reviews_title_idn' if lang == 'id' else 'reviews_title_en', 'Guest reviews') }}</h2>
     </div>
     <div class="grid grid-3" style="margin-top:4rem">

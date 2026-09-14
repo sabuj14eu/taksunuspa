@@ -54,7 +54,8 @@ def sitemap():
         out.append(_url(f"{base}/treatment/{tr.slug}", "weekly", "0.8"))
     for g in (ProductGroup.query.filter_by(is_active=True)
               .order_by(ProductGroup.sort_order).all()):
-        out.append(_url(f"{base}/products/{g.slug}", "weekly", "0.8"))
+        if any(p.is_active for p in g.products):
+            out.append(_url(f"{base}/products/{g.slug}", "weekly", "0.8"))
     for p in (Product.query.filter_by(is_active=True)
               .order_by(Product.sort_order).all()):
         out.append(_url(f"{base}/product/{p.slug}", "weekly", "0.8"))

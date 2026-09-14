@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block content %}
 <section class="page-head">
   <div class="wrap">
@@ -7,6 +8,18 @@
   </div>
 </section>
 <section class="section" style="padding-top:2rem">
-  <div class="wrap"><div class="prose">{{ loc(p, 'body')|nl2br }}</div></div>
+  <div class="wrap"><div class="prose">{{ loc(p, 'body')|richtext }}</div></div>
+</section>
+
+{# Every page ends somewhere a guest can act, rather than trailing off. #}
+<section class="section section-sand">
+  <div class="wrap section-head center">
+    <h2>{{ t.book_your_treatment }}</h2>
+    <p style="margin-top:1.5rem">
+      <a class="btn btn-primary" href="/treatments">{{ t.book_your_treatment }}</a>
+      <a class="btn btn-outline" href="{{ wa() }}" target="_blank" rel="noopener">
+        {{ icon('phone') }} {{ t.whatsapp_us }}</a>
+    </p>
+  </div>
 </section>
 {% endblock %}

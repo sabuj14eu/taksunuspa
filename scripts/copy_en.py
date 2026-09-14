@@ -5,78 +5,98 @@ right wording, and scripts/apply_copy.py, which pushes the same wording onto a
 database that is already live. Editing the text here and running apply_copy is
 the whole workflow — there is no second copy of these sentences to forget.
 
-Rules this copy follows, set by the owner:
-  * Taksu Nusa Spa is a home spa. Therapists travel to the guest.
-  * The service covers eight named areas, not the whole island. Nothing may
-    say "Bali-wide", "across Bali" or "wherever you are in Bali".
-  * There is no travel fee inside those areas — say that, do not say "free".
+The wording below is the owner's own, supplied verbatim. Rules it follows:
+  * Taksu Nusa Spa is a home spa. The therapist comes to the guest.
+  * The service covers eight named areas, not the island. Nothing may say
+    "Bali-wide", "across Bali", "anywhere in Bali" or "wherever you are in
+    Bali" — the phrase is "Serving selected areas of Bali."
+  * There is no travel fee inside those areas. Never "free travel".
   * Couple Massage is priced per person, and that must be impossible to miss.
-  * No medical or health claims, for treatments or for honey.
+  * No medical claims, for treatments or for honey.
+  * Nothing invented: no certifications, no reviews, no guest numbers, no
+    services the spa does not offer.
 """
 
-# The eight areas, in the order the owner lists them. Everything that prints
-# the areas builds the string from here, so they cannot drift apart.
+# The eight areas, in the owner's order. Everything that prints the areas
+# builds its string from here, so the list cannot drift between pages.
 AREAS = ["Seminyak", "Ubud", "Kuta", "Legian", "Sanur", "Nusa Dua",
          "Jimbaran", "Uluwatu"]
 AREAS_LINE = " · ".join(AREAS)
 
-OPENING_HOURS = "Daily 09:00 – 23:00"
+OPENING_HOURS = "Daily · 09:00–23:00"
 NO_TRAVEL_FEE = "No travel fee within our service areas."
+NO_TRAVEL_FEE_SINGULAR = "No travel fee within our service area."
+SELECTED_AREAS = "Serving selected areas of Bali."
+WHATSAPP_DISPLAY = "+62 812-3672-9448"
 
 POSITIONING = ("Professional Balinese home spa treatments delivered to your "
                "hotel, villa or home.")
 
+OUTSIDE_AREAS = ("Staying outside our standard service areas? Contact us on "
+                 "WhatsApp and we will check availability.")
+
 # ---------------------------------------------------------------- settings
 
 SETTINGS_EN = {
-    "tagline_en": POSITIONING,
+    # hero
+    "hero_eyebrow_en": SELECTED_AREAS,
+    "hero_line1_en": "Bali Premium",
+    "hero_line2_en": "Home Spa",
+    "tagline_en": (
+        "Authentic Balinese massage and wellness treatments, delivered "
+        "directly to your hotel, villa or home.\n\n"
+        "Relax in complete privacy while our experienced therapists bring the "
+        "spa experience directly to you."),
+
+    # The rating line is only shown when the owner sets rating_value. It is
+    # left empty because "4.9 · 1000+ happy guests" could not be evidenced.
+    "rating_value": "",
+    "rating_note_en": "",
 
     "about_en": (
-        "Taksu Nusa Spa is a home spa service. Rather than asking you to "
-        "travel, our therapists come to you, bringing the massage table, "
-        "fresh linen, warm oils and music, and setting up in your own room."),
+        "Taksu Nusa Spa was created to make it easier for guests in Bali to "
+        "enjoy a relaxing and authentic spa experience without leaving their "
+        "accommodation. Instead of travelling to a spa, our therapists come "
+        "directly to your hotel, villa, guesthouse or home."),
 
     "service_hours": OPENING_HOURS,
-    "service_scope": f"Service areas: {AREAS_LINE}",
+    "service_scope": SELECTED_AREAS,
 
-    # hero
-    "hero_eyebrow_en": "Balinese home spa · we come to you",
-    "hero_line1_en": "The Spa",
-    "hero_line2_en": "Comes to You.",
-
-    "treatments_eyebrow_en": "Traditional Balinese treatments",
+    "treatments_eyebrow_en": "Traditional Techniques & Personalised Care",
     "treatments_intro_en": (
-        "Every treatment is given in your own room, using traditional "
-        "Balinese technique, warm oils and steady, unhurried pressure."),
+        "Authentic Balinese massage and wellness treatments, delivered "
+        "directly to your hotel, villa or home."),
 
-    "experience_eyebrow_en": "Why book with us",
-    "experience_title_en": "Why guests choose us",
+    "experience_eyebrow_en": "Why choose us",
+    "experience_title_en": "Why Choose Us",
 
     "therapists_eyebrow_en": "Meet Our Therapists",
     "therapists_title_en": "Meet Our Therapists",
     "therapists_intro_en": (
-        "Experienced professional therapists, trained in Bali, who come to "
-        "your hotel, villa or home."),
+        "Our therapists are experienced professionals who are passionate "
+        "about providing a relaxing, comfortable and personalised Balinese "
+        "spa experience. Our therapists come directly to your hotel, villa or "
+        "home within our service areas."),
 
     "gallery_eyebrow_en": "A look inside",
-    "products_eyebrow_en": "Take Bali home",
+    "products_eyebrow_en": "Take a Little Bali Home",
 
     "areas_note_en": (
-        f"{NO_TRAVEL_FEE} We come to your hotel, villa, guesthouse or home in "
-        f"{AREAS_LINE}."),
+        "No need to travel to a spa. Our therapists come directly to your "
+        f"hotel, villa, guesthouse or home.\n{NO_TRAVEL_FEE}"),
 
     "reviews_eyebrow_en": "What guests say",
     "reviews_title_en": "Guest reviews",
 
     "cta_eyebrow_en": "Booking takes a minute",
-    "cta_title_en": "Book your treatment",
+    "cta_title_en": "Book Your Treatment",
     "cta_text_en": (
         "Choose your treatment and a time that suits you, and your therapist "
-        "will arrive ready to set up."),
+        "will arrive with everything needed."),
 
     "meta_desc": (
-        f"{POSITIONING} Massage for one or two guests in {AREAS_LINE}. "
-        f"Book online or on WhatsApp."),
+        f"{POSITIONING} {SELECTED_AREAS} Serving {AREAS_LINE}. Book online or "
+        f"on WhatsApp."),
 
     "footer_note_en": POSITIONING,
 }
@@ -84,147 +104,166 @@ SETTINGS_EN = {
 # ------------------------------------------------------------- treatments
 
 TREATMENT_GROUP_DESC_EN = {
-    "massage": ("Traditional Balinese massage given in your own room, with "
-                "warm oil and unhurried pressure."),
+    "massage": ("Traditional Balinese massage given in the comfort and "
+                "privacy of your own accommodation."),
     "body-treatment": ("Scrubs, masks and flower baths made from island "
                        "ingredients."),
-    "packages": ("Longer combinations for couples and half-day escapes."),
+    "packages": "Longer combinations for couples and half-day escapes.",
 }
 
 TREATMENT_DESC_EN = {
     "balinese-massage":
-        "The classic Balinese full-body massage, and the one most guests "
-        "book first. Your therapist works from the feet up to the shoulders "
-        "with long, flowing strokes, gentle stretching and warm coconut oil, "
-        "at a pace that is calming rather than brisk. A good choice after "
-        "travelling, or on a slow afternoon at the villa.",
+        "A traditional full-body massage combining flowing strokes, palm "
+        "pressure and aromatic oils. Designed to ease everyday muscle "
+        "tension, calm the mind and promote deep relaxation.",
 
     "deep-tissue-massage":
-        "A firmer massage for guests who prefer strong pressure. Your "
-        "therapist works slowly through the shoulders, back and legs, "
-        "spending time on the areas that feel tight. Popular after surfing, "
-        "training or a long flight. Tell your therapist how much pressure "
-        "you like — they will adjust as they go.",
+        "A firm and focused massage designed to target areas of muscle "
+        "tension and stiffness. A great choice after surfing, exercise, long "
+        "walks or a long journey.",
 
     "couple-massage":
-        "Two therapists, two tables, side by side in your own room, so you "
-        "and your partner are massaged at the same time. A relaxed, "
-        "unhurried treatment to share — a favourite for honeymoons, "
-        "anniversaries and first nights in Bali.\n\n"
-        "Please note: the price shown is per person.",
+        "Enjoy a relaxing massage together in the privacy of your hotel room, "
+        "villa or home. Two therapists provide the treatment at the same time "
+        "so you can relax together.\n\n"
+        "Important: price is per person.",
 
     "foot-massage":
-        "A focused treatment for tired feet and lower legs, using warm "
-        "herbal oil and firm thumb pressure through the soles, ankles and "
-        "calves. Deeply relaxing after a day of walking, and easy to enjoy "
-        "sitting comfortably in your own room.",
+        "A relaxing treatment focusing on the feet and lower legs using "
+        "gentle pressure-point techniques and soothing oils. Perfect for "
+        "tired feet after a day of walking or exploring Bali.",
 }
 
 # --------------------------------------------------------------- products
 
 PRODUCT_GROUP_DESC_EN = {
-    "honey": ("Our own honey, made at home here in Bali — raw, from "
-              "stingless bees and wild hives. No added sugar, nothing "
-              "heated, nothing bought in to resell."),
-    "spa-products": "The oils, scrubs and balms we use in the treatment room.",
-    "gift-sets": "Honey and spa products boxed together, ready to give.",
+    "honey": ("Discover our selection of locally produced Bali honey and "
+              "wellness products. Perfect for enjoying at home or taking a "
+              "little taste of Bali with you."),
+    "spa-products": "The oils and balms we use during our treatments.",
+    "gift-sets": "Honey and wellness products boxed together, ready to give.",
 }
 
 # slug -> (short line under the name, full description)
 PRODUCT_COPY_EN = {
     "madu-kela-kela-250ml": (
-        "Raw liquid honey with a bright sweet-sour taste. 250 ml.",
+        "Raw liquid Bali honey with a light, sweet-sour taste. 250 ml.",
         "Madu Kela Kela is the liquid honey in our Sari Madu Sedana range, "
-        "gathered from stingless bees here in Bali. It pours easily and has "
-        "the fresh sweet-sour character that sets stingless-bee honey apart "
-        "from ordinary table honey.\n\n"
+        "produced locally here in Bali from stingless bees. It pours easily "
+        "and has a light, sweet-sour taste that is distinctive of "
+        "stingless-bee honey.\n\n"
         "Raw and unheated, with no added sugar and nothing else in the "
         "bottle.\n\n"
-        "Enjoy it by the spoon, stirred into warm water, or over yoghurt "
-        "and fruit."),
+        "Enjoy it straight from the spoon, stirred into warm water, or over "
+        "yoghurt and fruit."),
 
     "madu-kela-kela-500ml": (
-        "The family-size bottle of our raw liquid honey. 500 ml.",
-        "The 500 ml bottle of Madu Kela Kela — the same raw liquid honey, "
-        "with the same bright sweet-sour taste, in the size our regular "
-        "customers come back for.\n\n"
+        "The larger bottle of our raw liquid Bali honey. 500 ml.",
+        "The 500 ml bottle of Madu Kela Kela — the same raw liquid honey with "
+        "the same light, sweet-sour taste, in the size our regular customers "
+        "return for.\n\n"
         "Raw and unheated, with no added sugar.\n\n"
-        "Keep it in the cupboard rather than the fridge, and use a dry spoon."),
+        "Store it in a cupboard rather than the fridge, and use a dry spoon."),
 
     "madu-nyawan-500ml": (
-        "Thick, richly sweet honey. 500 ml.",
-        "Madu Nyawan is the thick honey in our Sari Madu Sedana range: "
-        "dense, slow off the spoon, and clearly sweet rather than sour.\n\n"
+        "Thick, richly sweet Bali honey. 500 ml.",
+        "Madu Nyawan is the thick honey in our Sari Madu Sedana range: dense, "
+        "slow off the spoon, and noticeably sweet rather than sour.\n\n"
         "Raw and unheated, with no added sugar.\n\n"
-        "The one to choose if you find stingless-bee honey a little sharp. "
-        "Lovely on warm toast or stirred into tea."),
+        "A good choice if you find stingless-bee honey a little sharp. Lovely "
+        "on warm toast or stirred into tea."),
 }
 
 # ------------------------------------------------------------- highlights
 
 # (match on the existing English title, new icon, new title, new text)
 HIGHLIGHTS_EN = [
-    ("Certified therapists", "🌿", "Experienced therapists",
-     "Professional therapists trained in Bali, with years of practice behind "
-     "them."),
-    ("Organic botanicals", "🥥", "Natural oils",
-     "Cold-pressed coconut oil and essential oils, sourced here in Bali."),
-    ("Private & discreet", "🏡", "Private and discreet",
-     "Your treatment takes place in your own hotel room, villa or home."),
-    ("Full spa ritual", "✨", "Everything included",
-     "We bring the table, linen, oils and music — you need only be there."),
-    ("Fresh linens", "💧", "Fresh linen every time",
-     "Clean, freshly laundered towels and linen for every single booking."),
-    ("Hygienic & safe", "🧼", "Clean and careful",
-     "Equipment is sanitised between guests, every time."),
+    ("Certified therapists", "🌿", "Experienced Professional Therapists",
+     "Our experienced therapists provide professional and personalised "
+     "massage treatments with care, respect and attention to your comfort."),
+    ("Organic botanicals", "👥", "Female & Male Therapists",
+     "Choose a female or male therapist according to your preference and "
+     "availability."),
+    ("Private & discreet", "🏡", "Hotel & Villa Service",
+     "Enjoy your treatment in the comfort and privacy of your hotel room, "
+     "villa, guesthouse or home."),
+    ("Full spa ritual", "✨", "Traditional Balinese Techniques",
+     "Experience traditional Balinese massage techniques designed to help you "
+     "relax, release everyday tension and feel refreshed."),
+    ("Fresh linens", "💧", "Quality Massage Oils",
+     "We use carefully selected massage oils to create a comfortable and "
+     "relaxing treatment experience."),
+    ("Hygienic & safe", "💳", "Flexible Payment",
+     "Payment is available by cash after the treatment, bank transfer or "
+     "online payment."),
+]
+
+# ----------------------------------------------------------- how it works
+
+HOW_IT_WORKS_EN = [
+    ("Book Your Treatment",
+     "Choose your treatment, preferred date and time."),
+    ("Your Therapist Arrives",
+     "We bring the massage table, fresh towels, oils and everything needed "
+     "for your treatment."),
+    ("Relax & Enjoy",
+     "Enjoy your treatment in the comfort and privacy of your own space. "
+     "Payment can be made after the treatment."),
 ]
 
 # -------------------------------------------------------------------- FAQ
 
 # Matched on the old question so an existing row is updated rather than
-# duplicated. (old question, new question, new answer)
+# duplicated. (old question or sentinel, new question, new answer)
 FAQ_EN = [
     ("Do you come to my hotel or villa?",
      "Do you come to my hotel or villa?",
-     "Yes — that is our whole service. Your therapist brings the massage "
-     "table, fresh linen, oils and music to your hotel room, villa, "
-     "guesthouse or home, and sets everything up for you."),
+     "Yes. Our therapists come directly to your hotel, villa, guesthouse or "
+     "private home within our service areas."),
 
-    ("__areas__",
-     "Which areas do you cover?",
-     f"We currently serve {AREAS_LINE}. {NO_TRAVEL_FEE} If you are staying "
-     f"just outside these areas, message us on WhatsApp and we will let you "
-     f"know if we can reach you."),
+    ("__no_spa__",
+     "Do I need to travel to a spa?",
+     "No. Taksu Nusa Spa is a home spa service. We bring the spa experience "
+     "directly to you."),
+
+    ("__table__",
+     "Do you provide the massage table?",
+     "Yes. Our therapist brings the massage table and essential equipment."),
 
     ("How do I pay?", "How do I pay?",
-     "For treatments: cash to your therapist after the treatment, bank "
-     "transfer, or an online payment link. For honey and other products: "
-     "cash on delivery, bank transfer, or online payment."),
+     "You can pay in cash after your treatment, by bank transfer or through "
+     "an online payment link."),
 
-    ("How far ahead should I book?", "How far ahead should I book?",
-     "Booking in advance is recommended, as it secures both your time and "
-     "your therapist. Please allow at least two hours so your therapist can "
-     "travel to you. Evenings and weekends fill up first."),
+    ("How far ahead should I book?",
+     "How far in advance should I book?",
+     "We recommend booking at least two hours in advance. Evening, weekend "
+     "and holiday bookings may fill up quickly."),
 
     ("__gender__",
-     "Can I request a female or male therapist?",
-     "Yes, you are welcome to request a female or male therapist when you "
-     "book. Requests are subject to availability, so please let us know as "
-     "early as you can."),
+     "Can I request a male or female therapist?",
+     "Yes. Please tell us your preference when booking. Requests are subject "
+     "to availability."),
+
+    ("__specific__",
+     "Can I request a specific therapist?",
+     "Yes. You may request a preferred therapist, subject to availability."),
 
     ("__couple__",
-     "How is Couple Massage priced?",
-     "The price shown for Couple Massage is per person. Two therapists work "
-     "side by side so you and your partner are massaged at the same time."),
+     "Is the Couple Massage price for two people?",
+     "No. The listed Couple Massage price is per person."),
+
+    ("__areas__",
+     "What areas do you serve?",
+     f"{AREAS_LINE}.\n\nGuests outside these areas can contact us on WhatsApp "
+     f"to check availability."),
 
     ("__hours__",
-     "What are your opening hours?",
-     f"{OPENING_HOURS}. The last booking of the evening should start early "
-     f"enough for your chosen treatment to finish by 23:00."),
+     "What time are you open?",
+     OPENING_HOURS),
 
     ("Is the honey pure?", "Is the honey pure?",
-     "Yes — raw honey with no added sugar and nothing heated. It is made by "
-     "Yustika under the Sari Madu Sedana label, business number "
+     "Yes — raw honey with no added sugar and nothing heated. It is produced "
+     "locally under the Sari Madu Sedana label, business number "
      "9120014231404."),
 ]
 
@@ -232,57 +271,89 @@ FAQ_EN = [
 
 PAGES_EN = {
     "about": (
-        "About Us",
-        "Taksu Nusa Spa is a Balinese home spa. Rather than asking you to "
-        "travel to a salon, we come to you.\n\n"
-        "Your therapist arrives with everything needed for a full "
-        "treatment — a proper massage table, freshly laundered linen, warm "
-        "oils and music — and sets up quietly in your hotel room, villa or "
-        "home. All you have to do is be there.\n\n"
-        "Our therapists are experienced professionals trained here in Bali, "
-        "and they work the way they were taught: unhurried, attentive, and "
-        "guided by what your body needs on the day.\n\n"
-        f"We currently serve {AREAS_LINE}. {NO_TRAVEL_FEE}\n\n"
-        f"We are open {OPENING_HOURS.lower()}. The quickest way to book is "
-        f"on WhatsApp."),
+        "About Taksu Nusa Spa",
+        "## Bringing the Balinese Spa Experience to You\n"
+        "Taksu Nusa Spa was created to make it easier for guests in Bali to "
+        "enjoy a relaxing and authentic spa experience without leaving their "
+        "accommodation.\n\n"
+        "Instead of travelling to a spa, our therapists come directly to your "
+        "hotel, villa, guesthouse or home.\n\n"
+
+        "## Our Philosophy\n"
+        "We believe relaxation should feel simple, comfortable and "
+        "personal.\n\n"
+        "Our treatments are inspired by traditional Balinese massage "
+        "techniques and are designed to help you slow down, release everyday "
+        "tension and enjoy a moment of calm during your stay in Bali.\n\n"
+
+        "## Personalised Care\n"
+        "Every guest is different. That is why our therapists adapt the "
+        "pressure and pace of the treatment to your comfort and "
+        "preference.\n\n"
+        "Whether you are recovering after a long flight, relaxing after a day "
+        "of sightseeing, unwinding after surfing or simply looking for a "
+        "peaceful moment, we aim to make your experience comfortable from "
+        "beginning to end.\n\n"
+
+        "## Your Privacy Matters\n"
+        "Your treatment takes place in the comfort of your own accommodation, "
+        "giving you a private and relaxing experience without the crowds or "
+        "distractions of a busy spa.\n\n"
+
+        "## We Bring Everything to You\n"
+        "Our therapists arrive with the essential equipment needed for your "
+        "treatment, including the massage table, fresh towels and massage "
+        "oils.\n\n"
+        "All you need to do is relax.\n\n"
+
+        "## Experience Bali, Your Way\n"
+        "Whether you are travelling alone, enjoying a romantic holiday or "
+        "spending time with family and friends, Taksu Nusa Spa brings a "
+        "relaxing Balinese wellness experience directly to your door.\n\n"
+
+        "## Our Service Areas\n"
+        f"{AREAS_LINE}\n\n"
+        f"{NO_TRAVEL_FEE} {OUTSIDE_AREAS}\n\n"
+        f"Open {OPENING_HOURS}."),
 
     "delivery-and-payment": (
         "Delivery & Payment",
-        "TREATMENTS\n\n"
+        "## Massage Treatments\n"
         "Your therapist comes to your hotel, villa, guesthouse or home. "
         f"{NO_TRAVEL_FEE}\n\n"
-        "You can pay by:\n"
-        "• Cash to your therapist after the treatment\n"
+        "Payment can be made:\n"
+        "• Cash after your treatment\n"
         "• Bank transfer\n"
         "• Online payment\n\n"
         "No deposit is required to book.\n\n"
-        "PRODUCTS\n\n"
-        f"We deliver honey and spa products throughout our service areas "
-        f"({AREAS_LINE}).\n\n"
-        "You can pay by:\n"
+
+        "## Product Orders\n"
+        f"We deliver within our service areas: {AREAS_LINE}.\n\n"
+        "Payment options:\n"
         "• Cash on delivery\n"
         "• Bank transfer\n"
         "• Online payment\n\n"
         "Orders placed before 15:00 usually go out the same day."),
 }
 
-# ---------------------------------------------------------------- contact
-
-CONTACT_EN = {
-    "intro": (
-        "The quickest way to book is on WhatsApp — send us a message and we "
-        "will confirm your therapist and time straight away. You can also "
-        "book online, or use the form below."),
-    "wa_label": "WhatsApp — fastest way to book",
-    "areas_heading": "Service areas",
-}
-
 # ------------------------------------------------------------ trust badges
 
-# Small reassurance line under the hero. No certification claim, no Bali-wide.
+# Small reassurance line under the hero. No certification claim.
 TRUST_EN = [
     ("shield", "Experienced professional therapists"),
     ("users", "Female & male therapists"),
     ("map-pin", "Hotel, villa & home service"),
     ("card", "Cash, transfer or online"),
+]
+
+# --------------------------------------------------- reviews to take down
+
+# Seeded during the build as sample text, never genuine. One names Canggu,
+# which is not a service area; another names a honeymoon package that is not
+# on the menu. apply_copy removes exactly these and nothing else, so a real
+# review entered in admin is never touched.
+PLACEHOLDER_REVIEWS = [
+    ("Sarah", "Amazing Balinese massage in our Canggu villa"),
+    ("Marco & Julia", "Honeymoon package with a flower bath"),
+    ("Tomasz", "Great value and totally professional"),
 ]

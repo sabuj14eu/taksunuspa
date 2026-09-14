@@ -200,17 +200,11 @@ HIGHLIGHTS = [
      "Peralatan disanitasi dan protokol kebersihan ketat setiap pemesanan."),
 ]
 
-REVIEWS = [
-    ("Sarah", "Australia", 5,
-     "Amazing Balinese massage in our Canggu villa. On time, professional, "
-     "pure bliss. Booked twice more!"),
-    ("Marco & Julia", "Italy", 5,
-     "Honeymoon package with a flower bath on our terrace at sunset. The most "
-     "romantic evening of our trip."),
-    ("Tomasz", "Poland", 5,
-     "Great value and totally professional. The booking took one minute and "
-     "WhatsApp confirmation came instantly."),
-]
+# Deliberately empty. Sample reviews were seeded during the build and the
+# owner asked for nothing invented: no reviews, no guest counts, no
+# certifications. Real ones are entered in Admin -> Reviews, and the home
+# page simply omits the band until there are some.
+REVIEWS = []
 
 # slug, EN name, ID name, icon, sort, EN description, ID description
 PRODUCT_GROUPS = [

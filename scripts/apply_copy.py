@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app  # noqa: E402
 from app.extensions import db  # noqa: E402
+from app.models.media import Review  # noqa: E402
 from app.models.shop import Product, ProductGroup  # noqa: E402
 from app.models.site import FaqItem, Page, SiteSetting  # noqa: E402
 from app.models.spa import (Highlight, Treatment,  # noqa: E402
@@ -36,7 +37,8 @@ from . import copy_en  # noqa: E402
 # stale sentence somewhere is reported rather than quietly shipped.
 BANNED = ["Bali-wide", "wherever you are in Bali", "anywhere in Bali",
           "across Bali", "seluruh Bali", "Free travel",
-          "Write your story here", "Certified therapists", "Your healers"]
+          "Write your story here", "Certified therapists", "Your healers",
+          "Traditional & therapeutic", "Pick your area"]
 
 
 def _set(row, field, value, changes, label):
@@ -104,6 +106,18 @@ def run(write: bool):
             row.answer_en = answer
             row.question_en = question
             row.sort_order = i * 10
+
+        # ---- sample reviews written during the build, never genuine. One
+        # names Canggu, which is not a service area; another names a package
+        # that is not on the menu. Only these exact rows are hidden, so a real
+        # review entered in admin is never touched.
+        for author, opening in copy_en.PLACEHOLDER_REVIEWS:
+            for row in Review.query.filter_by(author_name=author).all():
+                if opening.lower() in (row.text or "").lower() \
+                        and row.is_approved:
+                    row.is_approved = False
+                    changes.append((f"review by {author} — hidden, not genuine",
+                                    (row.text or "")[:80], "(not shown)"))
 
         # ---- pages
         for slug, (title, body) in copy_en.PAGES_EN.items():
