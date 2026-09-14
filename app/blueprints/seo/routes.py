@@ -43,9 +43,12 @@ def sitemap():
     for a in (ServiceArea.query.filter_by(is_active=True)
               .order_by(ServiceArea.sort_order).all()):
         out.append(_url(f"{base}/areas/{a.slug}", "weekly", "0.7"))
+    # An empty group has no page to offer Google, so it stays out until it has
+    # something in it.
     for c in (TreatmentCategory.query.filter_by(is_active=True)
               .order_by(TreatmentCategory.sort_order).all()):
-        out.append(_url(f"{base}/treatments/{c.slug}", "weekly", "0.8"))
+        if any(t.is_active for t in c.treatments):
+            out.append(_url(f"{base}/treatments/{c.slug}", "weekly", "0.8"))
     for tr in (Treatment.query.filter_by(is_active=True)
                .order_by(Treatment.sort_order).all()):
         out.append(_url(f"{base}/treatment/{tr.slug}", "weekly", "0.8"))

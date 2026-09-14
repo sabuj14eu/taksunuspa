@@ -67,7 +67,8 @@ def create_app():
     def _inject():
         from .models.site import SiteSetting, Page, MenuItem
         from .models.shop import ProductGroup
-        from .models.spa import TreatmentCategory
+        from .models.media import MediaImage
+        from .models.spa import ServiceArea, TreatmentCategory
         from .services import media_service, pricing_service
         from .services.notify_service import whatsapp_link
         try:
@@ -80,19 +81,34 @@ def create_app():
             product_groups = (ProductGroup.query.filter_by(is_active=True)
                               .order_by(ProductGroup.sort_order,
                                         ProductGroup.id).all())
-            spa_cats = (TreatmentCategory.query.filter_by(is_active=True)
+            # A group with nothing in it renders a page saying "Nothing
+            # found", which a guest reads as a broken site. Body Rituals and
+            # Packages are listed again the moment a treatment is added to
+            # them, so nothing has to be switched back on by hand.
+            spa_cats = [c for c in
+                        TreatmentCategory.query.filter_by(is_active=True)
                         .order_by(TreatmentCategory.sort_order,
-                                  TreatmentCategory.id).all())
+                                  TreatmentCategory.id).all()
+                        if any(t.is_active for t in c.treatments)]
+            # The Gallery menu item disappears while there is nothing to
+            # show, and returns on its own with the first photo.
+            has_gallery = MediaImage.query.filter_by(
+                entity_type="gallery").first() is not None
+            areas_line = " · ".join(
+                a.name for a in ServiceArea.query.filter_by(is_active=True)
+                .order_by(ServiceArea.sort_order, ServiceArea.name).all())
             banner = next((d for d in pricing_service.live_discounts()
                            if d.is_automatic), None)
         except Exception:
             cfg, nav, footer_pages = {}, [], []
             product_groups, spa_cats, banner = [], [], None
+            areas_line, has_gallery = "", False
 
         wa_number = cfg.get("whatsapp") or app.config["WHATSAPP_NUMBER"]
         return {
             "site": cfg, "nav_items": nav, "footer_pages": footer_pages,
             "product_groups": product_groups, "spa_cats": spa_cats,
+            "areas_line": areas_line, "has_gallery": has_gallery,
             "banner_discount": banner,
             "t": t(), "lang": lang(), "loc": loc, "rp": rp,
             "cover_url": media_service.cover_url,

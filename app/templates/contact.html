@@ -13,17 +13,21 @@
 <section class="section" style="padding-top:2.5rem">
   <div class="wrap section-split">
     <div>
-      <h3 style="font-family:var(--font-display);font-size:1.5rem">{{ site.get('company_name','Taksu Nusa Spa') }}</h3>
-      {% if site.get('address') %}<p>{{ site['address'] }}</p>{% endif %}
-      {% if site.get('city') %}<p class="muted">{{ site['city'] }}</p>{% endif %}
-      {% if site.get('phone') %}<p><a href="tel:{{ site['phone']|replace(' ','') }}">{{ site['phone'] }}</a></p>{% endif %}
-      {% if site.get('email') %}<p><a href="mailto:{{ site['email'] }}">{{ site['email'] }}</a></p>{% endif %}
-
-      <p>
-        <a class="btn btn-primary" href="{{ wa() }}" target="_blank" rel="noopener">
-          {{ icon('phone') }} WhatsApp
+      {# WhatsApp first and largest: it is how most guests actually book, and
+         the owner asked for it to be the obvious route. #}
+      <div class="wa-card">
+        <h3>{{ icon('phone') }} {{ t.book_on_whatsapp }}</h3>
+        <p class="muted">{{ t.whatsapp_intro }}</p>
+        <a class="btn btn-primary btn-lg" href="{{ wa() }}" target="_blank" rel="noopener">
+          {{ icon('phone') }} {{ t.message_us_now }}
         </a>
-      </p>
+        {% if wa_number %}<p class="muted small" style="margin:.75rem 0 0">+{{ wa_number }}</p>{% endif %}
+      </div>
+
+      <h3 style="font-family:var(--font-display);font-size:1.5rem;margin-top:2.5rem">{{ site.get('company_name','Taksu Nusa Spa') }}</h3>
+      {% if site.get('phone') %}<p>{{ t.phone }}: <a href="tel:{{ site['phone']|replace(' ','') }}">{{ site['phone'] }}</a></p>{% endif %}
+      {% if site.get('email') %}<p>{{ t.email }}: <a href="mailto:{{ site['email'] }}">{{ site['email'] }}</a></p>{% endif %}
+      {% if site.get('address') %}<p class="muted small">{{ site['address'] }}{% if site.get('city') %}, {{ site['city'] }}{% endif %}</p>{% endif %}
       {% if site.get('maps_url') %}
       <p><a class="text-link" href="{{ site['maps_url'] }}" target="_blank" rel="noopener">Google Maps {{ icon('arrow-right') }}</a></p>
       {% endif %}
@@ -36,8 +40,10 @@
       </table>
 
       {% if areas %}
-      <h3 style="font-family:var(--font-display);font-size:1.5rem;margin-top:2.5rem">{{ t.areas_we_cover }}</h3>
+      <h3 style="font-family:var(--font-display);font-size:1.5rem;margin-top:2.5rem">{{ t.service_areas }}</h3>
       <p class="muted">{{ areas|map(attribute='name')|join(' · ') }}</p>
+      <p class="muted small">{{ t.no_travel_fee }}
+        <a href="/areas">{{ t.read_more }}</a></p>
       {% endif %}
     </div>
 

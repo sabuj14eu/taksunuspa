@@ -3,8 +3,9 @@
 
 ProductGroup is what the product page shows as its sub-menu (Honey, Spa Oils,
 Gift Sets ...), matching how spaairbali.com splits its product page. Orders
-are delivered across Bali and paid cash on delivery, by bank transfer, or
-online, so an order carries both a payment method and a payment status.
+are delivered inside the spa's service areas and paid cash on delivery, by
+bank transfer, or online, so an order carries both a payment method and a
+payment status.
 """
 import json
 import secrets

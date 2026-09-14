@@ -27,7 +27,10 @@ T = {
         "service_address_help":
             "Villa or hotel name, room number, and the address.",
         "area": "Area", "pick_area": "Choose your area",
-        "travel_fee": "Travel", "free_travel": "Free travel",
+        # "Free travel" read as a discount the owner might withdraw. The
+        # service simply has no travel fee inside its areas — say that.
+        "travel_fee": "Travel", "free_travel": "No travel fee",
+        "no_travel_fee": "No travel fee within our service areas.",
         "per_person": "per person", "guests": "Guests",
         "we_come_to_you": "We come to you",
         "areas_we_cover": "Areas we cover",
@@ -45,6 +48,13 @@ T = {
         "step_enjoy": "Enjoy, then pay",
         "step_enjoy_text": "Relax in your own space. Pay cash or by transfer "
                            "when the treatment is finished.",
+        "gallery_empty": "Our photo gallery is being put together. In the "
+                         "meantime, message us on WhatsApp and we will "
+                         "gladly answer any question about a treatment.",
+        "book_on_whatsapp": "Book on WhatsApp",
+        "whatsapp_intro": "The quickest way to book. Message us and we will "
+                          "confirm your therapist and time straight away.",
+        "message_us_now": "Message us now",
         "homemade": "Made at home in Bali",
         "homemade_note": "We make this ourselves — not bought in to resell.",
         "made_by": "Made by",
@@ -79,8 +89,8 @@ T = {
         "address_required": "Please give a delivery address, or choose "
                             "\u201cCash on collection\u201d if you are picking "
                             "the order up.",
-        "delivery_note": "We deliver across Bali. Pay cash on delivery, "
-                         "bank transfer or online.",
+        "delivery_note": "We deliver throughout our service areas. Pay cash "
+                         "on delivery, by bank transfer, or online.",
         "read_more": "Read more", "back": "Back",
         "search": "Search", "no_results": "Nothing found.",
     },
@@ -99,7 +109,8 @@ T = {
         "service_address_help":
             "Nama vila atau hotel, nomor kamar, dan alamatnya.",
         "area": "Area", "pick_area": "Pilih area Anda",
-        "travel_fee": "Transport", "free_travel": "Transport gratis",
+        "travel_fee": "Transport", "free_travel": "Tanpa biaya transport",
+        "no_travel_fee": "Tanpa biaya transport di area layanan kami.",
         "per_person": "per orang", "guests": "Tamu",
         "we_come_to_you": "Kami datang ke tempat Anda",
         "areas_we_cover": "Area yang kami layani",
@@ -117,6 +128,13 @@ T = {
         "step_enjoy": "Nikmati, lalu bayar",
         "step_enjoy_text": "Santai di tempat Anda sendiri. Bayar tunai atau "
                            "transfer setelah perawatan selesai.",
+        "gallery_empty": "Galeri foto kami sedang disiapkan. Sementara "
+                         "itu, hubungi kami di WhatsApp untuk pertanyaan "
+                         "apa pun tentang perawatan.",
+        "book_on_whatsapp": "Pesan lewat WhatsApp",
+        "whatsapp_intro": "Cara tercepat untuk memesan. Kirim pesan dan kami "
+                          "langsung konfirmasi terapis dan jam Anda.",
+        "message_us_now": "Kirim pesan sekarang",
         "homemade": "Dibuat di rumah, di Bali",
         "homemade_note": "Kami buat sendiri — bukan barang jualan orang lain.",
         "made_by": "Dibuat oleh",
@@ -153,8 +171,8 @@ T = {
         "address_required": "Mohon isi alamat pengiriman, atau pilih "
                             "\u201cAmbil sendiri\u201d bila Anda mengambil "
                             "pesanan.",
-        "delivery_note": "Kami kirim ke seluruh Bali. Bayar tunai saat "
-                         "pengiriman, transfer bank atau online.",
+        "delivery_note": "Kami kirim ke seluruh area layanan kami. Bayar "
+                         "tunai saat pengiriman, transfer bank atau online.",
         "read_more": "Selengkapnya", "back": "Kembali",
         "search": "Cari", "no_results": "Tidak ada hasil.",
     },

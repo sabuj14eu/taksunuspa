@@ -103,6 +103,21 @@ docker compose logs --tail=40 app
 `scripts/migrate.py` creates any new tables and adds any new columns. It never
 drops anything, so it is safe to run on every deploy.
 
+### Updating the English wording
+
+All the English copy lives in `scripts/copy_en.py` — the positioning line, the
+service areas, treatment and product descriptions, About Us, Delivery &
+Payment, the FAQ and the footer. Edit that file, then push it to the site:
+
+```bash
+docker compose exec app python -m scripts.apply_copy            # show changes
+docker compose exec app python -m scripts.apply_copy --write    # apply them
+```
+
+It writes English text only — never a price, a duration, a slug, a photo, a
+stock level or any Indonesian field — and it finishes by listing any retired
+wording it found but did not write, so nothing is quietly left behind.
+
 ### One-off: fill in the missing Indonesian text
 
 The treatment and treatment-group descriptions were seeded in English only, so

@@ -23,8 +23,14 @@
       {% endfor %}
     </div>
     {% else %}
-      <p class="muted">{{ t.no_results }}</p>
-      <p><a class="btn btn-primary" href="/treatments">{{ t.book }} {{ icon('arrow-right') }}</a></p>
+      {# "Nothing found" reads like a broken page to a guest. Until there are
+         photos, say something true and useful instead. #}
+      <p class="lead">{{ t.gallery_empty }}</p>
+      <p style="margin-top:1.5rem">
+        <a class="btn btn-primary" href="/treatments">{{ t.book_relaxation }} {{ icon('arrow-right') }}</a>
+        <a class="btn btn-outline" href="{{ wa() }}" target="_blank" rel="noopener">
+          {{ icon('phone') }} WhatsApp</a>
+      </p>
     {% endif %}
   </div>
 </section>

@@ -22,6 +22,8 @@ from app.models.spa import (Highlight, OpeningHour, ServiceArea, Therapist,
                             Treatment, TreatmentCategory, TreatmentOption)
 from app.models.user import User
 
+from . import copy_en
+
 SETTINGS = {
     # identity
     "company_name": "Taksu Nusa Spa",
@@ -114,6 +116,10 @@ SETTINGS = {
     "footer_note_idn": "Layanan home spa Bali premium di seluruh Bali.",
 }
 
+# The English wording lives in copy_en so that seeding a new database and
+# updating the live one cannot drift apart. Indonesian entries above stand.
+SETTINGS.update(copy_en.SETTINGS_EN)
+
 # Daily 09:00 – 23:00.
 HOURS = {wd: (9 * 60, 23 * 60) for wd in range(7)}
 
@@ -171,8 +177,7 @@ THERAPISTS = [
      "English, Indonesian", 20),
 ]
 
-AREAS = ["Seminyak", "Ubud", "Kuta", "Legian", "Sanur", "Nusa Dua",
-         "Jimbaran", "Uluwatu"]
+AREAS = copy_en.AREAS
 
 HIGHLIGHTS = [
     ("🛡️", "Certified therapists", "Terapis bersertifikat",
@@ -345,15 +350,17 @@ def run():
 
         cats = {}
         for slug, en, idn, icon, order, desc, desc_id in TREATMENT_CATEGORIES:
-            cats[slug] = upsert(TreatmentCategory, {"slug": slug}, name_en=en,
-                                name_idn=idn, icon=icon, sort_order=order,
-                                desc_en=desc, desc_idn=desc_id, is_active=True)
+            cats[slug] = upsert(
+                TreatmentCategory, {"slug": slug}, name_en=en, name_idn=idn,
+                icon=icon, sort_order=order, desc_idn=desc_id, is_active=True,
+                desc_en=copy_en.TREATMENT_GROUP_DESC_EN.get(slug, desc))
         db.session.flush()
 
         for i, row in enumerate(TREATMENTS):
             slug, cat, en, idn, per_person, desc, desc_id, tiers = row
             tr = upsert(Treatment, {"slug": slug}, name_en=en, name_idn=idn,
-                        category_id=cats[cat].id, desc_en=desc,
+                        category_id=cats[cat].id,
+                        desc_en=copy_en.TREATMENT_DESC_EN.get(slug, desc),
                         desc_idn=desc_id, per_person=per_person,
                         duration_min=tiers[0][0], price_idr=tiers[0][1],
                         sort_order=i * 10, is_featured=True, is_active=True)
@@ -373,7 +380,10 @@ def run():
                    slug=name.lower().replace(" ", "-"), travel_fee_idr=0,
                    sort_order=i * 10, is_active=True)
 
+        new_hl = {old: (ic, ti, tx)
+                  for old, ic, ti, tx in copy_en.HIGHLIGHTS_EN}
         for i, (icon, t_en, t_idn, x_en, x_idn) in enumerate(HIGHLIGHTS):
+            icon, t_en, x_en = new_hl.get(t_en, (icon, t_en, x_en))
             upsert(Highlight, {"title_en": t_en}, icon=icon, title_idn=t_idn,
                    text_en=x_en, text_idn=x_idn, sort_order=i * 10,
                    is_visible=True)
@@ -385,15 +395,17 @@ def run():
 
         groups = {}
         for slug, en, idn, icon, order, desc, desc_id in PRODUCT_GROUPS:
-            groups[slug] = upsert(ProductGroup, {"slug": slug}, name_en=en,
-                                  name_idn=idn, icon=icon, sort_order=order,
-                                  desc_en=desc, desc_idn=desc_id,
-                                  is_active=True)
+            groups[slug] = upsert(
+                ProductGroup, {"slug": slug}, name_en=en, name_idn=idn,
+                icon=icon, sort_order=order, desc_idn=desc_id, is_active=True,
+                desc_en=copy_en.PRODUCT_GROUP_DESC_EN.get(slug, desc))
         db.session.flush()
 
         for i, row in enumerate(PRODUCTS):
             (slug, group, en, idn, size, price, stock,
              short_en, short_idn, desc_en, desc_idn) = row
+            short_en, desc_en = copy_en.PRODUCT_COPY_EN.get(
+                slug, (short_en, desc_en))
             upsert(Product, {"slug": slug}, name_en=en, name_idn=idn,
                    group_id=groups[group].id, size_label=size, price_idr=price,
                    stock=stock, track_stock=True, short_en=short_en,
@@ -405,12 +417,25 @@ def run():
             upsert(DeliveryZone, {"name_en": en}, name_idn=idn, fee_idr=fee,
                    free_over_idr=free_over, sort_order=order, is_active=True)
 
-        for i, (q_en, q_idn, a_en, a_idn) in enumerate(FAQS):
-            upsert(FaqItem, {"question_en": q_en}, question_idn=q_idn,
-                   answer_en=a_en, answer_idn=a_idn, sort_order=i * 10,
-                   is_visible=True)
+        # The English FAQ is driven by copy_en, which has more entries than the
+        # Indonesian list; where an entry matches an old question the existing
+        # Indonesian answer is kept, otherwise the row is English-only until
+        # someone translates it in admin.
+        indo = {q_en: (q_idn, a_idn) for q_en, q_idn, _a_en, a_idn in FAQS}
+        for i, (old_q, q_en, a_en) in enumerate(copy_en.FAQ_EN):
+            q_idn, a_idn = indo.get(old_q, ("", ""))
+            row = (FaqItem.query.filter_by(question_en=old_q).first()
+                   or FaqItem.query.filter_by(question_en=q_en).first()
+                   or FaqItem())
+            row.question_en, row.answer_en = q_en, a_en
+            if q_idn:
+                row.question_idn, row.answer_idn = q_idn, a_idn
+            row.sort_order, row.is_visible = i * 10, True
+            if row.id is None:
+                db.session.add(row)
 
         for i, (slug, t_en, t_idn, b_en, b_idn) in enumerate(PAGES):
+            t_en, b_en = copy_en.PAGES_EN.get(slug, (t_en, b_en))
             upsert(Page, {"slug": slug}, title_en=t_en, title_idn=t_idn,
                    body_en=b_en, body_idn=b_idn, is_visible=True,
                    show_in_menu=True, sort_order=i * 10)

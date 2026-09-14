@@ -558,6 +558,17 @@ a.area-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);
   border:1px solid var(--border);background:var(--card);
 }
 
+/* WhatsApp is how guests actually book, so on the contact page it gets a
+   panel of its own rather than sitting in a list of numbers. */
+.wa-card{
+  padding:1.75rem;border-radius:1rem;
+  border:1px solid var(--border);border-left:3px solid var(--primary);
+  background:var(--card);
+}
+.wa-card h3{display:flex;align-items:center;gap:.6rem;font-size:1.375rem;
+  margin-bottom:.4rem}
+.wa-card h3 .ico{width:1.2rem;height:1.2rem;color:var(--primary)}
+
 /* "we made this ourselves" on a product page — the reason to buy it here */
 .made-card{
   margin-top:2rem;padding:1.25rem 1.5rem;
@@ -722,7 +733,7 @@ textarea{resize:vertical}
 
 /* ---------------------------------------------------------------- footer */
 .site-footer{border-top:1px solid var(--border);background:var(--ivory);padding:4rem 0 2rem}
-.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem}
+.foot-grid{display:grid;grid-template-columns:1.8fr 1fr 1fr 1.1fr 1.2fr;gap:2.5rem}
 .site-footer h4{font-family:var(--font-body);font-size:.7rem;font-weight:600;
   text-transform:uppercase;letter-spacing:.15em;color:var(--foreground)}
 .foot-link{display:block;padding:.35rem 0;font-size:.875rem;color:var(--muted-foreground)}

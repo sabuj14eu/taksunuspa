@@ -32,12 +32,16 @@ def _areas():
 @bp.route("/treatments/<cat_slug>")
 def index(cat_slug=None):
     site = SiteSetting.all_dict()
-    cats = (TreatmentCategory.query.filter_by(is_active=True)
-            .order_by(TreatmentCategory.sort_order, TreatmentCategory.id).all())
+    # Only groups that actually hold a treatment. An empty one used to render
+    # a page reading "Nothing found", which looks broken to a guest; it comes
+    # back by itself as soon as a treatment is put in it.
+    cats = [c for c in
+            TreatmentCategory.query.filter_by(is_active=True)
+            .order_by(TreatmentCategory.sort_order, TreatmentCategory.id).all()
+            if any(t.is_active for t in c.treatments)]
     cat = None
     if cat_slug:
-        cat = TreatmentCategory.query.filter_by(slug=cat_slug,
-                                                is_active=True).first()
+        cat = next((c for c in cats if c.slug == cat_slug), None)
         if not cat:
             abort(404)
 

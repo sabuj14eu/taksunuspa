@@ -48,7 +48,7 @@
       <a href="/treatments" class="{{ 'on' if current_path.startswith('/treatment') }}">{{ t.treatments }}</a>
       <a href="/#experience">{{ t.experience }}</a>
       <a href="/therapists" class="{{ 'on' if current_path == '/therapists' }}">{{ t.therapists }}</a>
-      <a href="/gallery" class="{{ 'on' if current_path == '/gallery' }}">{{ t.gallery }}</a>
+      {% if has_gallery %}<a href="/gallery" class="{{ 'on' if current_path == '/gallery' }}">{{ t.gallery }}</a>{% endif %}
       <a href="/products" class="{{ 'on' if current_path.startswith('/product') }}">{{ t.products }}</a>
       <a href="/areas" class="{{ 'on' if current_path.startswith('/areas') }}">{{ t.areas }}</a>
       {% for it in nav_items %}<a href="{{ it.url }}">{{ loc(it, 'label') }}</a>{% endfor %}
@@ -82,7 +82,7 @@
     <a class="nav-link {{ 'on' if current_path.startswith('/treatment') }}" href="/treatments">{{ t.treatments }}</a>
     <a class="nav-link" href="/#experience">{{ t.experience }}</a>
     <a class="nav-link {{ 'on' if current_path == '/therapists' }}" href="/therapists">{{ t.therapists }}</a>
-    <a class="nav-link {{ 'on' if current_path == '/gallery' }}" href="/gallery">{{ t.gallery }}</a>
+    {% if has_gallery %}<a class="nav-link {{ 'on' if current_path == '/gallery' }}" href="/gallery">{{ t.gallery }}</a>{% endif %}
     <a class="nav-link {{ 'on' if current_path.startswith('/product') }}" href="/products">{{ t.products }}</a>
     <a class="nav-link {{ 'on' if current_path.startswith('/areas') }}" href="/areas">{{ t.areas }}</a>
     <a class="nav-link {{ 'on' if current_path == '/contact' }}" href="/contact">{{ t.contact }}</a>
@@ -123,7 +123,7 @@
         <h4>{{ t.explore }}</h4>
         <a class="foot-link" href="/treatments">{{ t.treatments }}</a>
         <a class="foot-link" href="/therapists">{{ t.therapists }}</a>
-        <a class="foot-link" href="/gallery">{{ t.gallery }}</a>
+        {% if has_gallery %}<a class="foot-link" href="/gallery">{{ t.gallery }}</a>{% endif %}
         <a class="foot-link" href="/products">{{ t.products }}</a>
         <a class="foot-link" href="/areas">{{ t.areas }}</a>
         <a class="foot-link" href="/contact">{{ t.contact }}</a>
@@ -136,8 +136,18 @@
       </div>
 
       <div>
+        <h4>{{ t.service_areas }}</h4>
+        {# Named areas, not "all Bali" — the same eight everywhere on the site,
+           read from the database so they cannot drift out of step. #}
+        <p class="foot-link">{{ areas_line }}</p>
+        <p class="foot-link muted small">{{ t.no_travel_fee }}</p>
+      </div>
+
+      <div>
         <h4>{{ t.contact }}</h4>
-        {% if site.get('service_hours') %}<p class="foot-link">{{ site['service_hours'] }}</p>{% endif %}
+        {% if site.get('service_hours') %}
+        <p class="foot-link"><strong>{{ t.opening_hours }}:</strong><br>{{ site['service_hours'] }}</p>
+        {% endif %}
         {% if wa_number %}<a class="foot-link" href="{{ wa() }}" target="_blank" rel="noopener">WhatsApp: +{{ wa_number }}</a>{% endif %}
         {% if site.get('phone') %}<a class="foot-link" href="tel:{{ site['phone']|replace(' ','') }}">{{ site['phone'] }}</a>{% endif %}
         {% if site.get('email') %}<a class="foot-link" href="mailto:{{ site['email'] }}">{{ site['email'] }}</a>{% endif %}

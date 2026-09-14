@@ -24,15 +24,18 @@ WEEKDAYS = {
 SCHEMA_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
                "Saturday", "Sunday"]
 
+# "Certified" is a claim the spa cannot currently evidence, so the English
+# line says what is verifiably true instead: the therapists are experienced
+# professionals.
 TRUST_ITEMS = {
-    "en": [("shield", "Certified therapists"),
+    "en": [("shield", "Experienced professional therapists"),
            ("users", "Female & male therapists"),
-           ("map-pin", "Hotel & villa service"),
-           ("card", "Cash & online payment")],
-    "id": [("shield", "Terapis bersertifikat"),
+           ("map-pin", "Hotel, villa & home service"),
+           ("card", "Cash, transfer or online")],
+    "id": [("shield", "Terapis profesional berpengalaman"),
            ("users", "Terapis pria & wanita"),
-           ("map-pin", "Layanan hotel & vila"),
-           ("card", "Bayar tunai & online")],
+           ("map-pin", "Layanan hotel, vila & rumah"),
+           ("card", "Tunai, transfer atau online")],
 }
 
 

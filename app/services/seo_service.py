@@ -65,7 +65,7 @@ def meta_for(kind: str, lang="en", **kw):
             "treatment": f"{name} — Pijat Panggilan ke Vila & Hotel {city} | {brand}",
             "products": f"Produk Kami — Madu Asli Bali & Produk Spa | {brand}",
             "product_group": f"{name} — Produk Alami Bali | {brand}",
-            "product": f"{name} {price} — Kirim ke Seluruh {city} | {brand}",
+            "product": f"{name} {price} — Kirim ke Area Layanan Kami | {brand}",
             "contact": f"Kontak & Area Layanan — {brand}, {city}",
             "therapists": f"Terapis Kami — Pijat ke Vila & Hotel {city} | {brand}",
             "gallery": f"Galeri — Home Spa Bali di {city} | {brand}",
@@ -78,12 +78,12 @@ def meta_for(kind: str, lang="en", **kw):
                        f"bayar tunai saat pengiriman atau transfer.",
             "treatment": f"{name} — terapis datang ke vila, hotel atau rumah "
                          f"Anda di {city}. Booking online, harga jelas.",
-            "therapists": f"Terapis bersertifikat {brand} — datang ke vila, "
-                          f"hotel atau rumah Anda di {city}.",
+            "therapists": f"Terapis profesional berpengalaman {brand} — "
+                          f"datang ke vila, hotel atau rumah Anda.",
             "areas": f"Semua area di {city} yang kami layani, lengkap dengan "
                      f"biaya transport. Terapis datang ke tempat Anda.",
-            "area": f"Pijat panggilan di {name}: terapis bersertifikat datang "
-                    f"ke vila, hotel atau rumah Anda. Booking online.",
+            "area": f"Pijat panggilan di {name}: terapis berpengalaman "
+                    f"datang ke vila, hotel atau rumah Anda. Booking online.",
         }
     else:
         titles = {
@@ -92,25 +92,27 @@ def meta_for(kind: str, lang="en", **kw):
             "treatment": f"{name} — Villa & Hotel Massage in {city} | {brand}",
             "products": f"Our Product Line — Pure Bali Honey & Spa Products | {brand}",
             "product_group": f"{name} — Natural Bali Products | {brand}",
-            "product": f"{name} {price} — Delivered Across {city} | {brand}",
+            "product": f"{name} {price} — Delivered in Our Service Areas | {brand}",
             "contact": f"Contact & Service Areas — {brand}, {city}",
             "therapists": f"Our Therapists — Villa & Hotel Massage {city} | {brand}",
             "gallery": f"Gallery — Balinese Home Spa in {city} | {brand}",
-            "areas": f"Service Areas — Villa & Hotel Massage Across {city} "
+            "areas": f"Service Areas — Villa & Hotel Massage in {city} "
                      f"| {brand}",
             "area": f"Massage in {name} — Villa & Hotel Home Spa | {brand}",
         }
         default_desc = {
             "product": f"{name} — 100% natural, no added sugar. Order online, "
-                       f"pay cash on delivery or by transfer. Delivery across {city}.",
+                       f"pay cash on delivery or by transfer. Delivered "
+                       f"throughout our service areas.",
             "treatment": f"Book {name} — our therapist comes to your villa, "
                          f"hotel or home in {city}. Online booking, clear pricing.",
-            "therapists": f"Certified {brand} therapists who come to your "
-                          f"villa, hotel or home anywhere in {city}.",
-            "areas": f"Every area of {city} we travel to, with the travel fee "
-                     f"for each. Our therapists come to you.",
-            "area": f"Book a massage in {name} — a certified therapist comes "
-                    f"to your villa, hotel or home. Online booking, clear prices.",
+            "therapists": f"Experienced professional {brand} therapists "
+                          f"who come to your villa, hotel or home.",
+            "areas": f"The areas we travel to, and what each costs. Our "
+                     f"therapists come to your hotel, villa or home.",
+            "area": f"Book a massage in {name} — an experienced therapist "
+                    f"comes to your villa, hotel or home. Clear prices, "
+                    f"no travel fee.",
         }
 
     title = titles.get(kind) or (f"{name} | {brand}" if name else brand)
