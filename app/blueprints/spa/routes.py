@@ -91,17 +91,36 @@ def detail(slug):
         option = options[0]
     price = pricing_service.price_of("treatment", option or tr)
 
-    day_str = request.args.get("day") or date.today().isoformat()
-    try:
-        day = date.fromisoformat(day_str)
-    except ValueError:
-        day = date.today()
-    if day < date.today():
-        day = date.today()
-
     therapist_id = request.args.get("therapist", type=int)
     days = [date.today() + timedelta(days=i) for i in range(BOOKING_DAYS_AHEAD)]
     step = int(site.get("slot_step_min") or 30)
+
+    # Land the guest on a day they can actually book. Asked for a specific
+    # day we show that day, empty or not; arriving with no day at all, we
+    # open on the first one with a free time rather than on a today that
+    # closed hours ago.
+    requested = request.args.get("day")
+    day = None
+    if requested:
+        try:
+            day = date.fromisoformat(requested)
+        except ValueError:
+            day = None
+        if day and day < date.today():
+            day = None
+    if day is None:
+        day = (booking_service.next_available_day(
+            tr, therapist_id=therapist_id, option=option, step_min=step,
+            days=BOOKING_DAYS_AHEAD) or date.today())
+
+    slots = booking_service.slots_for(tr, day, therapist_id, option, step)
+    # Nothing free on the chosen day: point at the next one that is, so the
+    # guest has somewhere to go instead of a dead end.
+    next_free = None
+    if not slots:
+        next_free = booking_service.next_available_day(
+            tr, from_day=day + timedelta(days=1), therapist_id=therapist_id,
+            option=option, step_min=step, days=BOOKING_DAYS_AHEAD)
 
     title, desc = seo_service.meta_for(
         "treatment", lang(), name=loc(tr, "name"),
@@ -117,7 +136,7 @@ def detail(slug):
         therapists=(Therapist.query.filter_by(is_active=True)
                     .order_by(Therapist.sort_order, Therapist.id).all()),
         therapist_id=therapist_id, day=day, days=days,
-        slots=booking_service.slots_for(tr, day, therapist_id, option, step),
+        slots=slots, next_free=next_free,
         jsonld=seo_service.jsonld_service(
             name=loc(tr, "name"), url=f"{base}/treatment/{tr.slug}",
             price_idr=price["final"], description=loc(tr, "desc"),

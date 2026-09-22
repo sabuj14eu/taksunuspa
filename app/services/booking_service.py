@@ -108,6 +108,23 @@ def slots_for(treatment, day: date, therapist_id=None, option=None,
     return out
 
 
+def next_available_day(treatment, from_day=None, therapist_id=None,
+                       option=None, step_min=30, days=30, exclude_id=None):
+    """The first day that actually has a free slot, or None.
+
+    Today is usually not it: the last treatment has to finish by closing time
+    and there is a two-hour lead, so from late afternoon today is already
+    full. Opening the booking form on a day with nothing free reads as "no
+    availability" rather than "look at tomorrow".
+    """
+    start = from_day or date.today()
+    for i in range(days):
+        d = start + timedelta(days=i)
+        if slots_for(treatment, d, therapist_id, option, step_min, exclude_id):
+            return d
+    return None
+
+
 def book(treatment, day: date, time_min: int, *, name, phone, option=None,
          email="", note="", guests=1, therapist_id=None, area_id=None,
          service_address="", lang="en", via="web", payment_method="cash",

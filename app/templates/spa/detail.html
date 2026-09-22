@@ -162,9 +162,22 @@
         </button>
       </form>
       {% else %}
-        {# Booking happens on the website, never in a chat. A full day
-           sends the guest to another day, not into a DM. #}
-        <p class="muted">{{ t.no_slots }} {{ t.try_another_day }}</p>
+        {# Booking happens on the website, never in a chat, so a full day has
+           to offer the next day that is free — not a sentence and no button. #}
+        <div class="no-slots">
+          <p><strong>{{ t.no_slots }}</strong></p>
+          {% if next_free %}
+            <p class="muted">{{ t.next_available }}
+              <strong>{{ next_free.strftime('%a %d %b') }}</strong></p>
+            <a class="btn btn-primary btn-lg"
+               href="/treatment/{{ tr.slug }}?day={{ next_free.isoformat() }}{% if option %}&option={{ option.id }}{% endif %}{% if therapist_id %}&therapist={{ therapist_id }}{% endif %}">
+              {{ t.book_on }} {{ next_free.strftime('%a %d %b') }} {{ icon('arrow-right') }}
+            </a>
+          {% else %}
+            <p class="muted">{{ t.try_another_day }}</p>
+            <a class="btn btn-outline" href="/contact">{{ t.contact }}</a>
+          {% endif %}
+        </div>
       {% endif %}
     </div>
   </div>

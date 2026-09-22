@@ -64,6 +64,8 @@ T = {
                          "meantime, message us on WhatsApp and we will "
                          "gladly answer any question about a treatment.",
         "try_another_day": "Please choose another day.",
+        "next_available": "The next available day is",
+        "book_on": "Book on",
         "use_your_link": "To change or cancel this booking, open the "
                          "link in the confirmation we sent you.",
         "booking_confirmed_now": "Your booking is confirmed. We have sent "
@@ -185,6 +187,8 @@ T = {
                          "itu, hubungi kami di WhatsApp untuk pertanyaan "
                          "apa pun tentang perawatan.",
         "try_another_day": "Silakan pilih hari lain.",
+        "next_available": "Hari tersedia berikutnya adalah",
+        "book_on": "Pesan untuk",
         "use_your_link": "Untuk mengubah atau membatalkan pesanan ini, "
                          "buka tautan pada konfirmasi yang kami kirim.",
         "booking_confirmed_now": "Pesanan Anda dikonfirmasi. Salinannya "

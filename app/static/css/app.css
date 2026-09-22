@@ -558,6 +558,13 @@ a.area-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);
   border:1px solid var(--border);background:var(--card);
 }
 
+.no-slots{
+  border:1px solid var(--border);border-radius:1rem;
+  background:var(--secondary);padding:1.75rem;text-align:center;
+}
+.no-slots p{margin:0 0 .5rem}
+.no-slots .btn{margin-top:1rem}
+
 /* ------------------------------------------------- manage your booking */
 .panel-card{
   border:1px solid var(--border);background:var(--card);
