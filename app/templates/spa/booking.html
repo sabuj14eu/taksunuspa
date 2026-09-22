@@ -13,9 +13,10 @@
       <tr><td>{{ t.duration }}</td><td class="right">{{ b.duration_min }} {{ t.min }}</td></tr>
       <tr><td>{{ t.day }}</td><td class="right">{{ b.starts_at.strftime('%a %d %b %Y') }}</td></tr>
       <tr><td>{{ t.time }}</td><td class="right">{{ b.starts_at.strftime('%H:%M') }} – {{ b.ends_at.strftime('%H:%M') }}</td></tr>
-      {% if b.therapist %}<tr><td>{{ t.therapist }}</td><td class="right">{{ b.therapist.name }}</td></tr>{% endif %}
+      {# No address and no therapist here: this page is reachable from a
+         short code, so it shows only what is harmless if guessed. The
+         full booking is behind the manage link the guest was sent. #}
       {% if b.area %}<tr><td>{{ t.area }}</td><td class="right">{{ b.area.name }}</td></tr>{% endif %}
-      {% if b.service_address %}<tr><td>{{ t.service_address }}</td><td class="right">{{ b.service_address }}</td></tr>{% endif %}
       {% if b.discount_idr %}<tr><td>{{ t.discount }}</td><td class="right">-{{ rp(b.discount_idr) }}</td></tr>{% endif %}
       {% if b.travel_fee_idr %}<tr><td>{{ t.travel_fee }}</td><td class="right">{{ rp(b.travel_fee_idr) }}</td></tr>{% endif %}
       <tr class="grand"><td>{{ t.total }}</td><td class="right">{{ rp(b.total_idr) }}</td></tr>
@@ -23,10 +24,14 @@
 
     <p class="muted small">{{ t.payment }}: {{ b.payment_method }}</p>
 
+    {# Deliberately not linking to the manage page: this page is reachable
+       from a short code, and linking the token here would hand it to
+       anyone who guessed one. The guest has the link in their message. #}
+    <p class="muted small">{{ t.use_your_link }}</p>
+
     <div class="hero-cta" style="justify-content:center">
-      <a class="btn btn-primary" href="{{ wa(t.booking_code ~ ' ' ~ b.public_code) }}"
-         target="_blank" rel="noopener">{{ icon('phone') }} WhatsApp</a>
       <a class="btn btn-outline" href="/treatments">{{ t.treatments }}</a>
+      <a class="btn btn-outline" href="/contact">{{ t.contact }}</a>
     </div>
   </div>
 </div>

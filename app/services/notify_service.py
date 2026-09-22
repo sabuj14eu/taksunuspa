@@ -19,9 +19,11 @@ WhatsApp session and have no such restriction, which is why they suit a small
 spa better.
 """
 import os
+from functools import wraps
 from urllib.parse import quote
 
 import requests
+from flask import current_app
 
 TIMEOUT = 8
 
@@ -43,6 +45,32 @@ def wa_configured() -> bool:
 
 
 # ---------------------------------------------------------------- sending
+
+def never_raises(default=None):
+    """Notifications are an extra, never a dependency.
+
+    The website is the record of a booking. A guest has already been told it
+    is confirmed before any of this runs, so nothing in here — not a dead
+    gateway, not a misconfigured template, not a bug of ours — may escape and
+    turn a saved booking into an error page.
+    """
+    def decorate(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except Exception as exc:                           # noqa: BLE001
+                try:
+                    current_app.logger.exception(
+                        "notification failed in %s: %s", fn.__name__, exc)
+                except Exception:                              # noqa: BLE001
+                    pass
+                # Callers that read a result get one shaped the way they
+                # expect, so a swallowed error cannot become an unpack error.
+                return default(exc) if callable(default) else default
+        return wrapper
+    return decorate
+
 
 def _send_whatsapp(number: str, text: str):
     """(ok, detail). Never raises — a failed message must not fail a booking."""
@@ -83,8 +111,61 @@ def _send_whatsapp(number: str, text: str):
 
         ok = 200 <= r.status_code < 300
         return ok, f"{r.status_code} {r.text[:200]}"
-    except requests.RequestException as exc:
-        return False, str(exc)[:200]
+    except Exception as exc:                                   # noqa: BLE001
+        # Deliberately broad. A gateway can fail in ways requests does not
+        # wrap — a proxy error, a TLS problem, a bad JSON body — and none
+        # of them may reach the caller, who is in the middle of taking a
+        # booking.
+        return False, f"{type(exc).__name__}: {exc}"[:200]
+
+
+def _send_whatsapp_template(number: str, template: str, params, lang_code):
+    """Send an approved WhatsApp template. (ok, detail), never raises.
+
+    Meta only accepts free text from a business inside the 24-hour window
+    that opens when the customer messages first. A booking confirmation goes
+    to someone who may never have messaged us, so it has to be a template
+    that Meta approved in advance — this is that path. Providers that drive a
+    linked handset (fonnte, wablas) have no template concept and fall back to
+    the rendered text.
+    """
+    provider = os.getenv("WA_PROVIDER", "none").lower()
+    token = os.getenv("WA_TOKEN", "")
+    to = digits(number)
+
+    if not to:
+        return False, "no phone number"
+    if provider != "meta":
+        return False, f"provider '{provider}' does not send templates"
+    if not token:
+        return False, "no WhatsApp provider configured"
+    phone_id = os.getenv("WA_PHONE_ID", "")
+    if not phone_id:
+        return False, "WA_PHONE_ID is not set"
+    if not template:
+        return False, "no template name configured"
+
+    body = {"messaging_product": "whatsapp", "to": to, "type": "template",
+            "template": {"name": template,
+                         "language": {"code": lang_code},
+                         "components": [{
+                             "type": "body",
+                             "parameters": [{"type": "text",
+                                             "text": str(p)[:1024]}
+                                            for p in params]}]}}
+    try:
+        r = requests.post(
+            f"https://graph.facebook.com/v20.0/{phone_id}/messages",
+            headers={"Authorization": f"Bearer {token}",
+                     "Content-Type": "application/json"},
+            json=body, timeout=TIMEOUT)
+        return 200 <= r.status_code < 300, f"{r.status_code} {r.text[:200]}"
+    except Exception as exc:                                   # noqa: BLE001
+        # Deliberately broad. A gateway can fail in ways requests does not
+        # wrap — a proxy error, a TLS problem, a bad JSON body — and none
+        # of them may reach the caller, who is in the middle of taking a
+        # booking.
+        return False, f"{type(exc).__name__}: {exc}"[:200]
 
 
 def _send_telegram(chat_id: str, text: str):
@@ -96,8 +177,12 @@ def _send_telegram(chat_id: str, text: str):
                           json={"chat_id": chat_id, "text": text},
                           timeout=TIMEOUT)
         return 200 <= r.status_code < 300, f"{r.status_code} {r.text[:200]}"
-    except requests.RequestException as exc:
-        return False, str(exc)[:200]
+    except Exception as exc:                                   # noqa: BLE001
+        # Deliberately broad. A gateway can fail in ways requests does not
+        # wrap — a proxy error, a TLS problem, a bad JSON body — and none
+        # of them may reach the caller, who is in the middle of taking a
+        # booking.
+        return False, f"{type(exc).__name__}: {exc}"[:200]
 
 
 def _log(channel, purpose, recipient, name, body, ok, detail):
@@ -113,6 +198,11 @@ def _log(channel, purpose, recipient, name, body, ok, detail):
         db.session.commit()
     except Exception:
         db.session.rollback()
+
+
+# mail_service records its attempts in the same place, so one screen shows
+# every message the site tried to send on any channel.
+log_message = _log
 
 
 def send_whatsapp(number, text, purpose="message", name=""):
@@ -131,6 +221,7 @@ def send_telegram(chat_id, text, purpose="message", name=""):
     return ok, detail
 
 
+@never_raises()
 def telegram_admin(text: str, purpose="message"):
     chat = os.getenv("ADMIN_TELEGRAM_CHAT", "")
     ok, detail = _send_telegram(chat, text)
@@ -172,6 +263,7 @@ def telegram_contacts():
         return [], str(exc)[:200]
 
 
+@never_raises()
 def notify_admin(text: str, purpose="message"):
     """Owner's WhatsApp first, Telegram as well when it is set up."""
     from ..models.site import SiteSetting
@@ -232,17 +324,125 @@ def order_text(o, site_url="") -> str:
     return "\n".join(lines)
 
 
+# ------------------------------------------------- what the customer receives
+
+def _money(n):
+    return "Rp " + f"{int(n or 0):,}".replace(",", ".")
+
+
+def customer_booking_text(b, site_url="", event="confirmed") -> str:
+    """The guest's own copy. It carries the manage link and nothing else —
+    no therapist name, no staff number, no way to arrange anything off-site."""
+    head = {"confirmed": "Booking Confirmed",
+            "changed": "Booking Updated",
+            "cancelled": "Booking Cancelled"}.get(event, "Booking")
+    lines = [f"Taksu Nusa Spa — {head}",
+             "",
+             f"Booking: #{b.public_code}",
+             f"Service: {b.treatment_name} {b.duration_min} min",
+             f"Date: {b.starts_at:%d %B %Y}",
+             f"Time: {b.starts_at:%H:%M}"]
+    if b.service_address:
+        lines.append(f"Address: {b.service_address}")
+    elif b.area:
+        lines.append(f"Area: {b.area.name}")
+    lines.append(f"Total: {_money(b.total_idr)}")
+    lines.append(f"Status: {b.status.title()}")
+    if event != "cancelled" and site_url:
+        lines += ["", "Manage / modify / cancel:",
+                  f"{site_url}{b.manage_path()}"]
+    return "\n".join(lines)
+
+
+def customer_template_params(b, site_url=""):
+    """The ordered {{1}}..{{7}} values for the approved Utility template.
+
+    Meta rejects a parameter containing a newline or a run of spaces, so each
+    one is a single tidy line.
+    """
+    where = b.service_address or (b.area.name if b.area else "-")
+    return [b.public_code,
+            f"{b.treatment_name} {b.duration_min} min",
+            f"{b.starts_at:%d %B %Y}",
+            f"{b.starts_at:%H:%M}",
+            " ".join(where.split()),
+            b.status.title(),
+            f"{site_url}{b.manage_path()}"]
+
+
+@never_raises(lambda exc: (False, False))
+def notify_customer(b, site_url="", event="confirmed"):
+    """Tell the guest, on WhatsApp and by e-mail. (whatsapp_ok, email_ok).
+
+    Best-effort by design: the booking is already saved and shown on screen
+    before this runs, so a gateway being down costs a notification, never a
+    booking.
+    """
+    text = customer_booking_text(b, site_url, event)
+    provider = os.getenv("WA_PROVIDER", "none").lower()
+    wa_ok = False
+
+    if b.customer_phone and wa_configured():
+        if provider == "meta":
+            tpl = os.getenv("WA_TEMPLATE_BOOKING", "").strip()
+            lang_code = os.getenv("WA_TEMPLATE_LANG", "en").strip() or "en"
+            if tpl:
+                wa_ok, detail = _send_whatsapp_template(
+                    b.customer_phone, tpl,
+                    customer_template_params(b, site_url), lang_code)
+                _log("whatsapp", f"customer_{event}", digits(b.customer_phone),
+                     b.customer_name, text, wa_ok, f"template {tpl}: {detail}")
+            else:
+                _log("whatsapp", f"customer_{event}", digits(b.customer_phone),
+                     b.customer_name, text, False,
+                     "WA_TEMPLATE_BOOKING is not set — Meta needs an approved "
+                     "template to message a customer who has not messaged first")
+        else:
+            # fonnte / wablas drive a linked handset and take plain text.
+            wa_ok, _ = send_whatsapp(b.customer_phone, text,
+                                     purpose=f"customer_{event}",
+                                     name=b.customer_name)
+
+    email_ok = False
+    if b.customer_email:
+        from . import mail_service
+        subject = f"Taksu Nusa Spa — {event.title()} — #{b.public_code}"
+        email_ok, _ = mail_service.send(b.customer_email, subject, text,
+                                        purpose=f"customer_{event}",
+                                        name=b.customer_name)
+    return wa_ok, email_ok
+
+
+@never_raises()
 def notify_booking(booking, site_url=""):
-    notify_admin(booking_text(booking, site_url), purpose="new_booking")
+    """Everything that happens after a booking is saved.
+
+    Each channel is independent and none of them can fail the booking: the
+    guest has already seen the confirmation on the website, which stays the
+    record of the booking whatever the messaging gateways do.
+    """
+    text = booking_text(booking, site_url)
+    notify_admin(text, purpose="new_booking")
+
+    from . import mail_service
+    if mail_service.admin_address():
+        mail_service.send(mail_service.admin_address(),
+                          f"New booking #{booking.public_code}", text,
+                          purpose="new_booking", name="Admin")
+
+    notify_customer(booking, site_url, event="confirmed")
+
     # If the booking already has a therapist, tell them straight away.
     if booking.therapist:
         notify_therapist(booking, site_url)
 
 
+@never_raises()
 def notify_order(order, site_url=""):
     notify_admin(order_text(order, site_url), purpose="new_order")
 
 
+@never_raises(lambda exc: (False, f"{type(exc).__name__}: {exc}"[:200]))
 def notify_therapist(booking, site_url=""):
     """(ok, detail). Tries WhatsApp, then Telegram, which is free.
 

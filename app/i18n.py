@@ -63,6 +63,35 @@ T = {
         "gallery_empty": "Our photo gallery is being put together. In the "
                          "meantime, message us on WhatsApp and we will "
                          "gladly answer any question about a treatment.",
+        "try_another_day": "Please choose another day.",
+        "use_your_link": "To change or cancel this booking, open the "
+                         "link in the confirmation we sent you.",
+        "booking_confirmed_now": "Your booking is confirmed. We have sent "
+                                 "you a copy — keep this page bookmarked "
+                                 "to change or cancel it at any time.",
+        "manage_booking": "Manage your booking",
+        "manage_intro": "Everything about this booking is handled here. You "
+                        "never need to contact your therapist directly.",
+        "booking_status": "Status",
+        "change_booking": "Change your booking",
+        "change_service": "Service",
+        "change_time": "Date & time",
+        "change_address": "Where we come",
+        "save_changes": "Save changes",
+        "cancel_booking": "Cancel this booking",
+        "cancel_confirm": "Cancel this booking? This cannot be undone.",
+        "booking_updated": "Your booking has been updated. We have sent you "
+                           "a new confirmation.",
+        "booking_cancelled": "Your booking has been cancelled.",
+        "booking_not_changeable": "This booking can no longer be changed.",
+        "booking_too_late": "This booking starts too soon to change online. "
+                            "Please contact us and we will help.",
+        "booking_is_cancelled": "This booking was cancelled.",
+        "too_late_notice": "Changes and cancellations close 4 hours before "
+                           "your treatment. Please contact us for anything "
+                           "after that.",
+        "keep_current_time": "Keep the current time",
+        "current_booking": "Your booking",
         "book_on_whatsapp": "Book on WhatsApp",
         "whatsapp_intro": "The quickest way to book. Message us and we will "
                           "confirm your therapist and time straight away.",
@@ -155,6 +184,35 @@ T = {
         "gallery_empty": "Galeri foto kami sedang disiapkan. Sementara "
                          "itu, hubungi kami di WhatsApp untuk pertanyaan "
                          "apa pun tentang perawatan.",
+        "try_another_day": "Silakan pilih hari lain.",
+        "use_your_link": "Untuk mengubah atau membatalkan pesanan ini, "
+                         "buka tautan pada konfirmasi yang kami kirim.",
+        "booking_confirmed_now": "Pesanan Anda dikonfirmasi. Salinannya "
+                                 "sudah kami kirim — simpan halaman ini "
+                                 "untuk mengubah atau membatalkan.",
+        "manage_booking": "Kelola pesanan Anda",
+        "manage_intro": "Semua hal tentang pesanan ini diatur di sini. Anda "
+                        "tidak perlu menghubungi terapis secara langsung.",
+        "booking_status": "Status",
+        "change_booking": "Ubah pesanan Anda",
+        "change_service": "Perawatan",
+        "change_time": "Tanggal & jam",
+        "change_address": "Kami datang ke mana",
+        "save_changes": "Simpan perubahan",
+        "cancel_booking": "Batalkan pesanan ini",
+        "cancel_confirm": "Batalkan pesanan ini? Tindakan ini tidak dapat "
+                          "dibatalkan.",
+        "booking_updated": "Pesanan Anda telah diperbarui. Konfirmasi baru "
+                           "sudah kami kirim.",
+        "booking_cancelled": "Pesanan Anda telah dibatalkan.",
+        "booking_not_changeable": "Pesanan ini tidak dapat diubah lagi.",
+        "booking_too_late": "Pesanan ini terlalu dekat untuk diubah online. "
+                            "Silakan hubungi kami dan kami akan membantu.",
+        "booking_is_cancelled": "Pesanan ini telah dibatalkan.",
+        "too_late_notice": "Perubahan dan pembatalan ditutup 4 jam sebelum "
+                           "perawatan. Untuk setelah itu silakan hubungi kami.",
+        "keep_current_time": "Tetap pada jam saat ini",
+        "current_booking": "Pesanan Anda",
         "book_on_whatsapp": "Pesan lewat WhatsApp",
         "whatsapp_intro": "Cara tercepat untuk memesan. Kirim pesan dan kami "
                           "langsung konfirmasi terapis dan jam Anda.",

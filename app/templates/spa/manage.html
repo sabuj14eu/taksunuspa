@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block content %}
+
+<section class="page-head">
+  <div class="wrap">
+    <nav class="crumbs"><a href="/">{{ t.home }}</a> › <span>{{ t.manage_booking }}</span></nav>
+    <h2 style="font-size:clamp(2rem,4vw,3rem)">{{ t.manage_booking }}</h2>
+    {% if request.args.get("new") %}
+    <p class="lead"><strong>{{ t.booking_confirmed_now }}</strong></p>
+    {% else %}
+    <p class="lead">{{ t.manage_intro }}</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section" style="padding-top:2rem">
+  <div class="wrap section-split">
+
+    {# ------------------------------------------------ what is booked now #}
+    <div class="split-sticky">
+      <div class="panel-card">
+        <h3>{{ t.current_booking }}</h3>
+        <p class="code">{{ t.booking_code }}: <strong>{{ b.public_code }}</strong></p>
+        <p>
+          <span class="status-pill status-{{ b.status }}">{{ b.status }}</span>
+        </p>
+        <table class="table">
+          <tr><td>{{ t.change_service }}</td><td class="right">{{ b.treatment_name }}</td></tr>
+          <tr><td>{{ t.duration }}</td><td class="right">{{ b.duration_min }} {{ t.min }}</td></tr>
+          <tr><td>{{ t.day }}</td><td class="right">{{ b.starts_at.strftime('%a %d %b %Y') }}</td></tr>
+          <tr><td>{{ t.time }}</td><td class="right">{{ b.starts_at.strftime('%H:%M') }} – {{ b.ends_at.strftime('%H:%M') }}</td></tr>
+          {% if b.guests and b.guests > 1 %}<tr><td>{{ t.guests }}</td><td class="right">{{ b.guests }}</td></tr>{% endif %}
+          {% if b.area %}<tr><td>{{ t.area }}</td><td class="right">{{ b.area.name }}</td></tr>{% endif %}
+          {% if b.service_address %}<tr><td>{{ t.change_address }}</td><td class="right">{{ b.service_address }}</td></tr>{% endif %}
+          {% if b.discount_idr %}<tr><td>{{ t.discount }}</td><td class="right">-{{ rp(b.discount_idr) }}</td></tr>{% endif %}
+          {% if b.travel_fee_idr %}<tr><td>{{ t.travel_fee }}</td><td class="right">{{ rp(b.travel_fee_idr) }}</td></tr>{% endif %}
+          <tr class="grand"><td>{{ t.total }}</td><td class="right">{{ rp(b.total_idr) }}</td></tr>
+        </table>
+        <p class="muted small">{{ t.payment }}: {{ b.payment_method }}</p>
+        {# A therapist's name reassures; their number would let a guest book
+           around the website, so it is never shown. #}
+        {% if b.therapist %}
+        <p class="muted small">{{ t.therapist }}: {{ b.therapist.name }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ------------------------------------------------------ what may change #}
+    <div>
+      {% if b.status == 'cancelled' %}
+        <div class="panel-card">
+          <h3>{{ t.booking_is_cancelled }}</h3>
+          <p class="muted">{{ t.we_will_confirm }}</p>
+          <p style="margin-top:1.5rem">
+            <a class="btn btn-primary" href="/treatments">{{ t.book_your_treatment }}</a>
+          </p>
+        </div>
+
+      {% elif not b.customer_may_change %}
+        <div class="panel-card">
+          <h3>{{ t.change_booking }}</h3>
+          <p class="muted">{{ t.too_late_notice }}</p>
+          <p style="margin-top:1.5rem">
+            <a class="btn btn-outline" href="/contact">{{ t.contact }}</a>
+          </p>
+        </div>
+
+      {% else %}
+        <form method="post" action="/b/{{ b.manage_token }}/change" class="panel-card stackform">
+          <h3>{{ t.change_booking }}</h3>
+
+          <label>{{ t.change_service }}
+            <select name="treatment_id" id="treatment-select">
+              {% for tr in treatments %}
+                <option value="{{ tr.id }}" {{ 'selected' if tr.id == b.treatment_id }}>
+                  {{ loc(tr, 'name') }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label>{{ t.duration }}
+            <select name="option_id" id="option-select">
+              {% for tr in treatments %}
+                {% for o in tr.active_options %}
+                  <option value="{{ o.id }}" data-treatment="{{ tr.id }}"
+                          {{ 'selected' if o.id == b.option_id }}>
+                    {{ o.duration_min }} {{ t.min }} — {{ rp(price_of('treatment', o)['final']) }}</option>
+                {% endfor %}
+              {% endfor %}
+            </select>
+          </label>
+
+          <label>{{ t.change_time }}
+            <input type="date" name="day" value="{{ day.isoformat() }}"
+                   min="{{ today }}" max="{{ max_day }}"
+                   onchange="location.href='/b/{{ b.manage_token }}?day='+this.value">
+          </label>
+
+          {% if slots %}
+          <div class="slot-grid">
+            <label class="slot">
+              <input type="radio" name="time_min" value="" checked>
+              <span>{{ t.keep_current_time }}</span>
+            </label>
+            {% for s in slots %}
+            <label class="slot">
+              <input type="radio" name="time_min" value="{{ s.time_min }}">
+              <span>{{ s.label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="muted">{{ t.no_slots }}</p>
+          {% endif %}
+
+          <label>{{ t.area }}
+            <select name="area_id">
+              <option value="">{{ t.pick_area }}</option>
+              {% for a in areas %}
+                <option value="{{ a.id }}" {{ 'selected' if a.id == b.area_id }}>{{ a.name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label>{{ t.change_address }}
+            <textarea name="service_address" rows="3"
+                      placeholder="{{ t.service_address_help }}">{{ b.service_address or '' }}</textarea>
+          </label>
+
+          <label>{{ t.note }}
+            <textarea name="note" rows="2">{{ b.note or '' }}</textarea>
+          </label>
+
+          <button class="btn btn-primary" type="submit">{{ t.save_changes }}</button>
+          <p class="muted small">{{ t.too_late_notice }}</p>
+        </form>
+
+        <form method="post" action="/b/{{ b.manage_token }}/cancel"
+              class="panel-card" style="margin-top:2rem"
+              onsubmit="return confirm('{{ t.cancel_confirm }}')">
+          <h3>{{ t.cancel_booking }}</h3>
+          <button class="btn btn-outline btn-danger" type="submit">{{ t.cancel_booking }}</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Show only the durations belonging to the chosen treatment. Pure display
+   logic — the server re-checks that the option belongs to the treatment, so
+   nothing here can be used to buy a long treatment at a short price. */
+(function () {
+  var tSel = document.getElementById('treatment-select');
+  var oSel = document.getElementById('option-select');
+  if (!tSel || !oSel) return;
+  function sync() {
+    var want = tSel.value, first = null;
+    Array.prototype.forEach.call(oSel.options, function (o) {
+      var mine = o.dataset.treatment === want;
+      o.hidden = !mine;
+      o.disabled = !mine;
+      if (mine && first === null) first = o;
+    });
+    if (oSel.selectedOptions[0] && oSel.selectedOptions[0].disabled && first) {
+      first.selected = true;
+    }
+  }
+  tSel.addEventListener('change', sync);
+  sync();
+})();
+</script>
+{% endblock %}

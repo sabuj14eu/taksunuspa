@@ -49,10 +49,6 @@
       <button class="btn btn-outline" type="submit" name="buy_now" value="1" {{ 'disabled' if not p.in_stock }}>{{ t.checkout }}</button>
     </form>
 
-    <p>
-      <a class="btn btn-outline btn-sm" href="{{ wa(loc(p,'name') ~ ' — ' ~ rp(price.final)) }}"
-         target="_blank" rel="noopener">{{ icon('phone') }} {{ t.order_whatsapp }}</a>
-    </p>
 
     {% if loc(p, 'desc') %}<div class="prose">{{ loc(p, 'desc')|nl2br }}</div>{% endif %}
 

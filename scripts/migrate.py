@@ -40,7 +40,26 @@ def run():
                     db.session.rollback()
                     print(f"  ! {table.name}.{col.name}: {exc}", file=sys.stderr)
 
-        print(f"Migration done. Tables ensured, {added} column(s) added.")
+        filled = _backfill_manage_tokens()
+        print(f"Migration done. Tables ensured, {added} column(s) added"
+              + (f", {filled} booking token(s) generated." if filled else "."))
+
+
+def _backfill_manage_tokens() -> int:
+    """A column added by ALTER TABLE is NULL on every existing row. For
+    manage_token that is not cosmetic: a booking with no token has no manage
+    link, and a lookup for NULL would match all of them at once. So every
+    booking that predates the column gets a token of its own here."""
+    import secrets
+
+    from app.models.spa import Booking
+    rows = Booking.query.filter(
+        (Booking.manage_token.is_(None)) | (Booking.manage_token == "")).all()
+    for b in rows:
+        b.manage_token = secrets.token_urlsafe(32)
+    if rows:
+        db.session.commit()
+    return len(rows)
 
 
 if __name__ == "__main__":

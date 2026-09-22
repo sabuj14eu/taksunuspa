@@ -38,13 +38,22 @@ def hours_for_day(day: date):
     return h.open_min, h.close_min
 
 
-def _free_therapist(starts_at, ends_at, therapist_id=None):
+def _free_therapist(starts_at, ends_at, therapist_id=None, exclude_id=None):
     """The first therapist with no overlapping booking. Because they travel
     between guests, a buffer is added either side of each existing booking.
-    With no therapist rows at all the spa books as one resource."""
+    With no therapist rows at all the spa books as one resource.
+
+    exclude_id leaves one booking out of the clash check: when a guest
+    moves their own appointment it must not be found blocking itself.
+    """
     buffer = timedelta(minutes=TRAVEL_BUFFER_MIN)
     window_start = starts_at - buffer
     window_end = ends_at + buffer
+
+    def clashes(q):
+        if exclude_id:
+            q = q.filter(Booking.id != exclude_id)
+        return q.first()
 
     if therapist_id:
         pool = [db.session.get(Therapist, therapist_id)]
@@ -54,19 +63,19 @@ def _free_therapist(starts_at, ends_at, therapist_id=None):
     pool = [t for t in pool if t and t.is_active]
 
     if not pool:
-        clash = (Booking.query
-                 .filter(Booking.therapist_id.is_(None),
-                         Booking.status.in_(BOOKING_ACTIVE),
-                         Booking.starts_at < window_end,
-                         Booking.ends_at > window_start).first())
+        clash = clashes(Booking.query
+                        .filter(Booking.therapist_id.is_(None),
+                                Booking.status.in_(BOOKING_ACTIVE),
+                                Booking.starts_at < window_end,
+                                Booking.ends_at > window_start))
         return None if clash else "venue"
 
     for t in pool:
-        clash = (Booking.query
-                 .filter(Booking.therapist_id == t.id,
-                         Booking.status.in_(BOOKING_ACTIVE),
-                         Booking.starts_at < window_end,
-                         Booking.ends_at > window_start).first())
+        clash = clashes(Booking.query
+                        .filter(Booking.therapist_id == t.id,
+                                Booking.status.in_(BOOKING_ACTIVE),
+                                Booking.starts_at < window_end,
+                                Booking.ends_at > window_start))
         if not clash:
             return t
     return None
@@ -80,7 +89,7 @@ def duration_of(treatment, option=None) -> int:
 
 
 def slots_for(treatment, day: date, therapist_id=None, option=None,
-              step_min=30):
+              step_min=30, exclude_id=None):
     win = hours_for_day(day)
     if not win or not treatment:
         return []
@@ -93,7 +102,7 @@ def slots_for(treatment, day: date, therapist_id=None, option=None,
         starts = datetime.combine(day, datetime.min.time()) + timedelta(minutes=t)
         if starts >= cutoff:
             ends = starts + timedelta(minutes=minutes)
-            if _free_therapist(starts, ends, therapist_id):
+            if _free_therapist(starts, ends, therapist_id, exclude_id):
                 out.append({"time_min": t, "label": hhmm(t)})
         t += step
     return out
@@ -168,3 +177,108 @@ def upcoming(limit=50):
     return (Booking.query.filter(Booking.status.in_(BOOKING_ACTIVE),
                                  Booking.starts_at >= datetime.now())
             .order_by(Booking.starts_at).limit(limit).all())
+
+
+# ------------------------------------------------- changes made by the guest
+
+def _reprice(b, treatment, option):
+    """Re-run the same pricing the menu shows, for the new selection."""
+    priced = option if option is not None else treatment
+    p = pricing_service.price_of("treatment", priced)
+    units = max(1, b.guests or 1) if treatment.per_person else 1
+    travel = b.travel_fee_idr or 0
+    b.base_price_idr = p["base"] * units
+    b.discount_idr = p["off"] * units
+    b.total_idr = p["final"] * units + travel
+    b.discount_label = (p["label"] or "")[:80] or None
+
+
+def amend(b, *, treatment=None, option=None, day=None, time_min=None,
+          service_address=None, area_id=None, note=None, guests=None,
+          by="customer"):
+    """Change a booking the guest already holds. (booking, error_key).
+
+    Everything a guest is allowed to change goes through here so the rules
+    live in one place: the slot is re-checked against the calendar, the price
+    is recalculated from the menu, and the therapist is re-picked if the time
+    moved. Nothing is written unless every check passes.
+    """
+    if not b or not b.is_active:
+        return None, "booking_not_changeable"
+    if by == "customer" and not b.customer_may_change:
+        return None, "booking_too_late"
+
+    treatment = treatment or b.treatment
+    if not treatment or not treatment.is_active:
+        return None, "booking_not_changeable"
+
+    # An option must belong to the treatment it is priced against, or a guest
+    # could pay a 60-minute price for a 120-minute treatment.
+    if option is not None and (option.treatment_id != treatment.id
+                               or not option.is_active):
+        return None, "booking_not_changeable"
+
+    minutes = duration_of(treatment, option)
+    if day is not None and time_min is not None:
+        starts = (datetime.combine(day, datetime.min.time())
+                  + timedelta(minutes=int(time_min)))
+    else:
+        starts = b.starts_at
+    ends = starts + timedelta(minutes=minutes)
+
+    moved = (starts != b.starts_at or ends != b.ends_at)
+    if moved:
+        win = hours_for_day(starts.date())
+        opens = starts.hour * 60 + starts.minute
+        if not win or opens < win[0] or opens + minutes > win[1]:
+            return None, "slot_gone"
+        if starts < datetime.now() + timedelta(hours=LEAD_HOURS):
+            return None, "slot_gone"
+        # Keep the same therapist if they are still free; otherwise find one.
+        picked = (_free_therapist(starts, ends, b.therapist_id, exclude_id=b.id)
+                  or _free_therapist(starts, ends, exclude_id=b.id))
+        if not picked:
+            return None, "slot_gone"
+        b.therapist_id = None if picked == "venue" else picked.id
+        b.starts_at, b.ends_at = starts, ends
+    elif minutes != b.duration_min:
+        # Same start, longer treatment: the extra time must also be free.
+        picked = (_free_therapist(starts, ends, b.therapist_id, exclude_id=b.id)
+                  or _free_therapist(starts, ends, exclude_id=b.id))
+        if not picked:
+            return None, "slot_gone"
+        b.therapist_id = None if picked == "venue" else picked.id
+        b.ends_at = ends
+
+    if area_id is not None:
+        area = db.session.get(ServiceArea, int(area_id)) if area_id else None
+        b.area_id = area.id if area else None
+        b.travel_fee_idr = (area.travel_fee_idr or 0) if area else 0
+    if service_address is not None:
+        b.service_address = (service_address or "")[:400]
+    if note is not None:
+        b.note = (note or "")[:400]
+    if guests is not None:
+        b.guests = max(1, int(guests))
+
+    b.treatment_id = treatment.id
+    b.option_id = option.id if option is not None else None
+    b.treatment_name = treatment.name_en[:160]
+    b.duration_min = minutes
+    _reprice(b, treatment, option)
+
+    db.session.commit()
+    return b, None
+
+
+def cancel(b, by="customer"):
+    """(booking, error_key). Cancelling frees the slot for everyone else."""
+    if not b or not b.is_active:
+        return None, "booking_not_changeable"
+    if by == "customer" and not b.customer_may_change:
+        return None, "booking_too_late"
+    b.status = "cancelled"
+    b.cancelled_at = datetime.now()
+    b.cancelled_by = by
+    db.session.commit()
+    return b, None

@@ -41,10 +41,6 @@
 
     {% if loc(tr, 'desc') %}<div class="prose" style="margin-top:1.5rem">{{ loc(tr, 'desc')|nl2br }}</div>{% endif %}
 
-    <p style="margin-top:1.5rem">
-      <a class="btn btn-outline" href="{{ wa(loc(tr,'name') ~ ' — ' ~ rp(price.final)) }}"
-         target="_blank" rel="noopener">{{ icon('phone') }} {{ t.book_whatsapp }}</a>
-    </p>
   </div>
 </div>
 
@@ -166,10 +162,9 @@
         </button>
       </form>
       {% else %}
-        <p class="muted">{{ t.no_slots }}</p>
-        <a class="btn btn-primary" href="{{ wa(loc(tr,'name')) }}" target="_blank" rel="noopener">
-          {{ icon('phone') }} {{ t.book_whatsapp }}
-        </a>
+        {# Booking happens on the website, never in a chat. A full day
+           sends the guest to another day, not into a DM. #}
+        <p class="muted">{{ t.no_slots }} {{ t.try_another_day }}</p>
       {% endif %}
     </div>
   </div>

@@ -192,6 +192,11 @@ class Booking(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     public_code = db.Column(db.String(8), unique=True,
                             default=lambda: secrets.token_hex(4).upper())
+    # The customer manages their own booking through this token, never by
+    # contacting a therapist. public_code is short enough to read aloud and so
+    # is guessable; this is not, and it is what every link we send carries.
+    manage_token = db.Column(db.String(64), unique=True, index=True,
+                             default=lambda: secrets.token_urlsafe(32))
     treatment_id = db.Column(db.Integer, db.ForeignKey("treatments.id"),
                              nullable=False)
     option_id = db.Column(db.Integer, db.ForeignKey("treatment_options.id"))
@@ -224,6 +229,10 @@ class Booking(db.Model):
     status = db.Column(db.String(12), default="requested")
     created_via = db.Column(db.String(12), default="web")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow,
+                           onupdate=datetime.utcnow)
+    cancelled_at = db.Column(db.DateTime)
+    cancelled_by = db.Column(db.String(12))    # "customer" or "admin"
 
     # What the therapist earns from this booking, and the payout that settled
     # it. Null fee means "work it out from the therapist's current rate" —
@@ -236,6 +245,27 @@ class Booking(db.Model):
     therapist = db.relationship("Therapist")
     area = db.relationship("ServiceArea")
     payout = db.relationship("Payout", backref="bookings")
+
+    # How close to the appointment a guest may still change it themselves.
+    # Inside this, the therapist may already be travelling, so the change has
+    # to go through the spa.
+    CHANGE_CUTOFF_HOURS = 4
+
+    @property
+    def is_active(self) -> bool:
+        return self.status in BOOKING_ACTIVE
+
+    @property
+    def customer_may_change(self) -> bool:
+        """Whether the manage page offers the change and cancel forms."""
+        if not self.is_active or not self.starts_at:
+            return False
+        from datetime import timedelta
+        return datetime.now() < self.starts_at - timedelta(
+            hours=self.CHANGE_CUTOFF_HOURS)
+
+    def manage_path(self) -> str:
+        return f"/b/{self.manage_token}"
 
     @property
     def fee_due(self) -> int:

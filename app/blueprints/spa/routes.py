@@ -16,6 +16,7 @@ from ...models.spa import (Booking, ServiceArea, Therapist, Treatment,
                            TreatmentCategory, TreatmentOption)
 from ...services import booking_service, media_service, pricing_service
 from ...services import seo_service
+from ...services import notify_service
 from ...services.notify_service import notify_booking
 
 bp = Blueprint("spa", __name__)
@@ -167,14 +168,150 @@ def book(slug):
         return redirect(url_for("spa.detail", slug=slug, day=day.isoformat(),
                                 option=option.id if option else None))
 
+    # Messaging is deliberately after the commit and cannot raise: the
+    # booking exists and the guest sees it whatever the gateways do.
     notify_booking(b, current_app.config["SITE_URL"])
-    return redirect(url_for("spa.booking_view", code=b.public_code))
+    # Straight to the manage link, so the guest lands on the page that
+    # lets them change or cancel without contacting anyone.
+    return redirect(b.manage_path() + "?new=1")
 
 
 @bp.route("/booking/<code>")
 def booking_view(code):
+    """The short code, kept for links already sent.
+
+    It is only eight hex characters, so it is guessable in a way the
+    manage token is not. This page therefore shows the booking without
+    the address or the therapist, and everything else lives behind the
+    token link the guest received.
+    """
     b = Booking.query.filter_by(public_code=code.upper()).first()
     if not b:
         abort(404)
     return render_template("spa/booking.html", b=b, noindex=True,
                            meta_title=f"Booking {b.public_code}", meta_desc="")
+
+
+# --------------------------------------------------------- manage a booking
+
+def _by_token(token):
+    """The booking behind a manage link, or 404.
+
+    An empty token must never be looked up: bookings created before the
+    column existed are backfilled by the migration, but a blank string here
+    would otherwise match whichever row happened to be blank.
+    """
+    token = (token or "").strip()
+    if len(token) < 20:
+        abort(404)
+    b = Booking.query.filter_by(manage_token=token).first()
+    if not b:
+        abort(404)
+    return b
+
+
+def _manage_page(b, **extra):
+    """The manage screen, with everything it needs to offer a change."""
+    treatments = (Treatment.query.filter_by(is_active=True)
+                  .order_by(Treatment.sort_order, Treatment.id).all())
+    day = b.starts_at.date()
+    raw = request.args.get("day")
+    if raw:
+        try:
+            day = date.fromisoformat(raw)
+        except ValueError:
+            pass
+    step = int(SiteSetting.all_dict().get("slot_step_min") or 30)
+    slots = booking_service.slots_for(b.treatment, day, option=b.option,
+                                      step_min=step, exclude_id=b.id)
+    return render_template(
+        "spa/manage.html", b=b, treatments=treatments, slots=slots,
+        day=day, noindex=True,
+        areas=(ServiceArea.query.filter_by(is_active=True)
+               .order_by(ServiceArea.sort_order, ServiceArea.name).all()),
+        today=date.today().isoformat(),
+        max_day=(date.today() + timedelta(days=BOOKING_DAYS_AHEAD)).isoformat(),
+        meta_title=f"Booking {b.public_code}", meta_desc="", **extra)
+
+
+@bp.route("/b/<token>")
+def booking_manage(token):
+    return _manage_page(_by_token(token))
+
+
+@bp.route("/b/<token>/change", methods=["POST"])
+def booking_change(token):
+    """Service, duration, time, address and area — the things a guest may
+    change themselves. Everything is re-checked server-side; the form is a
+    convenience, not the rule."""
+    b = _by_token(token)
+    f = request.form
+
+    treatment = b.treatment
+    if f.get("treatment_id", type=int):
+        treatment = db.session.get(Treatment, f.get("treatment_id", type=int))
+        if not treatment or not treatment.is_active:
+            abort(400)
+
+    option = None
+    if f.get("option_id", type=int):
+        option = db.session.get(TreatmentOption, f.get("option_id", type=int))
+        if not option or not option.is_active:
+            abort(400)
+        # Changing treatment and keeping the old treatment's option would
+        # price the new service from the wrong menu row.
+        if option.treatment_id != treatment.id:
+            abort(400)
+
+    day = time_min = None
+    if f.get("day") and f.get("time_min"):
+        try:
+            day = date.fromisoformat(f["day"])
+            time_min = int(f["time_min"])
+        except (ValueError, KeyError):
+            abort(400)
+
+    updated, err = booking_service.amend(
+        b, treatment=treatment, option=option, day=day, time_min=time_min,
+        service_address=f.get("service_address"),
+        area_id=f.get("area_id", type=int) if "area_id" in f else None,
+        note=f.get("note"), by="customer")
+
+    if err:
+        flash(t().get(err, err))
+        return redirect(b.manage_path())
+
+    notify_service.notify_customer(updated, current_app.config["SITE_URL"],
+                                   event="changed")
+    notify_service.notify_admin(
+        "✏️ Booking changed by the guest\n"
+        + notify_service.booking_text(updated,
+                                      current_app.config["SITE_URL"]),
+        purpose="booking_changed")
+    if updated.therapist:
+        notify_service.notify_therapist(updated,
+                                        current_app.config["SITE_URL"])
+    flash(t()["booking_updated"])
+    return redirect(updated.manage_path())
+
+
+@bp.route("/b/<token>/cancel", methods=["POST"])
+def booking_cancel(token):
+    b = _by_token(token)
+    updated, err = booking_service.cancel(b, by="customer")
+    if err:
+        flash(t().get(err, err))
+        return redirect(b.manage_path())
+
+    notify_service.notify_customer(updated, current_app.config["SITE_URL"],
+                                   event="cancelled")
+    notify_service.notify_admin(
+        "❌ Booking cancelled by the guest\n"
+        + notify_service.booking_text(updated,
+                                      current_app.config["SITE_URL"]),
+        purpose="booking_cancelled")
+    if updated.therapist:
+        notify_service.notify_therapist(updated,
+                                        current_app.config["SITE_URL"])
+    flash(t()["booking_cancelled"])
+    return redirect(updated.manage_path())

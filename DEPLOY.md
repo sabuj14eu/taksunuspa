@@ -103,6 +103,46 @@ docker compose logs --tail=40 app
 `scripts/migrate.py` creates any new tables and adds any new columns. It never
 drops anything, so it is safe to run on every deploy.
 
+### Booking notifications and WhatsApp
+
+The website is the only place a booking is created, changed or cancelled.
+WhatsApp and e-mail are notification channels hanging off that, and every one
+of them is best-effort: if a gateway is down, the booking is still saved, the
+guest still sees their confirmation page, and the failure is recorded in
+Admin → Alerts. Nothing waits on WhatsApp approval to go live.
+
+After a booking is saved the site sends:
+
+| To | Channel | Contains |
+|---|---|---|
+| Customer | WhatsApp | code, service, date, time, address, status, manage link |
+| Customer | e-mail | the same, if they gave an address |
+| Owner | WhatsApp | the full booking including the customer's number |
+| Owner | e-mail | the same |
+| Therapist | WhatsApp or Telegram | the job and their fee |
+
+The customer's message never carries a therapist's name or number, an admin
+number, or any `wa.me` link — the only action it offers is the manage link
+back to the website.
+
+**Switching provider** is one line in `.env`. `WA_PROVIDER=meta` is the
+production route; `fonnte` or `wablas` are a stopgap while Meta verification
+and template approval are pending. No other file changes.
+
+**Meta needs an approved template.** A confirmation goes to a guest who has
+not messaged the spa first, so Meta treats it as business-initiated and will
+only deliver a Utility template approved in advance. Create it in WhatsApp
+Manager with seven parameters in the order listed in `.env.example`, then set
+`WA_TEMPLATE_BOOKING`. Until that name is set the customer's WhatsApp is
+skipped and the reason is logged — everything else still sends.
+
+**It is not free.** Checked September 2026: Utility templates are billed per
+message. They were free inside the 24-hour customer service window from
+1 July 2025, but **from 1 October 2026 Meta charges for them inside that
+window too**. Each business number gets 1,000 free service messages a month;
+past that, every confirmation has a cost. Meta's own pricing page is the
+authority — re-check it before budgeting.
+
 ### Updating the English wording
 
 All the English copy lives in `scripts/copy_en.py` — the positioning line, the
