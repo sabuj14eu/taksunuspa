@@ -103,6 +103,33 @@ docker compose logs --tail=40 app
 `scripts/migrate.py` creates any new tables and adds any new columns. It never
 drops anything, so it is safe to run on every deploy.
 
+### Nothing is being sent — start here
+
+Bookings save and guests see their confirmation whether or not any gateway is
+configured. **Out of the box nothing is configured**, so no WhatsApp and no
+e-mail leave the server. One command says exactly what is missing:
+
+```bash
+docker compose exec app python -m scripts.check_notifications
+```
+
+It prints what is on, the last ten send attempts with the reason each failed,
+the last five bookings, and the exact `.env` lines to add. Test a real send
+once configured:
+
+```bash
+docker compose exec app python -m scripts.check_notifications --send 6281236729448
+docker compose exec app python -m scripts.check_notifications --send-email you@gmail.com
+```
+
+The Admin dashboard shows the same warning, and every skipped message is
+recorded in **Admin → Alerts** with its reason.
+
+The quickest channel to get working is **Telegram** — free, no verification,
+about five minutes (see Alerts & Telegram in admin). E-mail needs an SMTP
+login; with Gmail that is an app password, not your normal password. WhatsApp
+to guests needs a provider account and, on Meta, an approved template.
+
 ### Booking notifications and WhatsApp
 
 The website is the only place a booking is created, changed or cancelled.

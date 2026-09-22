@@ -263,6 +263,43 @@ def telegram_contacts():
         return [], str(exc)[:200]
 
 
+def notification_status():
+    """A plain-English account of what will and will not send.
+
+    Used by the dashboard and by scripts/check_notifications.py, so the owner
+    can see at a glance why a booking produced no message.
+    """
+    from . import mail_service
+    provider = os.getenv("WA_PROVIDER", "none").lower()
+    wa_on = wa_configured()
+    tpl = os.getenv("WA_TEMPLATE_BOOKING", "").strip()
+
+    if not wa_on:
+        wa = (False, f"off — WA_PROVIDER is '{provider}'. Set WA_PROVIDER and "
+                     f"WA_TOKEN in .env on the server.")
+    elif provider == "meta" and not tpl:
+        wa = (False, "on, but WA_TEMPLATE_BOOKING is empty. Meta will not "
+                     "deliver a message to a guest who has not written to you "
+                     "first unless it is an approved template.")
+    else:
+        wa = (True, f"on — using {provider}"
+                    + (f", template '{tpl}'" if tpl else ""))
+
+    if not mail_service.configured():
+        mail = (False, "off — set MAIL_HOST, MAIL_FROM and the login in .env.")
+    elif not mail_service.admin_address():
+        mail = (True, "on for guests, but ADMIN_EMAIL is empty so you get no "
+                      "copy yourself.")
+    else:
+        mail = (True, f"on — from {os.getenv('MAIL_FROM')}, your copy to "
+                      f"{mail_service.admin_address()}")
+
+    return {"whatsapp": wa, "email": mail,
+            "telegram": (telegram_configured(),
+                         "on" if telegram_configured()
+                         else "off — free alternative, see Alerts & Telegram")}
+
+
 @never_raises()
 def notify_admin(text: str, purpose="message"):
     """Owner's WhatsApp first, Telegram as well when it is set up."""
@@ -275,6 +312,13 @@ def notify_admin(text: str, purpose="message"):
         os.getenv("WHATSAPP_NUMBER", "")
     if number and wa_configured():
         send_whatsapp(number, text, purpose=purpose, name="admin")
+    else:
+        # Never silent: an owner with nothing configured must be able to find
+        # out why, from Admin -> Alerts, rather than assume the site is broken.
+        _log("whatsapp", purpose, number, "admin", text, False,
+             "no WhatsApp provider configured — set WA_PROVIDER and WA_TOKEN "
+             "in .env on the server" if number else
+             "no owner WhatsApp number set in Admin -> Site settings")
     telegram_admin(text, purpose=purpose)
 
 
@@ -382,7 +426,17 @@ def notify_customer(b, site_url="", event="confirmed"):
     provider = os.getenv("WA_PROVIDER", "none").lower()
     wa_ok = False
 
-    if b.customer_phone and wa_configured():
+    if not b.customer_phone:
+        _log("whatsapp", f"customer_{event}", "", b.customer_name, text, False,
+             "the guest gave no phone number")
+    elif not wa_configured():
+        # Silence here is how an owner ends up thinking the site is broken.
+        # Record the reason so Admin -> Alerts can explain it.
+        _log("whatsapp", f"customer_{event}", digits(b.customer_phone),
+             b.customer_name, text, False,
+             "no WhatsApp provider configured — set WA_PROVIDER and WA_TOKEN "
+             "in .env on the server")
+    else:
         if provider == "meta":
             tpl = os.getenv("WA_TEMPLATE_BOOKING", "").strip()
             lang_code = os.getenv("WA_TEMPLATE_LANG", "en").strip() or "en"
@@ -410,6 +464,9 @@ def notify_customer(b, site_url="", event="confirmed"):
         email_ok, _ = mail_service.send(b.customer_email, subject, text,
                                         purpose=f"customer_{event}",
                                         name=b.customer_name)
+    else:
+        _log("email", f"customer_{event}", "", b.customer_name, text, False,
+             "the guest gave no e-mail address")
     return wa_ok, email_ok
 
 
@@ -429,6 +486,10 @@ def notify_booking(booking, site_url=""):
         mail_service.send(mail_service.admin_address(),
                           f"New booking #{booking.public_code}", text,
                           purpose="new_booking", name="Admin")
+    else:
+        _log("email", "new_booking", "", "Admin", text, False,
+             "ADMIN_EMAIL is not set in .env, so the owner's copy has "
+             "nowhere to go")
 
     notify_customer(booking, site_url, event="confirmed")
 

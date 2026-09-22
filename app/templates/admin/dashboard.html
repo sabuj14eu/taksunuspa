@@ -66,6 +66,33 @@
   </table>
 </div>
 
+{% set off = notify_status.values()|rejectattr('0')|list %}
+{% if off|length == notify_status|length %}
+<div class="panel" style="border-left:3px solid var(--destructive)">
+  <h2>Nobody is being notified yet</h2>
+  <p>Bookings are saving correctly and guests see their confirmation on the
+    website — but no message is leaving the server, because no gateway is set
+    up. Until one is, you will only see new bookings here.</p>
+  <ul>
+    {% for name, state in notify_status.items() %}
+      <li><strong>{{ name|capitalize }}</strong>: {{ state[1] }}</li>
+    {% endfor %}
+  </ul>
+  <p class="muted small">These are set in <code>.env</code> on the server, then
+    <code>docker compose up -d</code>. Telegram is free and takes five minutes —
+    see <a href="/admin/messages-sent">Alerts &amp; Telegram</a>.</p>
+</div>
+{% elif off %}
+<div class="panel" style="border-left:3px solid var(--brass)">
+  <h2>Some notifications are off</h2>
+  <ul>
+    {% for name, state in notify_status.items() %}
+      <li><strong>{{ name|capitalize }}</strong>: {{ state[1] }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
 {% if missing %}
 <div class="panel">
   <h2>Photos still needed <span class="muted">({{ missing|length }})</span></h2>

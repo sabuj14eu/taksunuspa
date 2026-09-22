@@ -220,6 +220,7 @@ def dashboard():
                  .order_by(Product.stock).limit(10).all())
     return render_template(
         "admin/dashboard.html", active="dash", missing=_missing_photos(),
+        notify_status=notify_service.notification_status(),
         orders_open=orders_open, revenue_week=revenue_week,
         bookings_today=bookings_today, low_stock=low_stock,
         recent_orders=Order.query.order_by(Order.created_at.desc()).limit(8).all(),
